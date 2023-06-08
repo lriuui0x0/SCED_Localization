@@ -338,7 +338,7 @@ def get_se_rule(rule):
         (r'\[intellect\]', '<int>'),
         (r'\[combat\]', '<com>'),
         (r'\[agility\]', '<agi>'),
-        (r'\[wild\]', '<wild>')
+        (r'\[wild\]', '<wild>'),
         (r'\[guardian\]', '<gua>'),
         (r'\[seeker\]', '<see>'),
         (r'\[rogue\]', '<rog>'),
