@@ -355,7 +355,7 @@ def get_se_rule(rule):
         (r'\[per_investigator\]', '<per>'),
     ]
     for a, b in markup:
-        rule = re.sub(a, b, flags=re.I)
+        rule = re.sub(a, b, rule, flags=re.I)
     # NOTE: Format traits.
     rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t></size><size 30%> </size>', rule)
     # NOTE: Get rid of the erratum text, e.g. Wendy's Amulet.
