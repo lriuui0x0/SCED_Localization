@@ -334,6 +334,7 @@ def get_se_rule(rule):
         (r'\[action\]', '<act>'),
         (r'\[reaction\]', '<rea>'),
         (r'\[free\]', '<fre>'),
+        (r'\[fast\]', '<fre>'),
         (r'\[willpower\]', '<wil>'),
         (r'\[intellect\]', '<int>'),
         (r'\[combat\]', '<com>'),
@@ -358,8 +359,10 @@ def get_se_rule(rule):
         rule = re.sub(a, b, rule, flags=re.I)
     # NOTE: Format traits.
     rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t></size><size 30%> </size>', rule)
-    # NOTE: Get rid of the erratum text, e.g. Wendy's Amulet.
-    rule = re.sub(r'<i>[^<]*</i>', '', rule)
+    # NOTE: Get rid of the errata text, e.g. Wendy's Amulet.
+    rule = re.sub(r'<i>\(Erratum[^<]*</i>', '', rule)
+    # NOTE: Get rid of the FAQ text, e.g. Rex Murphy
+    rule = re.sub(r'<i>\(FAQ[^<]*</i>', '', rule)
     # NOTE: Format bold action keywords.
     rule = re.sub(r'<b>([^<]*)</b>', r'<hdr><size 95%>\1</size></hdr>', rule)
     # NOTE: Increase the line height. We intentionally add a space at the end to hack around a problem with SE scenario card layout.
