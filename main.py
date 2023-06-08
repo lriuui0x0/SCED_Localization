@@ -7,7 +7,8 @@ import shutil
 import subprocess
 import base64
 import urllib.request
-import imgbbpy
+import requests
+import webbrowser
 from enum import Enum
 from PIL import Image
 from hanziconv import HanziConv
@@ -38,8 +39,17 @@ parser.add_argument('--filter', default='True', help='A Python expression filter
 parser.add_argument('--step', default=None, choices=steps, help='The particular automation step to run')
 parser.add_argument('--repo-primary', default=None, help='The primary repository path for the SCED mod')
 parser.add_argument('--repo-secondary', default=None, help='The secondary repository path for the SCED mod')
-parser.add_argument('--imgbb-api-key', default=None, help='The ImgBB API key for uploading translated deck images')
+parser.add_argument('--imgur-access-token', default=None, help='The imgur access token for uploading translated deck images')
 args = parser.parse_args()
+
+def imgur_auth():
+    return { 'Authorization': f'Bearer {args.imgur_access_token}' }
+
+# NOTE: Run a protected API test to detect expired access token early.
+if args.imgur_access_token is not None:
+    res = requests.get('https://api.imgur.com/3/account/me/settings', headers=imgur_auth()).json()
+    if not res['success']:
+        raise Exception('Invalid imgur access token.')
 
 # NOTE: ADB data may contain explicit null fields, that should be treated the same as missing.
 def get_field(card, key, default):
@@ -918,7 +928,7 @@ def write_csv():
 def run_se():
     se_script = f'{se_project}/make.js'
     print(f'Running {se_script}...')
-    subprocess.run([args.se_executable, '--glang', args.lang.value, '--run', se_script])
+    subprocess.run([args.se_executable, '--glang', args.lang, '--run', se_script])
 
 def pack_images():
     deck_images = {}
@@ -951,15 +961,49 @@ def pack_images():
 
 deck_urls = {}
 def upload_deck_images():
-    if args.imgbb_api_key is None:
-        raise Exception('ImageBB API key is not defined!')
-    client = imgbbpy.SyncClient(args.imgbb_api_key)
+    # NOTE: Create an localized album if not already exists.
+    res = requests.get('https://api.imgur.com/3/account/me/settings', headers=imgur_auth()).json()
+    username = res['data']['account_url']
+    res = requests.get(f'https://api.imgur.com/3/account/{username}/albums', headers=imgur_auth()).json()
+    album_title = f'SCED localization deck images {args.lang}'
+    album_id = None
+    for album in res['data']:
+        if album['title'] == album_title:
+            album_id = album['id']
+            break
+    if album_id is None:
+        print('Creating album...')
+        res = requests.post(f'https://api.imgur.com/3/album', headers=imgur_auth(), data={
+            'title': album_title,
+            # NOTE: Use a fixed image here to avoid imgur throws HTTP 417 code when it cannot generate the cover for album.
+            'cover': 'czPnwbw',
+        }).json()
+        album_id = res['data']['id']
+
+    res = requests.get('https://api.imgur.com/3/account/me/images', headers=imgur_auth()).json()
+    old_images = res['data']
+
     for filename in os.listdir(args.deck_images_dir):
-        print(f'Uploading {filename}...')
         deck_url_id = filename.split('.')[0]
-        deck_image_filename = f'{args.deck_images_dir}/{filename}'
-        image = client.upload(file=deck_image_filename)
-        deck_urls[deck_url_id] = image.url
+        for image in old_images:
+            image_url_id = encode_url(image['link'])
+            # NOTE: Delete old deck image with the same url to avoid uploading the same deck image twice.
+            if image_url_id == deck_url_id:
+                print(f'Deleting old {filename}...')
+                requests.delete(f'https://api.imgur.com/3/image/{image["id"]}', headers=imgur_auth())
+                break
+
+        print(f'Uploading {filename}...')
+        with open(f'{args.deck_images_dir}/{filename}', 'rb') as file:
+            deck_image_data = base64.b64encode(file.read())
+            res = requests.post(f'https://api.imgur.com/3/upload', headers=imgur_auth(), data={
+                'image': deck_image_data,
+                'type': 'base64',
+                'title': f'SCED localization deck image',
+                'description': '',
+                'album': album_id,
+            }).json()
+            deck_urls[deck_url_id] = res['data']['link']
 
 def write_sced_card_object(object, metadata, card, filename, root):
     deck_id, deck = get_deck(object)
