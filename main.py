@@ -606,8 +606,8 @@ def recreate_dir(dir):
 ahdb = {}
 def download_card(ahdb_id):
     ensure_dir(args.cache_dir)
-    filename = f'{args.cache_dir}/ahdb-{args.lang.value}.json'
-    lang_code = lang.value.split('_')[0]
+    lang_code = args.lang.value.split('_')[0]
+    filename = f'{args.cache_dir}/ahdb-{lang_code}.json'
 
     if not os.path.isfile(filename):
         print(f'Downloading ArkhamDB data...')
