@@ -76,7 +76,7 @@ During processing, the script will generate a series of files with strange long 
 
 The `SE_Generator` directory is a self-contained Strange Eons project. This means you can open this project in the Strange Eons UI and inspect its contents, as well as running its automation script. Please note it seems that the Strange Eons UI cannot run at the same time as its command line.
 
-# Translation directory
+### Translation directory
 
 Some cards don't have direct entries on ArkhamDB, e.g. taboo cards, so we include their translation data in the `translations` folder. Each card will be assigned a special id. For taboo cards, the id will be the card id of the non-taboo version suffixed with `-t`.
 
