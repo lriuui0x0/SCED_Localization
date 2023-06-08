@@ -635,9 +635,6 @@ def download_card(ahdb_id):
 
     return ahdb[ahdb_id]
 
-def is_deck_url(url):
-    return 'i.imgur.com' not in url
-
 # NOTE: Use base32 to encode URL so we don't generate characters like '/' or '-' hence can be used as filenames.
 def encode_url(url):
     return base64.b32encode(url.encode('ascii')).decode('ascii')
@@ -815,17 +812,20 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
     translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, True, card)
 
     back_url = deck['BackURL']
-    if is_deck_url(back_url):
-        # NOTE: Some cards on ADB have separate entries for front and back. Get the correct card data through the 'linked_card' property.
-        is_front = False
-        if 'linked_card' in card:
-            card = card['linked_card']
-            is_front = True
-        if deck['UniqueBack']:
-            translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, is_front, card)
-        else:
-            # NOTE: Even if the back is non-unique, SCED may still use it for interesting cards, e.g. Sophie: It Was All My Fault.
-            translate_sced_card(back_url, 1, 1, 0, 0, is_front, card)
+    # NOTE: Test whether it's generic player or encounter card backs.
+    if 'EcbhVuh' in back_url or 'sRsWiSG' in back_url:
+        return
+
+    # NOTE: Some cards on ADB have separate entries for front and back. Get the correct card data through the 'linked_card' property.
+    is_front = False
+    if 'linked_card' in card:
+        card = card['linked_card']
+        is_front = True
+    if deck['UniqueBack']:
+        translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, is_front, card)
+    else:
+        # NOTE: Even if the back is non-unique, SCED may still use it for interesting cards, e.g. Sophie: It Was All My Fault.
+        translate_sced_card(back_url, 1, 1, 0, 0, is_front, card)
 
 def download_repo(repo_folder, repo):
     if repo_folder is not None:
@@ -975,7 +975,7 @@ def upload_deck_images():
         print('Creating album...')
         res = requests.post(f'https://api.imgur.com/3/album', headers=imgur_auth(), data={
             'title': album_title,
-            # NOTE: Use a fixed image here to avoid imgur throws HTTP 417 code when it cannot generate the cover for album.
+            # NOTE: Use a fixed image here to avoid imgur throwing HTTP 417 code when it cannot generate the cover for the album.
             'cover': 'czPnwbw',
         }).json()
         album_id = res['data']['id']
