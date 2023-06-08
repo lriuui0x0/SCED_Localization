@@ -828,9 +828,9 @@ def download_repo(repo_folder, repo):
         subprocess.run(['git', 'clone', '--quiet', f'https://github.com/{repo}.git', repo_folder])
     return repo_folder
 
-# TODO: Remove this check, for minicards, parallels and taboo
+# TODO: Remove this check, for minicards, parallels
 def is_id_translatable(ahdb_id):
-    return '-' not in ahdb_id
+    return '-' not in ahdb_id or ahdb_id.endswith('-t')
 
 def process_player_cards(callback):
     repo_folder = download_repo(args.repo_primary, 'argonui/SCED')
