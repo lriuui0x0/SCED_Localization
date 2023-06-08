@@ -604,29 +604,22 @@ ahdb = {}
 def download_card(ahdb_id):
     ensure_dir(args.cache_dir)
     filename = f'{args.cache_dir}/ahdb-{args.lang.value}.json'
+    lang_code = lang.value.split('_')[0]
+
     if not os.path.isfile(filename):
         print(f'Downloading ArkhamDB data...')
-        api_map = {
-            langs.spanish: 'https://es.arkhamdb.com/api/public/cards/?encounter=1',
-            langs.german: 'https://de.arkhamdb.com/api/public/cards/?encounter=1',
-            langs.italian: 'https://it.arkhamdb.com/api/public/cards/?encounter=1',
-            langs.french: 'https://fr.arkhamdb.com/api/public/cards/?encounter=1',
-            langs.korean: 'https://ko.arkhamdb.com/api/public/cards/?encounter=1',
-            langs.ukrainian: 'https://uk.arkhamdb.com/api/public/cards/?encounter=1',
-            langs.polish: 'https://pl.arkhamdb.com/api/public/cards/?encounter=1',
-            langs.russian: 'https://ru.arkhamdb.com/api/public/cards/?encounter=1',
-            langs.traditional_chinese: 'https://zh.arkhamdb.com/api/public/cards/?encounter=1',
-            langs.simplified_chinese: 'https://zh.arkhamdb.com/api/public/cards/?encounter=1',
-        }
-        urllib.request.urlretrieve(api_map[args.lang], filename)
+        urllib.request.urlretrieve(f'https://{lang_code}.arkhamdb.com/api/public/cards/?encounter=1', filename)
 
     if not len(ahdb):
         print(f'Processing ArkhamDB data...')
+        cards = []
         with open(filename, 'r', encoding='utf-8') as file:
-            cards_str = file.read()
-            cards = json.loads(cards_str)
-            for card in cards:
-                ahdb[card['code']] = card
+            cards.extend(json.loads(file.read()))
+        with open(f'translations/{lang_code}.json', 'r', encoding='utf-8') as file:
+            cards.extend(json.loads(file.read()))
+        for card in cards:
+            ahdb[card['code']] = card
+
     return ahdb[ahdb_id]
 
 def is_deck_url(url):
