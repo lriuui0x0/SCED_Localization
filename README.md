@@ -8,8 +8,6 @@ This repository contains the script for automatically generating localized [SCED
 
 - Python with some packages. Install the required packages with `pip install -r requirements.txt`.
 
-- Git.
-
 ## How it works
 
 This script uses Strange Eons to create custom Arkham Horror cards using the [ArkhamDB card translation](https://github.com/Kamalisk/arkhamdb-json-data) together with the scanned card images in the mod.
