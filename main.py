@@ -8,7 +8,6 @@ import subprocess
 import base64
 import urllib.request
 import requests
-import webbrowser
 from enum import Enum
 from PIL import Image
 from hanziconv import HanziConv
