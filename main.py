@@ -370,7 +370,7 @@ def get_se_rule(rule):
     rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t></size><size 30%> </size>', rule)
     # NOTE: Get rid of the errata text, e.g. Wendy's Amulet.
     rule = re.sub(r'<i>\(Erratum[^<]*</i>', '', rule)
-    # NOTE: Get rid of the FAQ text, e.g. Rex Murphy
+    # NOTE: Get rid of the FAQ text, e.g. Rex Murphy.
     rule = re.sub(r'<i>\(FAQ[^<]*</i>', '', rule)
     # NOTE: Format bold action keywords.
     rule = re.sub(r'<b>([^<]*)</b>', r'<hdr><size 95%>\1</size></hdr>', rule)
@@ -496,6 +496,8 @@ def get_se_back_connection(metadata, index):
 
 def get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y):
     image_sheet = decode_result_id(result_id)[-1]
+    # NOTE: Use the same schema for all SE card types to avoid duplicated code. Garbage data for a card type that doesn't need it is fine,
+    # so long as a value can be generated with out error.
     return {
         'file': result_id,
         '$PortraitShare': '0',
@@ -927,7 +929,7 @@ def write_csv():
 def run_se():
     se_script = f'{se_project}/make.js'
     print(f'Running {se_script}...')
-    subprocess.run([args.se_executable, '--glang', args.lang, '--run', se_script])
+    subprocess.run([args.se_executable, '--glang', args.lang.value, '--run', se_script])
 
 def pack_images():
     deck_images = {}
