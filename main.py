@@ -723,7 +723,7 @@ def download_card(ahdb_id):
         cards = []
         with open(filename, 'r', encoding='utf-8') as file:
             cards.extend(json.loads(file.read()))
-        with open(f'translations/{lang_code}.json', 'r', encoding='utf-8') as file:
+        with open(f'translations/{lang_code}/taboo.json', 'r', encoding='utf-8') as file:
             cards.extend(json.loads(file.read()))
         for card in cards:
             ahdb[card['code']] = card

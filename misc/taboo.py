@@ -49,7 +49,7 @@ for lang in langs:
         card['WARNING'] = 'NOT UPDATED'
         translations[lang].append(card)
 
-    with open(f'translations/{lang}.json', 'w', encoding='utf-8') as file:
+    with open(f'translations/{lang}/taboo.json', 'w', encoding='utf-8') as file:
         file.write(json.dumps(translations[lang], indent=2, ensure_ascii=False))
 
 try:
