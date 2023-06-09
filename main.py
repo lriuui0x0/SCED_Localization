@@ -3,34 +3,21 @@ import re
 import csv
 import json
 import os
+import sys
 import shutil
 import subprocess
 import base64
 import urllib.request
 import requests
-from enum import Enum
+import inspect
+import importlib
 from PIL import Image
-from hanziconv import HanziConv
 
-se_project = 'SE_Generator'
 steps = ['prepare', 'generate', 'pack', 'update']
-class langs(Enum):
-    spanish = 'es'
-    german = 'de'
-    italian = 'it'
-    french = 'fr'
-    korean = 'ko'
-    ukrainian = 'uk'
-    polish = 'pl'
-    russian = 'ru'
-    traditional_chinese = 'zh_TW'
-    simplified_chinese = 'zh_CN'
-
-    def __str__(self):
-        return self.value
+langs = ['es', 'de', 'it', 'fr', 'ko', 'uk', 'pl', 'ru', 'zh_TW', 'zh_CN']
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--lang', default=langs.simplified_chinese, type=langs, choices=list(langs), help='The language to translate into')
+parser.add_argument('--lang', default='zh_CN', choices=langs, help='The language to translate into')
 parser.add_argument('--se-executable', default=r'C:\Program Files\StrangeEons\bin\eons.exe', help='The Strange Eons executable path')
 parser.add_argument('--cache-dir', default='cache', help='The directory to keep intermediate resources during processing')
 parser.add_argument('--deck-images-dir', default='decks', help='The directory to keep translated deck images')
@@ -40,6 +27,30 @@ parser.add_argument('--repo-primary', default=None, help='The primary repository
 parser.add_argument('--repo-secondary', default=None, help='The secondary repository path for the SCED mod')
 parser.add_argument('--imgur-access-token', default=None, help='The imgur access token for uploading translated deck images')
 args = parser.parse_args()
+
+def get_lang_code_region():
+    parts = args.lang.split('_')
+    if len(parts) > 1:
+        return parts[0], parts[1]
+    else:
+        return parts[0], ''
+
+def process_lang(value):
+    # NOTE: Import language dependent processing functions.
+    lang_code, region = get_lang_code_region()
+    lang_folder = f'translations/{lang_code}'
+    if lang_folder not in sys.path:
+        sys.path.insert(1, lang_folder)
+    module_name = 'transform'
+    if region:
+        module_name += f'_{region}'
+    module = importlib.import_module(module_name)
+
+    # NOTE: Get the corresponding process function from stack frame. Therefore it's important to call this function from the correct 'get_se_xxx' function.
+    attr = inspect.stack()[1].function.replace('get_se_', '')
+    func_name = f'transform_{attr}'
+    func = getattr(module, func_name, None)
+    return func(value) if func else value
 
 def imgur_auth():
     return { 'Authorization': f'Bearer {args.imgur_access_token}' }
@@ -313,38 +324,30 @@ def get_se_unique(card):
     # NOTE: ADB doesn't specify 'is_unique' property for investigator cards but they are always unique.
     return '1' if get_field(card, 'is_unique', False) or card['type_code'] == 'investigator' else '0'
 
+def get_se_name(name):
+    return process_lang(name)
+
 def get_se_front_name(card):
     name = get_field(card, 'name', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(name)
-    else:
-        return name
+    return get_se_name(name)
 
 def get_se_back_name(card):
     # NOTE: ADB doesn't have back names for scenario and investigator cards but SE have them. We need to use the front names instead to avoid getting blank on the back.
     if get_field(card, 'type_code', None) in ['scenario', 'investigator']:
-        title = get_field(card, 'name', '')
+        name = get_field(card, 'name', '')
     else:
-        title = get_field(card, 'back_name', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(title)
-    else:
-        return title
+        name = get_field(card, 'back_name', '')
+    return get_se_name(name)
 
 def get_se_subname(card):
-    title = get_field(card, 'subname', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(title)
-    else:
-        return title
+    subname = get_field(card, 'subname', '')
+    return get_se_name(subname)
 
 def get_se_traits(card):
     traits = get_field(card, 'traits', '')
     traits = [f'{trait.strip()}.' for trait in traits.split('.') if trait.strip()]
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified('<size 50%> </size>'.join(traits))
-    else:
-        return ' '.join(traits)
+    traits = ' '.join(traits)
+    return process_lang(traits)
 
 def get_se_markup(rule):
     markup = [
@@ -391,10 +394,7 @@ def get_se_rule(rule):
     # NOTE: We intentionally add a space at the end to hack around a problem with SE scenario card layout. If we don't add this space,
     # the text on scenario cards doesn't automatically break lines.
     rule = f'{rule} ' if rule.strip() else ''
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(rule)
-    else:
-        return rule
+    return process_lang(rule)
 
 def get_se_front_rule(card):
     rule = get_field(card, 'text', '')
@@ -435,31 +435,29 @@ def get_se_deck_line(card, index):
         line = [line[0], ':'.join(line[1:])]
     return line
 
+def get_se_header(header):
+    header = get_se_markup(header)
+    return process_lang(header)
+
 def get_se_deck_header(card, index):
     header, _ = get_se_deck_line(card, index)
     header = f'<size 95%>{header}</size>'
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(header)
-    else:
-        return header
+    return get_se_header(header)
 
 def get_se_deck_rule(card, index):
     _, rule = get_se_deck_line(card, index)
     return get_se_rule(rule)
 
+def get_se_flavor(flavor):
+    return process_lang(flavor)
+
 def get_se_front_flavor(card):
     flavor = get_field(card, 'flavor', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(flavor)
-    else:
-        return flavor
+    return get_se_flavor(flavor)
 
 def get_se_back_flavor(card):
     flavor = get_field(card, 'back_flavor', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(flavor)
-    else:
-        return flavor
+    return get_se_flavor(flavor)
 
 def get_se_progress_line(card, index):
     text = get_field(card, 'back_text', '')
@@ -498,10 +496,6 @@ def get_se_progress_line(card, index):
     filled_index = -1
     filled_lines = ['', '', '', '', '', '', '', '', '']
     for type, text in lines:
-        if type == 0:
-            text = get_se_markup(text)
-        elif type == 2:
-            text = get_se_rule(text)
         for i in range(filled_index + 1, len(filled_lines)):
             if i % 3 == type:
                 filled_lines[i] = text
@@ -512,32 +506,22 @@ def get_se_progress_line(card, index):
 
 def get_se_progress_header(card, index):
     header, _, _ = get_se_progress_line(card, index)
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(header)
-    else:
-        return header
+    return get_se_header(header)
 
 def get_se_progress_flavor(card, index):
     _, flavor, _ = get_se_progress_line(card, index)
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(flavor)
-    else:
-        return flavor
+    return get_se_flavor(flavor)
 
 def get_se_progress_rule(card, index):
     _, _, rule = get_se_progress_line(card, index)
-    return rule
+    return get_se_rule(rule)
 
 def get_se_victory(card):
     victory = get_field(card, 'victory', None)
     if type(victory) != int:
         return ''
-    if args.lang == langs.simplified_chinese:
-        return f'胜利<size 50%> </size>{victory}。'
-    elif args.lang == langs.german:
-        return f'Sieg {victory}.'
-    else:
-        return f'Victory {victory}.'
+    victory = f'Victory {victory}.'
+    return process_lang(victory)
 
 def get_se_location_icon(icon):
     icon_map = {
@@ -711,7 +695,7 @@ def recreate_dir(dir):
 ahdb = {}
 def download_card(ahdb_id):
     ensure_dir(args.cache_dir)
-    lang_code = args.lang.value.split('_')[0]
+    lang_code, _ = get_lang_code_region()
     filename = f'{args.cache_dir}/ahdb-{lang_code}.json'
 
     if not os.path.isfile(filename):
@@ -1009,7 +993,7 @@ def process_encounter_cards(callback, **kwargs):
 
 
 def write_csv():
-    data_dir = f'{se_project}/data'
+    data_dir = 'SE_Generator/data'
     recreate_dir(data_dir)
     for se_type in se_types:
         print(f'Writing {se_type}.csv...')
@@ -1024,13 +1008,13 @@ def write_csv():
                     writer.writerow(component)
 
 def run_se():
-    se_script = f'{se_project}/make.js'
+    se_script = 'SE_Generator/make.js'
     print(f'Running {se_script}...')
-    subprocess.run([args.se_executable, '--glang', args.lang.value, '--run', se_script])
+    subprocess.run([args.se_executable, '--glang', args.lang, '--run', se_script])
 
 def pack_images():
     deck_images = {}
-    image_dir = f'{se_project}/build/images'
+    image_dir = 'SE_Generator/build/images'
     for filename in os.listdir(image_dir):
         print(f'Packing {filename}...')
         result_id = filename.split('.')[0]
