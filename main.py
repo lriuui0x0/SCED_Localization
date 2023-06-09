@@ -152,10 +152,10 @@ def get_se_enemy_horror(card):
     return str(get_field(card, 'enemy_horror', 0))
 
 def get_se_enemy_fight(card):
-    return str(get_field(card, 'enemy_fight', 0))
+    return str(get_field(card, 'enemy_fight', '-'))
 
 def get_se_enemy_evade(card):
-    return str(get_field(card, 'enemy_evade', 0))
+    return str(get_field(card, 'enemy_evade', '-'))
 
 def get_se_illustrator(card):
     return get_field(card, 'illustrator', '')
@@ -338,7 +338,7 @@ def get_se_traits(card):
     else:
         return ' '.join(traits)
 
-def get_se_rule(rule):
+def get_se_markup(rule):
     markup = [
         (r'\[action\]', '<act>'),
         (r'\[reaction\]', '<rea>'),
@@ -366,6 +366,10 @@ def get_se_rule(rule):
     ]
     for a, b in markup:
         rule = re.sub(a, b, rule, flags=re.I)
+    return rule
+
+def get_se_rule(rule):
+    rule = get_se_markup(rule)
     # NOTE: Format traits.
     rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t></size><size 30%> </size>', rule)
     # NOTE: Get rid of the errata text, e.g. Wendy's Amulet.
@@ -374,9 +378,11 @@ def get_se_rule(rule):
     rule = re.sub(r'<i>\(FAQ[^<]*</i>', '', rule)
     # NOTE: Format bold action keywords.
     rule = re.sub(r'<b>([^<]*)</b>', r'<hdr><size 95%>\1</size></hdr>', rule)
-    # NOTE: Increase the line height. We intentionally add a space at the end to hack around a problem with SE scenario card layout.
-    # If we don't add this space, the text on scenario cards doesn't automatically break lines.
-    rule = '\n'.join([f'<loose>{line.strip()}</loose> ' if line.strip() else '' for line in rule.split('\n')])
+    # NOTE: Format bullet icon at the start of the line.
+    rule = '\n'.join([re.sub(r'^\- ', '<bul> ', line.strip()) for line in rule.split('\n')])
+    # NOTE: We intentionally add a space at the end to hack around a problem with SE scenario card layout. If we don't add this space,
+    # the text on scenario cards doesn't automatically break lines.
+    rule = f'{rule} ' if rule.strip() else ''
     if args.lang == langs.simplified_chinese:
         return HanziConv.toSimplified(rule)
     else:
@@ -390,47 +396,47 @@ def get_se_back_rule(card):
     rule = get_field(card, 'back_text', '')
     return get_se_rule(rule)
 
-def get_se_chaos(paragraphs, index):
-    paragraphs = [paragraph.strip() for paragraph in paragraphs.split('\n')]
-    paragraphs = paragraphs[1:]
+def get_se_chaos(lines, index):
+    lines = [line.strip() for line in lines.split('\n')]
+    lines = lines[1:]
     token = ['[skull]', '[cultist]', '[tablet]', '[elder_thing]'][index]
-    for paragraph in paragraphs:
-        paragraph = paragraph.replace('：', ':').replace(':', '')
-        if paragraph.startswith(token):
-            return paragraph.replace(token, '').strip()
+    for line in lines:
+        line = line.replace('：', ':').replace(':', '')
+        if line.startswith(token):
+            return line.replace(token, '').strip()
     return ''
 
 def get_se_front_chaos(card, index):
-    paragraphs = get_field(card, 'text', '')
-    rule = get_se_chaos(paragraphs, index)
+    lines = get_field(card, 'text', '')
+    rule = get_se_chaos(lines, index)
     return get_se_rule(rule)
 
 def get_se_back_chaos(card, index):
-    paragraphs = get_field(card, 'back_text', '')
-    rule = get_se_chaos(paragraphs, index)
+    lines = get_field(card, 'back_text', '')
+    rule = get_se_chaos(lines, index)
     return get_se_rule(rule)
 
-def get_se_deck_paragraph(card, index):
-    paragraphs = get_field(card, 'back_text', '')
-    paragraphs = [paragraph.strip() for paragraph in paragraphs.split('\n') if paragraph.strip()]
-    paragraph = paragraphs[index] if index < len(paragraphs) else ''
-    paragraph = [part.strip() for part in paragraph.replace('：', ':').split(':')]
-    # NOTE: Add enough paragraph parts so cards other than investigator don't generate errors.
-    while len(paragraph) < 2:
-        paragraph.append('')
-    return paragraph
+def get_se_deck_line(card, index):
+    lines = get_field(card, 'back_text', '')
+    lines = [line.strip() for line in lines.split('\n') if line.strip()]
+    line = lines[index] if index < len(lines) else ''
+    line = [part.strip() for part in line.replace('：', ':').split(':')]
+    if len(line) < 2:
+        line.append('')
+    elif len(line) > 2:
+        line = [line[0], ':'.join(line[1:])]
+    return line
 
-def get_se_deck_title(card, index):
-    paragraph = get_se_deck_paragraph(card, index)
-    title = paragraph[0]
+def get_se_deck_header(card, index):
+    header, _ = get_se_deck_line(card, index)
+    header = f'<size 95%>{header}</size>'
     if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(title)
+        return HanziConv.toSimplified(header)
     else:
-        return title
+        return header
 
 def get_se_deck_rule(card, index):
-    paragraph = get_se_deck_paragraph(card, index)
-    rule = paragraph[1]
+    _, rule = get_se_deck_line(card, index)
     return get_se_rule(rule)
 
 def get_se_front_flavor(card):
@@ -446,6 +452,73 @@ def get_se_back_flavor(card):
         return HanziConv.toSimplified(flavor)
     else:
         return flavor
+
+def get_se_progress_line(card, index):
+    text = get_field(card, 'back_text', '')
+    flavor = get_field(card, 'back_flavor', '')
+    # NOTE: For simple layout, ADB data will split out the flavor part as a separate field in 'back_flavor'.
+    if flavor:
+        lines = [(1, flavor.strip()), (2, text.strip())]
+    else:
+        # NOTE: Deleting the tags that are not useful for the parsing.
+        text = text.replace('<blockquote>', '').replace('</blockquote>', '').replace('<hr>', '')
+
+        # NOTE: Keep splitting header and flavor out of rule text until no more splitting. Encode header as 0, flavor as 1, and rule as 2.
+        lines = [(2, text)]
+        while True:
+            splitted = False
+            for i in range(len(lines)):
+                type, text = lines[i]
+                if type == 2:
+                    re_header = r'(.*)<b>([^<]+[:：])</b>(.*)'
+                    header = re.search(re_header, text, flags=re.S)
+                    if header:
+                        lines = lines[0:i] + [(2, header.group(1))] + [(0, header.group(2))] + [(2, header.group(3))] + lines[i+1:]
+                        splitted = True
+                        break
+                    re_flavor = r'(.*)<i>([^<]+)</i>(.*)'
+                    flavor = re.search(re_flavor, text, flags=re.S)
+                    if flavor:
+                        lines = lines[0:i] + [(2, flavor.group(1))] + [(1, flavor.group(2))] + [(2, flavor.group(3))] + lines[i+1:]
+                        splitted = True
+                        break
+            if not splitted:
+                break
+        lines = [(type, text.strip()) for type, text in lines if text.strip()]
+
+    # NOTE: Arrange text in the standard form (header, flavor, rule, header, flavor, rule, header, flavor, rule). Fill text at the corresponding location based on its type.
+    filled_index = -1
+    filled_lines = ['', '', '', '', '', '', '', '', '']
+    for type, text in lines:
+        if type == 0:
+            text = get_se_markup(text)
+        elif type == 2:
+            text = get_se_rule(text)
+        for i in range(filled_index + 1, len(filled_lines)):
+            if i % 3 == type:
+                filled_lines[i] = text
+                filled_index = i
+                break
+
+    return filled_lines[index * 3:(index + 1) * 3]
+
+def get_se_progress_header(card, index):
+    header, _, _ = get_se_progress_line(card, index)
+    if args.lang == langs.simplified_chinese:
+        return HanziConv.toSimplified(header)
+    else:
+        return header
+
+def get_se_progress_flavor(card, index):
+    _, flavor, _ = get_se_progress_line(card, index)
+    if args.lang == langs.simplified_chinese:
+        return HanziConv.toSimplified(flavor)
+    else:
+        return flavor
+
+def get_se_progress_rule(card, index):
+    _, _, rule = get_se_progress_line(card, index)
+    return rule
 
 def get_se_victory(card):
     victory = get_field(card, 'victory', None)
@@ -545,21 +618,21 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Flavor': get_se_front_flavor(card),
         '$FlavorBack': get_se_back_flavor(card),
         '$InvStoryBack': get_se_back_flavor(card),
-        '$Text1NameBack': get_se_deck_title(card, 0),
+        '$Text1NameBack': get_se_deck_header(card, 0),
         '$Text1Back': get_se_deck_rule(card, 0),
-        '$Text2NameBack': get_se_deck_title(card, 1),
+        '$Text2NameBack': get_se_deck_header(card, 1),
         '$Text2Back': get_se_deck_rule(card, 1),
-        '$Text3NameBack': get_se_deck_title(card, 2),
+        '$Text3NameBack': get_se_deck_header(card, 2),
         '$Text3Back': get_se_deck_rule(card, 2),
-        '$Text4NameBack': get_se_deck_title(card, 3),
+        '$Text4NameBack': get_se_deck_header(card, 3),
         '$Text4Back': get_se_deck_rule(card, 3),
-        '$Text5NameBack': get_se_deck_title(card, 4),
+        '$Text5NameBack': get_se_deck_header(card, 4),
         '$Text5Back': get_se_deck_rule(card, 4),
-        '$Text6NameBack': get_se_deck_title(card, 5),
+        '$Text6NameBack': get_se_deck_header(card, 5),
         '$Text6Back': get_se_deck_rule(card, 5),
-        '$Text7NameBack': get_se_deck_title(card, 6),
+        '$Text7NameBack': get_se_deck_header(card, 6),
         '$Text7Back': get_se_deck_rule(card, 6),
-        '$Text8NameBack': get_se_deck_title(card, 7),
+        '$Text8NameBack': get_se_deck_header(card, 7),
         '$Text8Back': get_se_deck_rule(card, 7),
         '$Victory': get_se_victory(card),
         '$Artist': get_se_illustrator(card),
@@ -578,9 +651,15 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$ScenarioDeckID': get_se_stage_letter(card),
         '$AgendaStory': get_se_front_flavor(card),
         '$ActStory': get_se_front_flavor(card),
-        '$RulesABack': get_se_back_rule(card),
-        '$AccentedStoryABack': get_se_back_flavor(card),
-        '$RulesABack': get_se_back_rule(card),
+        '$HeaderABack': get_se_progress_header(card, 0),
+        '$AccentedStoryABack': get_se_progress_flavor(card, 0),
+        '$RulesABack': get_se_progress_rule(card, 0),
+        '$HeaderBBack': get_se_progress_header(card, 1),
+        '$AccentedStoryBBack': get_se_progress_flavor(card, 1),
+        '$RulesBBack': get_se_progress_rule(card, 1),
+        '$HeaderCBack': get_se_progress_header(card, 2),
+        '$AccentedStoryCBack': get_se_progress_flavor(card, 2),
+        '$RulesCBack': get_se_progress_rule(card, 2),
         '$StoryBack': get_se_back_flavor(card),
         '$RulesBack': get_se_back_rule(card),
         '$LocationIconBack': get_se_front_location(metadata),
@@ -718,8 +797,8 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
         rotate = card_type in ['investigator', 'agenda', 'act']
         sheet = 0 if is_front else 1
         # NOTE: SCED and SE consider the front and back for location cards differently. Reverse here and encode the sheet number in the 'result_id' so that
-        # front are generated for front, back for back.
-        if card_type == 'location':
+        # front are generated for front, back for back for the location cards. Some location cards only have single face, so they need to be special cased.
+        if card_type == 'location' and card['code'] not in ['02214', '02324', '02325', '02326', '02327', '02328']:
             sheet = 1 - sheet
         result_id = encode_result_id(url, deck_w, deck_h, deck_x, deck_y, rotate, sheet)
         if result_id in result_set:
@@ -752,7 +831,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                 se_type = 'enemy_encounter'
         elif card_type == 'agenda':
             # NOTE: Agenda with image back are special cased.
-            if card['code'] == '01145' and not is_front:
+            if card['code'] in ['01145', '02314'] and not is_front:
                 se_type = 'agenda_image'
             else:
                 if is_front:
