@@ -13,7 +13,7 @@
     "name": "Schwer zu fassen",
     "real_name": "Elusive",
     "cost": 2,
-    "text": "Schnell. Spiele diese Karte nur in deinem Zug.\nLöse dich von jedem Gegner, der mit dir in einen Kampf verwickelt ist, und bewege dich auf einen enthüllten Ort ohne Gegner.",
+    "text": "verändert. Schnell. Spiele diese Karte nur in deinem Zug.\nLöse dich von jedem Gegner, der mit dir in einen Kampf verwickelt ist, und bewege dich zu einem verbundenen Ort ohne Gegner.",
     "real_text": "Fast. Play only during your turn.\nDisengage from each enemy engaged with you and move to a revealed location with no enemies.",
     "quantity": 1,
     "skill_intellect": 1,
@@ -33,9 +33,7 @@
     "imagesrc": "/bundles/cards/01050.png",
     "duplicated_by": [
       "01550"
-    ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Der letzte Absatz dieser Karte lautet jetzt: „Löse dich von jedem Gegner, der mit dir in einen Kampf verwickelt ist, und bewege dich zu einem verbundenen Ort ohne Gegner.“"
+    ]
   },
   {
     "pack_code": "tmm",
@@ -51,7 +49,7 @@
     "name": "Spurensucher",
     "real_name": "Pathfinder",
     "cost": 3,
-    "text": "[free] Falls du in deinem Zug nicht mit einem Gegner in einen Kampf verwickelt bist, erschöpfe Spurensucher: Bewege dich auf einen verbundenen Ort.",
+    "text": "Verkettet (+2 Erfahrung).\n[free] Falls du in deinem Zug nicht mit einem Gegner in einen Kampf verwickelt bist, erschöpfe Spurensucher: Bewege dich auf einen verbundenen Ort.",
     "real_text": "[free]During your turn, if you are not engaged with any enemies, exhaust Pathfinder: Move to a connecting location.",
     "quantity": 2,
     "skill_agility": 1,
@@ -84,7 +82,7 @@
     "name": "Springmesser",
     "real_name": "Switchblade",
     "cost": 1,
-    "text": "Schnell.\n[action] <b>Kampf.</b> Du bekommst für diesen Angriff +2 [combat]. Falls dir diese Probe um 2 oder mehr gelingt, fügt dieser Angriff +1 Schaden zu.",
+    "text": "Verkettet (+1 Erfahrung). Schnell.\n[action] <b>Kampf.</b> Du bekommst für diesen Angriff +2 [combat]. Falls dir diese Probe um 2 oder mehr gelingt, fügt dieser Angriff +1 Schaden zu.",
     "real_text": "Fast.\n[action] <b>Fight.</b> You get +2 [combat] for this attack. If you succeed by 2 or more, this attack deals +1 damage.",
     "quantity": 2,
     "skill_combat": 1,
@@ -117,7 +115,7 @@
     "code": "02187-t",
     "name": "Höhere Bildung",
     "real_name": "Higher Education",
-    "text": "Dauerhaft.\nSolange du 5 oder mehr Karten auf der Hand hast, erhält Höhere Bildung:\n„[free] Gib 1 Ressource aus: Du bekommst für diese Fertigkeitsprobe +2 [willpower].\n[free] Gib 1 Ressource aus: Du bekommst für diese Fertigkeitsprobe +2 [intellect].“",
+    "text": "Verkettet (+3 Erfahrung). Dauerhaft.\nSolange du 5 oder mehr Karten auf der Hand hast, erhält Höhere Bildung:\n„[free] Gib 1 Ressource aus: Du bekommst für diese Fertigkeitsprobe +2 [willpower].\n[free] Gib 1 Ressource aus: Du bekommst für diese Fertigkeitsprobe +2 [intellect].“",
     "real_text": "Permanent.\nWhile you have 5 or more cards in your hand, Higher Education gains:\n\"[free] Spend 1 resource: You get +2 [willpower] for this skill test.\n[free] Spend 1 resource: You get +2 [intellect] for this skill test.\"",
     "quantity": 2,
     "xp": 6,
@@ -147,7 +145,7 @@
     "code": "02189-t",
     "name": "Gewieft",
     "real_name": "Streetwise",
-    "text": "Dauerhaft.\n[free] Gib 2 Ressourcen aus: Du bekommst für diese Fertigkeitenprobe +3 [intellect].\n[free] Gib 2 Ressourcen aus: Du bekommst für diese Fertigkeitenprobe +3 [agility].",
+    "text": "Verkettet (+3 Erfahrung). Dauerhaft.\n[free] Gib 2 Ressourcen aus: Du bekommst für diese Fertigkeitenprobe +3 [intellect].\n[free] Gib 2 Ressourcen aus: Du bekommst für diese Fertigkeitenprobe +3 [agility].",
     "real_text": "Permanent.\n[free] Spend 2 resources: You get +3 [intellect] for this skill test.\n[free] Spend 2 resources: You get +3 [agility] for this skill test.",
     "quantity": 2,
     "xp": 6,
@@ -177,7 +175,7 @@
     "code": "02193-t",
     "name": "Schläger",
     "real_name": "Scrapper",
-    "text": "Dauerhaft.\n[free] Gib 1 Ressource aus: Du bekommst für diese Fertigkeitsprobe +1 [combat].\n[free] Gib 1 Ressource aus: Du bekommst für diese Fertigkeitsprobe +1 [agility].",
+    "text": "Verkettet (+1 Erfahrung). Dauerhaft.\n[free] Gib 1 Ressource aus: Du bekommst für diese Fertigkeitsprobe +1 [combat].\n[free] Gib 1 Ressource aus: Du bekommst für diese Fertigkeitsprobe +1 [agility].",
     "real_text": "Permanent.\n[free] Spend 1 resource: You get +1 [combat] for this skill test.\n[free] Spend 1 resource: You get +1 [agility] for this skill test.",
     "quantity": 2,
     "xp": 4,
@@ -208,7 +206,7 @@
     "name": "Springfield M1903",
     "real_name": "Springfield M1903",
     "cost": 4,
-    "text": "Anwendungen (3 Munition).\n[action] Gib 1 Munition aus: <b>Kampf.</b> Du bekommst für diesen Angriff +3 [combat] und fügst +2 Schaden zu. Kann nicht verwendet werden, um Gegner anzugreifen, die mit dir in einen Kampf verwickelt sind.",
+    "text": "Verändert. Anwendungen (3 Munition).\n[action] Gib 1 Munition aus: <b>Kampf.</b> Du bekommst für diesen Angriff +3 [combat] und fügst +2 Schaden zu. Kann nicht verwendet werden, um Gegner anzugreifen, die mit dir in einen Kampf verwickelt sind. Dieser Angriff darf Nicht-[[Elite]]-Gegner bis zu 1 Ort weiter entfernt zum Ziel haben als die normale Reichweite erlaubt und ignoriert die Merkmale Zurückhaltend und Zurückschlagen.",
     "real_text": "Uses (3 ammo).\n[action] Spend 1 ammo: <b>Fight</b>. You get +3 [combat] and deal +2 damage for this attack. Cannot be used to attack enemies engaged with you.",
     "quantity": 2,
     "skill_combat": 1,
@@ -226,9 +224,7 @@
     "double_sided": false,
     "octgn_id": "0ddd4332-6338-3470-3816-14e36d0acba0",
     "url": "https://de.arkhamdb.com/card/02226",
-    "imagesrc": "/bundles/cards/02226.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Die [action]-Fähigkeit dieser Karte erhält folgenden zusätzlichen Text: „Dieser Angriff darf Nicht-[[Elite]]-Gegner bis zu 1 Ort weiter entfernt zum Ziel haben als die normale Reichweite erlaubt und ignoriert die Merkmale Zurückhaltend und Zurückschlagen.“"
+    "imagesrc": "/bundles/cards/02226.png"
   },
   {
     "pack_code": "sha",
@@ -244,7 +240,7 @@
     "name": "Flammenwerfer",
     "real_name": "Flamethrower",
     "cost": 4,
-    "text": "Anwendungen (4 Munition).\n[action] Gib 1 Munition aus: <b>Kampf.</b> Der für diesen Angriff gewählte Gegner muss der mit dir in einen Kampf verwickelte Gegner mit dem höchsten Kampfwert sein. Du bekommst für diesen Angriff +4 [combat]. Falls dieser Angriff gelingt, darfst du statt seines normalen Schadens bis zu 4 Schaden unter Gegnern zuweisen, die mit dir in einem Kampf verwickelt sind <i>(möglicher zusätzlicher Schaden wird dieser Summe hinzugefügt)</i>.",
+    "text": "Verkettet (+1 Erfahrung). Anwendungen (4 Munition).\n[action] Gib 1 Munition aus: <b>Kampf.</b> Der für diesen Angriff gewählte Gegner muss der mit dir in einen Kampf verwickelte Gegner mit dem höchsten Kampfwert sein. Du bekommst für diesen Angriff +4 [combat]. Falls dieser Angriff gelingt, darfst du statt seines normalen Schadens bis zu 4 Schaden unter Gegnern zuweisen, die mit dir in einem Kampf verwickelt sind <i>(möglicher zusätzlicher Schaden wird dieser Summe hinzugefügt)</i>.",
     "real_text": "Uses (4 ammo).\n[action] Spend 1 ammo: <b>Fight.</b> The enemy chosen for this attack must be the enemy engaged with you with the highest fight. You get +4 [combat] for this attack. If this attack is successful, instead of its standard damage, you may assign up to 4 damage among enemies engaged with you <i>(any additional damage adds to this total)</i>.",
     "quantity": 2,
     "skill_combat": 2,
@@ -279,7 +275,7 @@
     "real_name": "Mr. \"Rook\"",
     "subname": "Geheimnishändler",
     "cost": 3,
-    "text": "Anwendungen (3 Geheimnisse).\n[free] Erschöpfe Mr. „Rook” und gib 1 Geheimnis aus: Durchsuche die obersten 3, 6 oder 9 Karten deines Decks nach einer beliebigen Karte und ziehe sie. Falls unter den angesehenen Karten mindestens 1 Schwäche ist, ziehe außerdem 1 von ihnen. Mische dein Deck.",
+    "text": "Verändert. Anwendungen (3 Geheimnisse).\n[action] Erschöpfe Mr. „Rook” und gib 1 Geheimnis aus: Durchsuche die obersten 3, 6 oder 9 Karten deines Decks nach einer beliebigen Karte und ziehe sie. Falls unter den angesehenen Karten mindestens 1 Schwäche ist, ziehe außerdem 1 von ihnen. Mische dein Deck.",
     "real_text": "Uses (3 secrets).\n[free] Exhaust Mr. \"Rook\" and spend 1 secret: Search the top 3, 6, or 9 cards of your deck for any card and draw it. If at least 1 weakness is among the searched cards, draw 1 of them, as well. Shuffle your deck.",
     "quantity": 2,
     "skill_willpower": 1,
@@ -299,9 +295,7 @@
     "double_sided": false,
     "octgn_id": "7d69d529-8921-4ab8-94d6-9602ef6aee5a",
     "url": "https://de.arkhamdb.com/card/05153",
-    "imagesrc": "/bundles/cards/05153.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/05153.png"
   },
   {
     "pack_code": "wos",
@@ -317,7 +311,7 @@
     "name": "Hoch pokern",
     "real_name": "Drawing Thin",
     "cost": 0,
-    "text": "[reaction] Sobald du eine Fertigkeitsprobe initiierst, erschöpfe Hoch pokern: Erhöhe die Schwierigkeit dieser Probe um 2. Du erhältst 2 Ressourcen oder ziehst 1 Karte.",
+    "text": "Verkettet (+3 Erfahrung).\n[reaction] Sobald du eine Fertigkeitsprobe initiierst, erschöpfe Hoch pokern: Erhöhe die Schwierigkeit dieser Probe um 2. Du erhältst 2 Ressourcen oder ziehst 1 Karte.",
     "real_text": "[reaction] When you initiate a skill test, exhaust Drawing Thin: Increase the difficulty of this skill test by 2. Gain 2 resources or draw 1 card.",
     "quantity": 2,
     "skill_willpower": 1,
@@ -349,7 +343,7 @@
     "name": "Zielfernrohr",
     "real_name": "Telescopic Sight",
     "cost": 3,
-    "text": "Schnell. Hänge diese Karte an eine [[Feuerwaffe]]-Vorteilskarte an, die du kontrollierst und die zwei Handslots benötigt. Die Vorteilskarte mit dieser Verstärkung kann nicht verwendet werden, um Gegner anzugreifen, die mit dir in einen Kampf verwickelt sind.\n[reaction] Sobald du eine <b>Kampf</b>-Aktion mit der Vorteilskarte mit dieser Verstärkung durchführst, falls du mit keinem Gegner in einen Kampf verwickelt bist, erschöpfe das Zielfernrohr: Dieser Angriff kann einen Nicht-[[Elite]]-Gegner an einem verbundenen Ort zum Ziel haben. Ignoriere für diesen Angriff die Schlüsselwörter Zurückhaltend und Zurückschlagen.",
+    "text": "Verändert. Schnell. Hänge diese Karte an eine [[Feuerwaffe]]-Vorteilskarte an, die du kontrollierst und die zwei Handslots benötigt.\n[reaction] Sobald du eine <b>Kampf</b>-Aktion mit der Vorteilskarte mit dieser Verstärkung durchführst, falls du mit keinem Gegner in einen Kampf verwickelt bist, erschöpfe das Zielfernrohr: Dieser Angriff kann einen Nicht-[[Elite]]-Gegner an einem verbundenen Ort zum Ziel haben. Ignoriere für diesen Angriff die Schlüsselwörter Zurückhaltend und Zurückschlagen.",
     "real_text": "Fast. Attach to a [[Firearm]] asset you control that takes up two hand slots. Attached asset cannot be used to attack enemies engaged with you.\n[reaction] When you perform a <b>Fight</b> action using attached asset, if you are engaged with no enemies, exhaust Telecopic Sight: This attack can target a non-[[Elite]] enemy at a connecting location. Ignore the aloof and retaliate keywords for this attack.",
     "quantity": 2,
     "skill_intellect": 1,
@@ -367,9 +361,7 @@
     "double_sided": false,
     "octgn_id": "d5b0032a-c405-4564-a4a4-afedd20df99b",
     "url": "https://de.arkhamdb.com/card/05230",
-    "imagesrc": "/bundles/cards/05230.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte verliert den Text: „Die Vorteilskarte mit dieser Verstärkung kann nicht verwendet werden, um Gegner anzugreifen, die mit dir in einen Kampf verwickelt sind.“"
+    "imagesrc": "/bundles/cards/05230.png"
   },
   {
     "pack_code": "uad",
@@ -385,7 +377,7 @@
     "name": "Wissen ist Macht",
     "real_name": "Knowledge is Power",
     "cost": 0,
-    "text": "Schnell. Spiele diese Karte nur in deinem Zug.\nWähle eine [[Buch]]- oder [[Zauber]]-Vorteilskarte, die du kontrollierst, oder enthülle eine [[Buch]]- oder [[Zauber]]-Vorteilskarte von deiner Hand. Handle eine [action]- oder [free]-Fähigkeit jener Vorteilskarte ab und ignoriere dafür alle Kosten <i>(einschließlich ihrer [action]-Kosten, sofern vorhanden)</i>. Falls jene Vorteilskarte auf deiner Hand war, darfst du sie dann ablegen, um 1 Karte zu ziehen.",
+    "text": "Verkettet (+2 Erfahrung). Schnell. Spiele diese Karte nur in deinem Zug.\nWähle eine [[Buch]]- oder [[Zauber]]-Vorteilskarte, die du kontrollierst, oder enthülle eine [[Buch]]- oder [[Zauber]]-Vorteilskarte von deiner Hand. Handle eine [action]- oder [free]-Fähigkeit jener Vorteilskarte ab und ignoriere dafür alle Kosten <i>(einschließlich ihrer [action]-Kosten, sofern vorhanden)</i>. Falls jene Vorteilskarte auf deiner Hand war, darfst du sie dann ablegen, um 1 Karte zu ziehen.",
     "real_text": "Fast. Play only during your turn.\nChoose a [[Tome]] or [[Spell]] asset you control, or reveal a [[Tome]] or [[Spell]] asset from your hand. Resolve an [action] or [free] ability on that asset, ignoring all costs <i>(including its [action] cost, if any)</i>. Then, if that asset was in your hand, you may discard it to draw 1 card.",
     "quantity": 2,
     "skill_willpower": 1,
@@ -419,7 +411,7 @@
     "name": "Wendung zum Guten",
     "real_name": "Eucatastrophe",
     "cost": 2,
-    "text": "Schnell. Spiele diese Karte, sobald du einen Chaosmarker enthüllst, der deinen Fertigkeitswert während einer Fertigkeitsprobe auf 0 senken würde (einschließlich des [auto_fail]-Markers).\nHebe jenen Marker auf und behandle ihn stattdessen als einen [elder_sign]-Marker.",
+    "text": "Verändert. Schnell. Spiele diese Karte, sobald du einen Chaosmarker enthüllst, der deinen Fertigkeitswert während einer Fertigkeitsprobe auf 0 senken würde (einschließlich des [auto_fail]-Markers).\nHebe jenen Marker auf und behandle ihn stattdessen als einen [elder_sign]-Marker.\nEntferne Wendung zum Guten aus dem Spiel.",
     "real_text": "Fast. Play when you reveal a chaos token that would reduce your skill value to 0 during a skill test (including the [auto_fail] token).\nCancel that token and treat it as an [elder_sign] token, instead.",
     "quantity": 2,
     "skill_wild": 2,
@@ -438,9 +430,7 @@
     "imagesrc": "/bundles/cards/05324.png",
     "duplicated_by": [
       "01692"
-    ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält folgenden zusätzlichen Text: „Entferne Wendung zum Guten aus dem Spiel.“"
+    ]
   },
   {
     "pack_code": "tde",
@@ -458,7 +448,7 @@
     "subname": "Von nichts und wieder nichts",
     "bonded_to": "Segment of Onyx",
     "bonded_count": 1,
-    "text": "Gebunden (Onyxstück). Anwendungen (3 Ladungen). Falls diese Karte keine Ladungen hat, lege sie als nicht im Spiel befindlich beiseite und mische 3 beiseitegelegte Kopien von Onyxstück in dein Deck.\n[fast] Erschöpfe den Anhänger der Königin und gib 1 Ladung aus: Wähle einen enthüllten Ort und wähle eins - du bewegst dich an jenen Ort, du entdeckst 1 Hinweis an jenem Ort oder du entkommst automatisch einem Gegner an jenem Ort.",
+    "text": "Verändert. Gebunden (Onyxstück). Anwendungen (3 Ladungen). Falls diese Karte keine Ladungen hat, entferne sie aus dem Spiel.\n[fast] Erschöpfe den Anhänger der Königin und gib 1 Ladung aus: Wähle einen enthüllten Ort und wähle eins - du bewegst dich an jenen Ort, du entdeckst 1 Hinweis an jenem Ort oder du entkommst automatisch einem Gegner an jenem Ort.",
     "real_text": "Bonded (Segment of Onyx). Uses (3 charges). If this card has no charges, set it aside, out of play, and shuffle 3 set-aside copies of Segment of Onyx into your deck.\n[free] Exhaust Pendant of the Queen and spend 1 charge: Choose a revealed location and select one - move to that location, discover 1 clue at that location, or automatically evade an enemy at that location.",
     "quantity": 1,
     "health_per_investigator": false,
@@ -474,9 +464,7 @@
     "octgn_id": "dc7600e3-a132-42b0-b96b-67ca0cee4aff",
     "url": "https://de.arkhamdb.com/card/06022",
     "imagesrc": "/bundles/cards/06022.png",
-    "xp": 0,
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Die anhaltende Fähigkeit dieser Karte lautet jetzt: „Falls diese Karte keine Ladungen hat, entferne sie aus dem Spiel.“"
+    "xp": 0
   },
   {
     "pack_code": "dsm",
@@ -491,7 +479,7 @@
     "code": "06199-t",
     "name": "Drei Asse",
     "real_name": "Three Aces",
-    "text": "Unzählig.\nFalls du 3 Kopien von Drei Asse zu einer Fertigkeitsprobe beiträgst, gelingt jene Probe automatisch <i>(es werden keine Chaosmarker aus dem Chaosbeutel enthüllt)</i>. Ziehe dann 3 Karten und erhalte 3 Ressourcen (Max. 1 Mal pro Probe)",
+    "text": "Verändert. Unzählig.\nFalls du 3 Kopien von Drei Asse zu einer Fertigkeitsprobe beiträgst, gelingt jene Probe automatisch <i>(es werden keine Chaosmarker aus dem Chaosbeutel enthüllt)</i>. Ziehe dann 3 Karten und erhalte 3 Ressourcen (Max. 1 Mal pro Probe).\nEntferne jede beigetragene Kopie von Drei Asse aus dem Spiel.",
     "real_text": "Myriad.\nIf you commit 3 copies of Three Aces to a skill test, that test automatically succeeds <i>(do not reveal chaos tokens from the chaos bag)</i>. Then draw 3 cards and gain 3 resources (max once per test).",
     "quantity": 3,
     "skill_wild": 1,
@@ -507,9 +495,7 @@
     "double_sided": false,
     "octgn_id": "583a859c-01f8-4a2f-b963-4bccef10ca34",
     "url": "https://de.arkhamdb.com/card/06199",
-    "imagesrc": "/bundles/cards/06199.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält folgenden zusätzlichen Text: „Entferne jede beigetragene Kopie von Drei Asse aus dem Spiel.“"
+    "imagesrc": "/bundles/cards/06199.png"
   },
   {
     "pack_code": "har",
@@ -526,7 +512,7 @@
     "real_name": "The Necronomicon",
     "subname": "Übersetzung von Petrus de Dacia",
     "cost": 3,
-    "text": "Anwendungen (6 Geheimnisse). Nur 1 pro Deck.\n[free] Gib 1 Geheimnis aus: Du bekommst +2 auf deinen Fertigkeitswert für diese Probe.\n[free] Gib 2 Geheimnisse aus: Ziehe 2 Karten.\n[free] Gib 3 Geheimnisse aus: Du entdeckst 1 Hinweis an einem beliebigen Ort.\n[free] Gib 4 Geheimnisse aus: Füge einem mit dir in einen Kampf verwickelten Gegner 3 Schaden zu.",
+    "text": "Verkettet (+3 Erfahrung). Anwendungen (6 Geheimnisse). Nur 1 pro Deck.\n[free] Gib 1 Geheimnis aus: Du bekommst +2 auf deinen Fertigkeitswert für diese Probe.\n[free] Gib 2 Geheimnisse aus: Ziehe 2 Karten.\n[free] Gib 3 Geheimnisse aus: Du entdeckst 1 Hinweis an einem beliebigen Ort.\n[free] Gib 4 Geheimnisse aus: Füge einem mit dir in einen Kampf verwickelten Gegner 3 Schaden zu.",
     "real_text": "Uses (6 secrets). Limit 1 per deck.\n[free] Spend 1 secret: You get +2 skill value for this skill test.\n[free] Spend 2 secrets: Draw 2 cards.\n[free] Spend 3 secrets: Discover 1 clue at any location.\n[free] Spend 4 secrets: Deal 3 damage to an enemy engaged with you.",
     "quantity": 1,
     "skill_intellect": 5,
@@ -559,7 +545,7 @@
     "real_name": "David Renfield",
     "subname": "Angesehender Eschatologe",
     "cost": 2,
-    "text": "Solange sich mindestens 1 Verderben auf David Renfield befindet, bekommst du +1 [willpower].\n[free] Erschöpfe David Renfield: Du darfst 1 Verderben auf David Renfield platzieren. Du erhältst 1 Ressource für jedes Verderben auf David Renfield.",
+    "text": "Verkettet (+3 Erfahrung).\nSolange sich mindestens 1 Verderben auf David Renfield befindet, bekommst du +1 [willpower].\n[free] Erschöpfe David Renfield: Du darfst 1 Verderben auf David Renfield platzieren. Du erhältst 1 Ressource für jedes Verderben auf David Renfield.",
     "real_text": "While David Renfield has at least 1 doom on him, you get +1 [willpower].\n[fast] Exhaust David Renfield: You may place 1 doom on David Renfield. Gain 1 resource for each doom on David Renfield.",
     "quantity": 2,
     "skill_intellect": 1,
@@ -593,7 +579,7 @@
     "code": "07197-t",
     "name": "Signum Crucis",
     "real_name": "Signum Crucis",
-    "text": "Trage diese Karte nur zu einer Fertigkeitsprobe bei, die du ablegst, und nur, falls die Schwierigkeit jener Probe höher als dein Grundfertigkeitswert ist.\nNachdem du Signum Crucis zu einer Fertigkeitsprobe beigetragen hast, füge dem Chaosbeutel X [bless]-Marker hinzu. X ist die Differenz zwischen der Schwierigkeit dieser Probe und deinem Grundfertigkeitswert.",
+    "text": "Unverkettet (-2 Erfahrung).\nTrage diese Karte nur zu einer Fertigkeitsprobe bei, die du ablegst, und nur, falls die Schwierigkeit jener Probe höher als dein Grundfertigkeitswert ist.\nNachdem du Signum Crucis zu einer Fertigkeitsprobe beigetragen hast, füge dem Chaosbeutel X [bless]-Marker hinzu. X ist die Differenz zwischen der Schwierigkeit dieser Probe und deinem Grundfertigkeitswert.",
     "real_text": "Commit only to a skill test you are performing, and only if the difficulty of that test is higher than your base skill value.\nAfter you commit Signum Crucis to a skill test, add X [bless] tokens to the chaos bag. X is the difference between the test's difficulty and your base skill value.",
     "quantity": 2,
     "skill_wild": 1,
@@ -624,7 +610,7 @@
     "name": "Ritual des Gleichgewichts",
     "real_name": "Rite of Equilibrium",
     "cost": 0,
-    "text": "Entweder (wähle eins):\n- Füge dem Chaosbeutel X [curse]-Marker hinzu, um dem Chaosbeutel X [bless]-Marker hinzuzufügen.\n- Entferne X [curse]- und X [bless]-Marker aus dem Chaosbeutel, um insgesamt X Horror von Karten an deinem Ort zu heilen.",
+    "text": "Unverkettet (-2 Erfahrung).\nEntweder (wähle eins):\n- Füge dem Chaosbeutel X [curse]-Marker hinzu, um dem Chaosbeutel X [bless]-Marker hinzuzufügen.\n- Entferne X [curse]- und X [bless]-Marker aus dem Chaosbeutel, um insgesamt X Horror von Karten an deinem Ort zu heilen.",
     "real_text": "Either (choose one):\n- Add X [curse] tokens to the chaos bag to add X [bless] tokens to the chaos bag.\n- Remove X [curse] and X [bless] tokens from the chaos bag to heal X total horror from among cards at your location.",
     "quantity": 2,
     "skill_wild": 1,
@@ -657,7 +643,7 @@
     "real_name": "Jeremiah Kirby",
     "subname": "Arktis-Archäologe",
     "cost": 4,
-    "text": "Du bekommst +1 [intellect].\n[reaction] Nachdem Jeremiah Kirby ins Spiel gekommen ist, wähle „gerade” oder „ungerade”: Enthülle die obersten 5 Karten deines Decks. Ziehe jede Karte, deren Kosten zu der gewählten Option passt. Mische die verbliebenen Karten in dein Deck.",
+    "text": "Verkettet (+2 Erfahrung).\nDu bekommst +1 [intellect].\n[reaction] Nachdem Jeremiah Kirby ins Spiel gekommen ist, wähle „gerade” oder „ungerade”: Enthülle die obersten 5 Karten deines Decks. Ziehe jede Karte, deren Kosten zu der gewählten Option passt. Mische die verbliebenen Karten in dein Deck.",
     "real_text": "You get +1 [intellect].\n[reaction] After Jeremiah Kirby enters play, choose \"even\" or \"odd:\" Reveal the top 5 cards of your deck. Draw each card with a cost that matches the chosen option. Shuffle the remaining cards into your deck.",
     "quantity": 2,
     "skill_intellect": 1,
@@ -695,7 +681,7 @@
     "real_name": "Gené Beauregard",
     "subname": "Unerschrockene Entdeckerin",
     "cost": 5,
-    "text": "Du bekommst +1 [intellect] und +1 [agility].\n[reaction] Nachdem du dich während deines Zuges an einen Ort bewegt hast, erschöpfe Gené Beauregard: Bewege einen Hinweis oder einen Nicht-[[Elite]]-Gegner von einem verbundenen Ort an deinen Ort oder umgekehrt.",
+    "text": "Verkettet (+2 Erfahrung).\nDu bekommst +1 [intellect] und +1 [agility].\n[reaction] Nachdem du dich während deines Zuges an einen Ort bewegt hast, erschöpfe Gené Beauregard: Bewege einen Hinweis oder einen Nicht-[[Elite]]-Gegner von einem verbundenen Ort an deinen Ort oder umgekehrt.",
     "real_text": "You get +1 [intellect] and +1 [agility].\n[reaction] During your turn, after you move to a location, exhaust Gené Beauregard: Move a clue or a non-[[Elite]] enemy from a connecting location to your location, or vice versa.",
     "quantity": 2,
     "skill_intellect": 1,
@@ -731,7 +717,7 @@
     "name": "Ein vorsichtiger Frieden",
     "real_name": "A Watchful Peace",
     "cost": 1,
-    "text": "Als zusätzliche Kosten, um Ein vorsichtiger Frieden zu spielen, durchsuche den Chaosbeutel und/oder Karten im Spiel nach insgesamt 5 [bless]-Markern und lege sie in den Markervorrat zurück.\nSchnell. Spiele diese Karte, sobald der Schritt „Begegnungskarten ziehen” in der Mythosphase beginnen würde. Überspringe diesen Schritt der Mythosphase.",
+    "text": "Verändert.\nAls zusätzliche Kosten, um Ein vorsichtiger Frieden zu spielen, durchsuche den Chaosbeutel und/oder Karten im Spiel nach insgesamt 5 [bless]-Markern und lege sie in den Markervorrat zurück.\nSchnell. Spiele diese Karte, sobald der Schritt „Begegnungskarten ziehen” in der Mythosphase beginnen würde. Überspringe diesen Schritt der Mythosphase. Entferne Ein vorsichtiger Frieden aus dem Spiel.",
     "real_text": "As an additional cost to play A Watchful Peace, search the chaos bag and/or cards in play for a total of 5 [bless] tokens and return them to the token pool.\nFast. Play when the \"draw encounter cards\" step of the mythos phase would begin. Skip this step of the mythos phase.",
     "quantity": 2,
     "skill_willpower": 2,
@@ -746,9 +732,7 @@
     "double_sided": false,
     "octgn_id": "4543ebb4-35da-489f-bf9f-820e1078352c",
     "url": "https://de.arkhamdb.com/card/07269",
-    "imagesrc": "/bundles/cards/07269.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält folgenden zusätzlichen Text: „Entferne Ein vorsichtiger Frieden aus dem Spiel.“"
+    "imagesrc": "/bundles/cards/07269.png"
   },
   {
     "pack_code": "itm",
@@ -764,7 +748,7 @@
     "name": "Weihen",
     "real_name": "Hallow",
     "cost": 3,
-    "text": "Als zusätzliche Kosten, um Weihen zu spielen, lege insgesamt 10 [bless]-Marker aus dem Chaosbeutel und/oder auf Karten versiegelt im Spiel in den Markervorrat zurück.\nEntferne 1 Verderben von einer beliebigen Karte im Spiel.",
+    "text": "Verändert.\nAls zusätzliche Kosten, um Weihen zu spielen, lege insgesamt 10 [bless]-Marker aus dem Chaosbeutel und/oder auf Karten versiegelt im Spiel in den Markervorrat zurück.\nEntferne 1 Verderben von einer beliebigen Karte im Spiel. Entferne Weihen aus dem Spiel.",
     "real_text": "As an additional cost to play Hallow, return a total of 10 [bless] tokens to the token pool from the chaos bag or sealed on cards in play.\nRemove 1 doom from any card in play.",
     "quantity": 2,
     "skill_willpower": 1,
@@ -781,9 +765,7 @@
     "double_sided": false,
     "octgn_id": "a2642077-3897-4563-83f6-d4e26123768d",
     "url": "https://de.arkhamdb.com/card/07301",
-    "imagesrc": "/bundles/cards/07301.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält folgenden zusätzlichen Text: „Entferne Weihen aus dem Spiel.“"
+    "imagesrc": "/bundles/cards/07301.png"
   },
   {
     "pack_code": "core",
@@ -800,7 +782,7 @@
     "real_name": "Dr. Milan Christopher",
     "subname": "Professor für Entomologie",
     "cost": 4,
-    "text": "Du bekommst +1 [intellect].\n[reaction] Nachdem du erfolgreich ermittelt hast: Erhalte 1 Ressource.",
+    "text": "Verändert.\nDu bekommst +1 [intellect].\n[reaction] Nachdem du erfolgreich ermittelt hast, erschöpfe Dr. Milan Christopher: Erhalte 1 Ressource.",
     "real_text": "You get +1 [intellect].\n[reaction] After you successfully investigate: Gain 1 resource.",
     "quantity": 1,
     "skill_intellect": 1,
@@ -823,9 +805,7 @@
     "imagesrc": "/bundles/cards/01033.png",
     "duplicated_by": [
       "01533"
-    ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    ]
   },
   {
     "pack_code": "dwl",
@@ -841,7 +821,7 @@
     "name": "Rex Murphy",
     "real_name": "Rex Murphy",
     "subname": "Der Reporter",
-    "text": "[reaction] Nachdem dir eine Fertigkeitsprobe um 2 oder mehr gelungen ist, solange du ermittelst: Entdecke 1 Hinweis an deinem Ort.\n[elder_sign]-Effekt: +2. Du darfst stattdessen entscheiden, dass diese Probe automatisch misslingt, um 3 Karten zu ziehen.",
+    "text": "Verändert.\n[reaction] Nachdem dir eine Fertigkeitsprobe um 2 oder mehr gelungen ist, solange du ermittelst: Entdecke 1 Hinweis an deinem Ort. (Nur ein Mal pro Runde.)\n[elder_sign]-Effekt: +2. Du darfst stattdessen entscheiden, dass diese Probe automatisch misslingt, um 3 Karten zu ziehen.",
     "real_text": "[reaction] After you succeed at a skill test by 2 or more while investigating: Discover 1 clue at your location.\n[elder_sign] effect: +2. You may instead choose to automatically fail this skill test to draw 3 cards.",
     "errata_date": {
       "date": "2019-04-23 00:00:00.000000",
@@ -914,9 +894,7 @@
     "url": "https://de.arkhamdb.com/card/02002",
     "imagesrc": "/bundles/cards/02002.png",
     "backimagesrc": "/bundles/cards/02002b.png",
-    "xp": 0,
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Die [reaction]-Fähigkeit dieser Karte erhält folgenden zusätzlichen Text: „(Nur ein Mal pro Runde.)“"
+    "xp": 0
   },
   {
     "pack_code": "tmm",
@@ -932,7 +910,7 @@
     "name": "Zu tief graben",
     "real_name": "Delve Too Deep",
     "cost": 1,
-    "text": "In Spielerreihenfolge zieht jeder Ermittler 1 Karte oben vom Begegnungsdeck. Füge dann Zu tief graben dem Siegpunktestapel hinzu.",
+    "text": "Verändert.\nIn Spielerreihenfolge zieht jeder Ermittler 1 Karte oben vom Begegnungsdeck. Füge dann Zu tief graben dem Siegpunktestapel hinzu.\nNur 2 Kopien von Zu tief graben im Siegpunktestapel für die gesamte Gruppe.",
     "real_text": "In player order, each investigator draws 1 card from the top of the encounter deck. Then, add Delve Too Deep to the victory display.",
     "quantity": 2,
     "xp": 0,
@@ -949,9 +927,7 @@
     "double_sided": false,
     "octgn_id": "e26a0dbf-cdf7-4c32-a80a-ffee470baaae",
     "url": "https://de.arkhamdb.com/card/02111",
-    "imagesrc": "/bundles/cards/02111.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält folgenden zusätzlichen Text: „Nur 2 Kopien von Zu tief graben im Siegpunktestapel für die gesamte Gruppe.“"
+    "imagesrc": "/bundles/cards/02111.png"
   },
   {
     "pack_code": "uau",
@@ -966,7 +942,7 @@
     "code": "02229-t",
     "name": "Geistesgegenwärtig",
     "real_name": "Quick Thinking",
-    "text": "Falls diese Fertigkeitsprobe um 2 oder mehr gelingt, darfst du, nachdem sie abgehandelt worden ist, sofort eine Aktion nehmen, als ob es dein Zug wäre (diese Aktion zählt nicht gegen die Anzahl der Aktionen, die du jede Runde nehmen kannst).",
+    "text": "Verändert.\nFalls diese Fertigkeitsprobe um 2 oder mehr gelingt, darfst du, nachdem sie abgehandelt worden ist, sofort eine Aktion nehmen, als ob es dein Zug wäre (diese Aktion zählt nicht gegen die Anzahl der Aktionen, die du jede Runde nehmen kannst). (Max. 1 Mal pro Runde.)",
     "real_text": "If this skill test is successful by 2 or more, after it resolves, you may immediately take an action as if it were your turn (this action does not count toward the number of actions you can take each turn).",
     "quantity": 2,
     "skill_wild": 1,
@@ -982,9 +958,7 @@
     "double_sided": false,
     "octgn_id": "4f457cbf-7876-398d-8891-02d168d35117",
     "url": "https://de.arkhamdb.com/card/02229",
-    "imagesrc": "/bundles/cards/02229.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält folgenden zusätzlichen Text: „(Max. 1 Mal pro Runde.)“"
+    "imagesrc": "/bundles/cards/02229.png"
   },
   {
     "pack_code": "wda",
@@ -1000,7 +974,7 @@
     "name": "Ass im Ärmel",
     "real_name": "Ace in the Hole",
     "cost": 0,
-    "text": "Außergewöhnlich. Schnell. Spiele diese Karte nur in deinem Zug.\nDu darfst in diesem Zug 3 zusätzliche Aktionen nehmen.",
+    "text": "Verändert. Außergewöhnlich. Schnell. Spiele diese Karte nur in deinem Zug.\nDu darfst in diesem Zug 3 zusätzliche Aktionen nehmen. (Max. 1 pro Runde.)",
     "real_text": "Exceptional. Fast. Play only during your turn.\nYou may take an additional 3 actions this turn.",
     "quantity": 2,
     "xp": 3,
@@ -1015,9 +989,7 @@
     "double_sided": false,
     "octgn_id": "0b63b793-9228-3e85-f368-25da786550b7",
     "url": "https://de.arkhamdb.com/card/02266",
-    "imagesrc": "/bundles/cards/02266.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält folgenden zusätzlichen Text: „(Max. 1 pro Runde.)“"
+    "imagesrc": "/bundles/cards/02266.png"
   },
   {
     "pack_code": "ptc",
@@ -1033,7 +1005,7 @@
     "name": "Taschenspielertrick",
     "real_name": "Sleight of Hand",
     "cost": 1,
-    "text": "Schnell. Spiele diese Karte nur während deines Zuges.\nBringe eine [[Gegenstand]]-Vorteilskarte von deiner Hand ins Spiel. Falls am Ende deines Zuges die Vorteilskarte noch im Spiel ist, schicke sie auf deine Hand zurück.",
+    "text": "Verändert. Schnell. Spiele diese Karte nur während deines Zuges.\nBringe eine [[Gegenstand]]-Vorteilskarte der Stufe 0–3 von deiner Hand ins Spiel. Falls am Ende deines Zuges die Vorteilskarte noch im Spiel ist, schicke sie auf deine Hand zurück.",
     "real_text": "Fast. Play only during your turn.\nPut an [[Item]] asset into play from your hand. At the end of your turn, if that asset is still in play, return it to your hand.",
     "quantity": 2,
     "skill_intellect": 1,
@@ -1050,9 +1022,7 @@
     "double_sided": false,
     "octgn_id": "31c82a7c-e642-4c53-a1ad-13b589edac18",
     "url": "https://de.arkhamdb.com/card/03029",
-    "imagesrc": "/bundles/cards/03029.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Die Fähigkeit dieser Karte lautet jetzt: „Bringe eine [[Gegenstand]]-Vorteilskarte der Stufe 0–3 von deiner Hand ins Spiel.“"
+    "imagesrc": "/bundles/cards/03029.png"
   },
   {
     "pack_code": "dca",
@@ -1069,7 +1039,7 @@
     "real_name": "Key of Ys",
     "subname": "Lass den Sturm toben",
     "cost": 3,
-    "text": "Du bekommst +1 auf jede deiner Fertigkeiten für jeden Horror auf Schlüssel von Ys.\n<b>Erzwungen</b> - Sobald eine beliebige Menge Horror auf dir platziert werden würde: Platziere 1 Horror davon auf Schlüssel von Ys.\n<b>Erzwungen</b> - Sobald Schlüssel von Ys das Spiel verlässt: Lege die obersten 10 Karten deines Decks ab.",
+    "text": "Verändert. Außergewöhnlich.\nDu bekommst +1 auf jede deiner Fertigkeiten für jeden Horror auf Schlüssel von Ys.\n<b>Erzwungen</b> - Sobald eine beliebige Menge Horror auf dir platziert werden würde: Platziere 1 Horror davon auf Schlüssel von Ys.\n<b>Erzwungen</b> - Sobald Schlüssel von Ys das Spiel verlässt: Lege die obersten 10 Karten deines Decks ab.",
     "real_text": "You get +1 to each of your skills for each horror on Key of Ys.\n<b>Forced</b> - When any amount of horror would be placed on you: Place 1 of that horror on Key of Ys.\n<b>Forced</b> - When Key of Ys leaves play: Discard the top 10 cards of your deck.",
     "quantity": 2,
     "skill_willpower": 1,
@@ -1088,9 +1058,7 @@
     "double_sided": false,
     "octgn_id": "aeadfc53-16cd-4869-89eb-0f47908d7fe2",
     "url": "https://de.arkhamdb.com/card/03315",
-    "imagesrc": "/bundles/cards/03315.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält das Merkmal Außergewöhnlich."
+    "imagesrc": "/bundles/cards/03315.png"
   },
   {
     "pack_code": "sha",
@@ -1105,7 +1073,7 @@
     "code": "04309-t",
     "name": "Alles oder Nichts",
     "real_name": "All In",
-    "text": "Max. 1 pro Fertigkeitsprobe beitragen.\nFalls diese Probe gelingt, ziehe 1 Karte für jeden Punkt, um den die Probe gelungen ist, bis zu einem Maximum von 5. Mische jede durch diesen Effekt gezogene Schwäche zurück in dein Deck, ohne sie abzuhandeln.",
+    "text": "Verändert. Max. 1 pro Fertigkeitsprobe beitragen.\nFalls diese Probe gelingt, ziehe 1 Karte für jeden Punkt, um den die Probe gelungen ist, bis zu einem Maximum von 5. Mische jede durch diesen Effekt gezogene Schwäche zurück in dein Deck, ohne sie abzuhandeln. Entferne Alles oder Nichts aus dem Spiel.",
     "real_text": "Max 1 committed per skill test.\nIf this test is successful, draw 1 card for each point you succeeded by, to a maximum of 5. Shuffle each weakness drawn by this effect back into your deck without resolving it.",
     "quantity": 2,
     "skill_wild": 2,
@@ -1121,9 +1089,7 @@
     "double_sided": false,
     "octgn_id": "3394aa3b-c35a-49d3-b1b6-bc0bc0162ff9",
     "url": "https://de.arkhamdb.com/card/04309",
-    "imagesrc": "/bundles/cards/04309.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält folgenden zusätzlichen Text: „Entferne Alles oder Nichts aus dem Spiel.“"
+    "imagesrc": "/bundles/cards/04309.png"
   },
   {
     "pack_code": "tsn",
@@ -1141,7 +1107,7 @@
     "name": "Schriftrolle der Geheimnisse",
     "real_name": "Scroll of Secrets",
     "cost": 1,
-    "text": "Anwendungen (3 Geheimnisse).\n[action] Erschöpfe die Schriftrolle der Geheimnisse und gib 1 Geheimnis aus: Sieh dir die unterste Karte eines beliebigen Ermittlerdecks oder des Begegnungsdecks an. Lege dann entweder jene Karte ab, füge sie der Hand ihres Besitzers hinzu, platziere sie unter ihrem Deck oder platziere sie auf ihrem Deck.",
+    "text": "Verändert. Anwendungen (3 Geheimnisse).\n[free] Erschöpfe die Schriftrolle der Geheimnisse und gib 1 Geheimnis aus: Sieh dir die unterste Karte eines beliebigen Ermittlerdecks oder des Begegnungsdecks an. Lege dann entweder jene Karte ab, füge sie der Hand ihres Besitzers hinzu, platziere sie unter ihrem Deck oder platziere sie auf ihrem Deck.",
     "real_text": "Uses (3 secrets).\n[action] Exhaust Scroll of Secrets and spend 1 secret: Look at the bottom card of any investigator's deck or the encounter deck. Then, either discard that card, add it to its owner's hand, place it on the bottom of its deck, or place it on the top of its deck.",
     "quantity": 2,
     "skill_intellect": 1,
@@ -1158,9 +1124,7 @@
     "double_sided": false,
     "octgn_id": "a9990ab5-25b1-40aa-9436-e24bd889bfd7",
     "url": "https://de.arkhamdb.com/card/05116",
-    "imagesrc": "/bundles/cards/05116.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Die [Action]-Fähigkeit dieser Karten ist jetzt eine [fast]-Fähigkeit."
+    "imagesrc": "/bundles/cards/05116.png"
   },
   {
     "pack_code": "fgg",
@@ -1176,7 +1140,7 @@
     "name": "Schriftrolle der Geheimnisse",
     "real_name": "Scroll of Secrets",
     "cost": 1,
-    "text": "Anwendungen (3 Geheimnisse).\n[action] Erschöpfe die Schriftrolle der Geheimnisse und gib 1 Geheimnis aus: Sieh dir die untersten 3 Karten eines beliebigen Ermittlerdecks oder des Begegnungsdecks an. Du darfst 1 jener Karten ablegen. Du darfst 1 jener Karten der Hand ihres Besitzers hinzufügen. Platziere die übrigen Karten in beliebiger Reihenfolge entweder auf oder unter ihrem Deck.",
+    "text": "Verändert. Anwendungen (3 Geheimnisse).\n[free] Erschöpfe die Schriftrolle der Geheimnisse und gib 1 Geheimnis aus: Sieh dir die untersten 3 Karten eines beliebigen Ermittlerdecks oder des Begegnungsdecks an. Du darfst 1 jener Karten ablegen. Du darfst 1 jener Karten der Hand ihres Besitzers hinzufügen. Platziere die übrigen Karten in beliebiger Reihenfolge entweder auf oder unter ihrem Deck.",
     "real_text": "Uses (3 secrets).\n[action] Exhaust Scroll of Secrets and spend 1 secret: Look at the bottom 3 cards of any investigator's deck or the encounter deck. You may discard 1 of those cards. You may add 1 of those cards to its owner's hand. Place the rest of those cards on either the top or bottom of their deck, in any order.",
     "quantity": 2,
     "skill_intellect": 2,
@@ -1193,9 +1157,7 @@
     "double_sided": false,
     "octgn_id": "f6e6bd79-7d2a-4ee8-a469-6e72ebbfa25c",
     "url": "https://de.arkhamdb.com/card/05188",
-    "imagesrc": "/bundles/cards/05188.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Die [Action]-Fähigkeit dieser Karten ist jetzt eine [fast]-Fähigkeit."
+    "imagesrc": "/bundles/cards/05188.png"
   },
   {
     "pack_code": "fgg",
@@ -1211,7 +1173,7 @@
     "name": "Schriftrolle der Geheimnisse",
     "real_name": "Scroll of Secrets",
     "cost": 1,
-    "text": "Anwendungen (4 Geheimnisse).\n[action] Erschöpfe die Schriftrolle der Geheimnisse und gib 1 Geheimnis aus: Sieh dir die oberste oder unterste Karte eines beliebigen Ermittlerdecks oder des Begegnungsdecks an. Lege dann entweder jene Karte ab, füge sie der Hand ihres Besitzers hinzu, platziere sie unter ihrem Deck oder platziere sie auf ihrem Deck.",
+    "text": "Verändert. Anwendungen (4 Geheimnisse).\n[free] Erschöpfe die Schriftrolle der Geheimnisse und gib 1 Geheimnis aus: Sieh dir die oberste oder unterste Karte eines beliebigen Ermittlerdecks oder des Begegnungsdecks an. Lege dann entweder jene Karte ab, füge sie der Hand ihres Besitzers hinzu, platziere sie unter ihrem Deck oder platziere sie auf ihrem Deck.",
     "real_text": "Uses (4 secrets).\n[action] Exhaust Scroll of Secrets and spend 1 secret: Look at the top or bottom card of any investigator's deck or the encounter deck. Then, either discard that card, add it to its owner's hand, place it on the bottom of its deck, or place it on top of its deck.",
     "quantity": 2,
     "skill_willpower": 1,
@@ -1229,9 +1191,7 @@
     "double_sided": false,
     "octgn_id": "8c671c80-d9a1-400d-a11d-75678e3b5bd7",
     "url": "https://de.arkhamdb.com/card/05189",
-    "imagesrc": "/bundles/cards/05189.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Die [Action]-Fähigkeit dieser Karten ist jetzt eine [fast]-Fähigkeit."
+    "imagesrc": "/bundles/cards/05189.png"
   },
   {
     "pack_code": "dsm",
@@ -1247,7 +1207,7 @@
     "name": "35er Winchester",
     "real_name": ".35 Winchester",
     "cost": 4,
-    "text": "Anwendungen (5 Munition).\n[action]: <b>Kampf.</b> Du bekommst für diesen Angriff +2 [combat]. Falls während dieses Angriffs ein +1-, 0-, oder [elder_sign]-Chaosmarker enthüllt wird, fügt dieser Angriff +2 Schaden zu.",
+    "text": "Verändert. Anwendungen (5 Munition).\n[action] Gib 1 Munition aus: <b>Kampf.</b> Du bekommst für diesen Angriff +2 [combat]. Falls während dieses Angriffs ein Chaosmarker mit einem nicht-negativen Modifikator enthüllt wird, fügt dieser Angriff +2 Schaden zu.",
     "real_text": "Uses (5 ammo).\n[action] Spend 1 ammo: <b>Fight.</b> You get +2 [combat] for this attack. If a +1, 0, or [elder_sign] chaos token is revealed during this attack, this attack deals +2 damage.",
     "errata_date": {
       "date": "2020-03-01 00:00:00.000000",
@@ -1269,9 +1229,7 @@
     "double_sided": false,
     "octgn_id": "56924231-f626-4110-a6cb-110051423225",
     "url": "https://de.arkhamdb.com/card/06195",
-    "imagesrc": "/bundles/cards/06195.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Die [action]-Fähigkeit dieser Karte lautet nun: „[action] Gib 1 Munition aus: <b>Kampf.</b> Du bekommst für diesen Angriff +2 [combat]. Falls während dieses Angriffs ein Chaosmarker mit einem nicht-negativen Modifikator enthüllt wird, fügt dieser Angriff +2 Schaden zu.“"
+    "imagesrc": "/bundles/cards/06195.png"
   },
   {
     "pack_code": "dwl",
@@ -1286,7 +1244,7 @@
     "code": "02026-t",
     "name": "Doppelt oder Nichts",
     "real_name": "Double or Nothing",
-    "text": "Max. 1 pro Fertigkeitsprobe beitragen.\nVerdopple die Schwierigkeit dieser Fertigkeitsprobe. Falls diese Fertigkeitsprobe gelingt, handle die Effekte der erfolgreichen Probe zwei Mal ab.",
+    "text": "Verboten.\nMax. 1 pro Fertigkeitsprobe beitragen.\nVerdopple die Schwierigkeit dieser Fertigkeitsprobe. Falls diese Fertigkeitsprobe gelingt, handle die Effekte der erfolgreichen Probe zwei Mal ab.",
     "real_text": "Max 1 committed per skill test.\nDouble the difficulty of this skill test. If this skill test is successful, resolve the effects of the successful test twice.",
     "quantity": 2,
     "skill_wild": 1,
@@ -1302,9 +1260,7 @@
     "double_sided": false,
     "octgn_id": "6804e6e3-6a7c-458c-a1b7-185bc4928f4c",
     "url": "https://de.arkhamdb.com/card/02026",
-    "imagesrc": "/bundles/cards/02026.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Verboten."
+    "imagesrc": "/bundles/cards/02026.png"
   },
   {
     "pack_code": "dwl",
@@ -1320,7 +1276,7 @@
     "name": "Ritualkerzen",
     "real_name": "Ritual Candles",
     "cost": 1,
-    "text": "[reaction] Nachdem ein [skull]-, [cultist]-, [tablet]-, oder [elder_thing]-Symbol während einer Probe enthüllt worden ist, die du ablegst: Du bekommst für diese Probe +1 auf den Fertigkeitswert.",
+    "text": "Verändert.\n[reaction] Nachdem ein Symbol während einer Probe enthüllt worden ist, die du ablegst: Du bekommst für diese Probe +1 auf den Fertigkeitswert.",
     "real_text": "[reaction] After a [skull], [cultist], [tablet], or [elder_thing] symbol is revealed during a test you are performing: You get +1 skill value for this test.",
     "quantity": 2,
     "skill_willpower": 1,
@@ -1341,9 +1297,7 @@
     "imagesrc": "/bundles/cards/02029.png",
     "duplicated_by": [
       "60405"
-    ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    ]
   },
   {
     "pack_code": "wda",
@@ -1360,7 +1314,7 @@
     "real_name": "Jewel of Aureolus",
     "subname": "Geschenk des Homunkuli",
     "cost": 3,
-    "text": "[reaction] Nachdem ein [skull]-, [cultist]-, [tablet]-, [elder_thing]-, oder [auto_fail]-Symbol während einer Fertigkeitsprobe enthüllt worden ist, erschöpfe Juwel von Aureolus: Ziehe 1 Karte oder erhalte 2 Ressourcen.",
+    "text": "Verändert.\n[reaction] Nachdem ein Symbol während einer Fertigkeitsprobe enthüllt worden ist, erschöpfe Juwel von Aureolus: Ziehe 1 Karte oder erhalte 2 Ressourcen.",
     "real_text": "[reaction] After a [skull], [cultist], [tablet], [elder_thing], or [auto_fail] symbol is revealed during a skill test at your location, exhaust Jewel of Aureolus: Draw 1 card or gain 2 resources.",
     "quantity": 2,
     "skill_wild": 1,
@@ -1377,9 +1331,7 @@
     "double_sided": false,
     "octgn_id": "015a2f11-fe7a-3aed-a970-76b6ee7db684",
     "url": "https://de.arkhamdb.com/card/02269",
-    "imagesrc": "/bundles/cards/02269.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/02269.png"
   },
   {
     "pack_code": "jac",
@@ -1395,7 +1347,7 @@
     "name": "Stimme des Re",
     "real_name": "Voice of Ra",
     "cost": 0,
-    "text": "Du erhältst eine Ressource. Enthülle 3 zufällige Marker aus dem Chaosbeutel. Für jedes enthüllte [skull]-, [cultist]-, [tablet]-, [elder_thing]- oder [auto_fail]-Symbol erhältst du 2 zusätzliche Ressourcen.",
+    "text": "Verändert.\nDu erhältst eine Ressource. Enthülle 3 zufällige Marker aus dem Chaosbeutel. Für jedes enthüllte Symbol erhältst du 2 zusätzliche Ressourcen.",
     "real_text": "Gain 1 resource. Reveal 3 random tokens from the chaos bag. For each [skull], [cultist], [tablet], [elder_thing], or [auto_fail] symbol revealed, gain an additional 2 resources.",
     "quantity": 2,
     "skill_willpower": 1,
@@ -1410,9 +1362,7 @@
     "double_sided": false,
     "octgn_id": "43e01cef-8b84-4247-8257-f4f628a4c8e6",
     "url": "https://de.arkhamdb.com/card/60416",
-    "imagesrc": "/bundles/cards/60416.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/60416.png"
   },
   {
     "pack_code": "wda",
@@ -1429,7 +1379,7 @@
     "real_name": "Strange Solution",
     "subname": "Ätzendes Sekret",
     "cost": 1,
-    "text": "Du kannst diese Vorteilskarte nur deinem Deck hinzufügen, indem du Seltsame Lösung <i>(Nicht identifiziert)</i> verbesserst, und nur, falls in deinem Kampagnenlogbuch steht, dass du „die Lösung identifiziert hast“.\nAnwendungen (3 Vorräte).\n[action] Gib 1 Vorrat aus: <b>Kampf.</b> Greife mit einem Grund-[combat]-Fertigkeitswert von 6 an. Dieser Angriff fügt 2 Schaden zu.",
+    "text": "Verändert. Erforscht. Anwendungen (3 Vorräte).\n[action] Gib 1 Vorrat aus: <b>Kampf.</b> Greife mit einem Grund-[combat]-Fertigkeitswert von 6 an. Dieser Angriff fügt +1 Schaden zu.",
     "real_text": "Researched. Uses (3 supplies).\n[action] Spend 1 supply: <b>Fight.</b> Attack with a base [combat] skill of 6. This attack deals +2 damage.",
     "errata_date": {
       "date": "2022-08-26 00:00:00.000000",
@@ -1450,9 +1400,7 @@
     "double_sided": false,
     "octgn_id": "33cfc081-1ed0-3c8e-1ad0-7cc2b9060f51",
     "url": "https://de.arkhamdb.com/card/02263",
-    "imagesrc": "/bundles/cards/02263.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/02263.png"
   },
   {
     "pack_code": "ptc",
@@ -1558,7 +1506,7 @@
     "code": "03019-t",
     "name": "Identitätskrise",
     "real_name": "Crisis of Identity",
-    "text": "<b>Enthüllung</b> - Lege alle Karten deiner aktuellen Rolle ab, die du kontrollierst. Lege dann die oberste Karte deines Decks ab. Wechsle deine Rolle zu der Klasse der abgelegten Karte (falls die abgelegte Karte eine Schwäche ist, wechsle deine Rolle auf Neutral).",
+    "text": "<b>Enthüllung</b> - Lege 1 Karte deiner aktuellen Rolle von deiner Hand oder Spielzone ab. Lege dann die oberste Karte deines Decks ab. Wechsle deine Rolle zu der Klasse der abgelegten Karte (falls die abgelegte Karte eine Schwäche ist, wechsle deine Rolle auf Neutral).",
     "real_text": "<b>Revelation</b> - Discard all cards you control of your current role. Then, discard the top card of your deck. Switch your role to the class of the discarded card (if the discarded card is a weakness, switch your role to neutral).",
     "quantity": 2,
     "health_per_investigator": false,
@@ -1579,9 +1527,7 @@
     "octgn_id": "1364260b-3c1d-4931-bb8d-8cc976640d7f",
     "url": "https://de.arkhamdb.com/card/03019",
     "imagesrc": "/bundles/cards/03019.png",
-    "xp": 0,
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "xp": 0
   },
   {
     "pack_code": "tfa",
@@ -1597,7 +1543,7 @@
     "name": "Dunkle Prophezeihung",
     "real_name": "Dark Prophecy",
     "cost": 1,
-    "text": "Schnell. Spiele diese Karte, sobald du einen Chaosmarker enthüllen würdest.\nEnthülle stattdessen 5 statt 1 Chaosmarker. Wähle einen jener Marker mit einem [skull]-, [cultist]-, [tablet]-, [elder_thing]-, oder [auto_fail]-Symbol, um ihn abzuhandeln, und ignoriere die restlichen. (Falls kein solcher Marker enthüllt wird, wähle einen beliebigen Marker jener Marker, um ihn abzuhandeln und ignoriere die restlichen.)",
+    "text": "Verändert. Schnell. Spiele diese Karte, sobald du einen Chaosmarker enthüllen würdest.\nEnthülle stattdessen 5 statt 1 Chaosmarker. Wähle einen jener Marker mit einem nicht-[elder_sign]-Symbol, um ihn abzuhandeln, und ignoriere die restlichen. (Falls kein solcher Marker enthüllt wird, wähle einen beliebigen Marker jener Marker, um ihn abzuhandeln und ignoriere die restlichen.)",
     "real_text": "Fast. Play when you would reveal a chaos token.\nReveal 5 chaos tokens instead of 1. Choose one of those tokens with a [skull], [cultist], [tablet], [elder_thing], or [auto_fail] symbol to resolve, and ignore the rest. (If no such token is revealed, choose any one of those tokens to resolve, and ignore the rest.)",
     "quantity": 2,
     "skill_willpower": 1,
@@ -1618,9 +1564,7 @@
     "imagesrc": "/bundles/cards/04032.png",
     "duplicated_by": [
       "60417"
-    ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    ]
   },
   {
     "pack_code": "tof",
@@ -1636,7 +1580,7 @@
     "name": "Gegenzauber",
     "real_name": "Counterspell",
     "cost": 2,
-    "text": "Schnell. Spiele diese Karte, sobald ein [skull]-, [cultist]-, [tablet]-, oder [elder_thing]-Chaosmarker während einer Fertigkeitsprobe an deinem Ort enthüllt wird.\nHebe jenen Chaosmarker auf. <i>(Enthülle keinen neuen Chaosmarker, um ihn zu ersetzen.)</i>",
+    "text": "Verändert. Schnell. Spiele diese Karte, sobald ein nicht-[auto_fail]-Chaosmarker während einer Fertigkeitsprobe an deinem Ort enthüllt wird.\nHebe jenen Chaosmarker auf. <i>(Enthülle keinen neuen Chaosmarker, um ihn zu ersetzen.)</i>",
     "real_text": "Fast. Play when a [skull], [cultist], [tablet], or [elder_thing] chaos token is revealed during a skill test at your location.\nCancel that chaos token. <i>(Do not reveal a new chaos token to replace it.)</i>",
     "quantity": 2,
     "skill_willpower": 1,
@@ -1654,9 +1598,7 @@
     "double_sided": false,
     "octgn_id": "410909a0-d960-43ff-8cc1-b92c69b52c08",
     "url": "https://de.arkhamdb.com/card/04110",
-    "imagesrc": "/bundles/cards/04110.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/04110.png"
   },
   {
     "pack_code": "tde",
@@ -1672,7 +1614,7 @@
     "name": "Mandy Thompson",
     "real_name": "Mandy Thompson",
     "subname": "Die Forscherin",
-    "text": "[reaction] Sobald ein Ermittler an deinem Ort sein Deck oder das Begegnungsdeck durchsuchen würde: Er darf entweder 3 zusätzliche Karten durchsuchen oder 1 zusätzliches Ziel der Suche abhandeln. (Nur ein Mal pro Runde.)\n[elder_sign] Effekt: +0. Durchsuche die obersten 3 Karten deines Decks nach einer Karte und ziehe sie entweder oder trage sie falls möglich zu dieser Fertigkeitsprobe bei. Mische dein Deck.",
+    "text": "Verändert.\n[reaction] Sobald ein Ermittler an deinem Ort sein Deck oder das Begegnungsdeck durchsuchen würde: Er darf entweder 3 zusätzliche Karten durchsuchen oder 1 zusätzliches Ziel der Suche abhandeln. (Nur ein Mal pro Runde.)\n[elder_sign] Effekt: +0. Durchsuche die obersten 3 Karten deines Decks nach einer Karte und ziehe sie entweder oder trage sie falls möglich zu dieser Fertigkeitsprobe bei. Mische dein Deck.",
     "real_text": "[reaction] When an investigator at your location would search their deck or the encounter deck: They may either search 3 additional cards or resolve 1 additional target of the search. (Limit once per round.)\n[elder_sign] effect: +0. Search the top 3 cards of your deck for a card and either draw it or commit it to this test, if able. Shuffle your deck.",
     "quantity": 1,
     "skill_willpower": 3,
@@ -1687,7 +1629,7 @@
     "traits": "Assistent. Gelehrter.",
     "real_traits": "Assistant. Scholar.",
     "deck_requirements": {
-      "size": 30,
+      "size": 50,
       "card": {
         "06008": {
           "06008": "06008"
@@ -1707,8 +1649,6 @@
       {
         "name": "Deck Size",
         "deck_size_select": [
-          "30",
-          "40",
           "50"
         ],
         "faction": []
@@ -1745,15 +1685,13 @@
     "is_unique": true,
     "permanent": false,
     "double_sided": true,
-    "back_text": "<b>Deckgröße</b>: Wähle beim Deckbau eine Deckgröße von 30, 40 oder 50.\n<b>Wahl der Sekundärklasse</b>: Wähle beim Deckbau Mystiker ([mystic]), Schurke ([rogue]) oder Überlebender ([survivor]).\n<b>Deckbau-Optionen</b>: Sucherkarten ([seeker]) Stufe 0-5, Neutrale Karten Stufe 0-5, bis zu 10 Stufe 0-1 Ereignis- und/oder Fertigkeitskarten deiner gewählten Sekundärklasse.\n<b>Deckbau-Voraussetzungen</b> (zählen nicht gegen die Deckgröße): 1 Kopie von Okkulter Beweis (stattdessen 2 Kopien, falls deine Deckgröße 40 beträgt; stattdessen 3 Kopien, falls deine Deckgröße 50 beträgt), Schockierende Entdeckung und 1 zufällige Grundschwäche.",
+    "back_text": "<b>Wahl der Sekundärklasse</b>: Wähle beim Deckbau Mystiker ([mystic]), Schurke ([rogue]) oder Überlebender ([survivor]).\n<b>Deckbau-Optionen</b>: Sucherkarten ([seeker]) Stufe 0-5, Neutrale Karten Stufe 0-5, bis zu 10 Stufe 0-1 Ereignis- und/oder Fertigkeitskarten deiner gewählten Sekundärklasse.\n<b>Deckbau-Voraussetzungen</b> (zählen nicht gegen die Deckgröße): 3 Kopie von Okkulter Beweis, Schockierende Entdeckung und 1 zufällige Grundschwäche.",
     "back_flavor": "Seit sie ein kleines Mädchen ist, greift Mandy bei Schlafschwierigkeiten zu einem Buch. Viele Nächte hat sie sich schon auf diese Weise um die Ohren geschlagen. Ihr gutes Gedächtnis und analytisches Denken haben ihr eine hochangesehene Stelle als Forscherin an der Miskatonic Universität eingebracht. Dort verbringt sie ganze Tage mit dem Wälzen uralter Schriften und verbotener Texte. Dabei ist ihr ein Muster aufgefallen, das den unmittelbar bevorstehenden Weltuntergang verkündet. Ist sie einer Paranoia verfallen? Oder droht tatsächlich eine Katastrophe von wahrhaft unbeschreiblichen Ausmaßen?",
     "octgn_id": "860404e7-ebaa-43b4-b61b-10d0dd51c4d1:95ab38d9-176e-451b-8d4d-e3d3c32f4d12",
     "url": "https://de.arkhamdb.com/card/06002",
     "imagesrc": "/bundles/cards/06002.png",
     "backimagesrc": "/bundles/cards/06002b.png",
-    "xp": 0,
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "xp": 0
   },
   {
     "pack_code": "lod",
@@ -1769,7 +1707,7 @@
     "name": "Flöte der Äußeren Götter",
     "real_name": "Flute of the Outer Gods",
     "cost": -2,
-    "text": "Außergewöhnlich. Versiegeln (bis zu X [curse]).\n[action] Erschöpfe die Flöte der Äußeren Götter und setze 1 darauf versiegelten [curse]-Marker frei: Wähle einen Nicht-[[Elite]]-Gegner an deinem Ort. Bewege den gewählten Gegner entweder an einen verbundenen Ort oder füge seinen Schaden einem beliebigen Gegner an seinem Ort zu. Diese Aktion provoziert keine Gelegenheitsangriffe.",
+    "text": "Verändert. Versiegeln (bis zu X [curse]). Limit 1 pro Deck.\n[action] Erschöpfe die Flöte der Äußeren Götter und setze 1 darauf versiegelten [curse]-Marker frei: Wähle einen Nicht-[[Elite]]-Gegner an deinem Ort. Bewege den gewählten Gegner entweder an einen verbundenen Ort oder füge seinen Schaden einem beliebigen Gegner an seinem Ort zu. Diese Aktion provoziert keine Gelegenheitsangriffe.",
     "real_text": "Exceptional. Seal (up to X [curse]).\n[action] Exhaust Flute of the Outer Gods and release 1 [curse] token sealed on it: Choose a non-[[Elite]] enemy at your location. Either move the chosen enemy to a connecting location, or deal its damage to any enemy at its location. This action does not provoke attacks of opportunity.",
     "quantity": 1,
     "skill_willpower": 1,
@@ -1788,9 +1726,7 @@
     "double_sided": false,
     "octgn_id": "a9c306cc-b82a-43e8-a6eb-5dbe309afa7c",
     "url": "https://de.arkhamdb.com/card/07268",
-    "imagesrc": "/bundles/cards/07268.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/07268.png"
   },
   {
     "pack_code": "eoep",
@@ -1807,7 +1743,7 @@
     "real_name": "Prophesiae Profana",
     "subname": "Atlas des Unwissbaren",
     "cost": 4,
-    "text": "Solange du dich nicht am Fokuspunkt befindest, bekommst du +1 [intellect], +1 [agility] und du darfst Gelegenheitsangriffe ignorieren.\n[reaction] Nachdem Prophesiae Profana ins Spiel gekommen ist: Wähle einen entühllten Ort, der zum „Fokuspunkt” wird, bis Prophesiae Profana das Spiel verlässt.\n[action]: Bewege einen beliebigen Ermittler zum Fokuspunkt.",
+    "text": "Verändert.\nSolange du dich nicht am Fokuspunkt befindest, bekommst du +1 [intellect], +1 [agility] und du darfst den ersten Gelegenheitsangriff gegen dich jede Runde ignorieren.\n[reaction] Nachdem Prophesiae Profana ins Spiel gekommen ist: Wähle einen entühllten Ort, der zum „Fokuspunkt” wird, bis Prophesiae Profana das Spiel verlässt.\n[action]: Bewege einen beliebigen Ermittler zum Fokuspunkt.",
     "real_text": "While you are not at the locus, you get +1 [intellect], +1 [agility], and you may ignore attacks of opportunity.\n[reaction] After Prophesiae Profana enters play: Choose a revealed location. That location is \"the locus\" until Prophesiae Profana leaves play.\n[action]: Move any investigator to the locus.",
     "quantity": 2,
     "skill_wild": 2,
@@ -1824,9 +1760,7 @@
     "double_sided": false,
     "octgn_id": "01b9c020-cc85-4162-ac85-8424c707d570",
     "url": "https://de.arkhamdb.com/card/08045",
-    "imagesrc": "/bundles/cards/08045.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/08045.png"
   },
   {
     "pack_code": "eoep",
@@ -1842,7 +1776,7 @@
     "name": "Schwarzmarkt",
     "real_name": "Black Market",
     "cost": 1,
-    "text": "Schnell. Spiele diese Karte zu Beginn der Ermittlungsphase.\nEnthülle nacheinander Karten oben von beliebigen Ermittlerdecks, bis genau 5 Karten enthüllt worden sind. Lege jene Karten als nicht im Spiel befindlich beseite. Solange jene Karten beiseitegelegt sind, darf sie jeder beliebiger Ermittler spielen, als ob sie sich auf seiner Hand befänden. Zu Beginn der nächsten Ermittlungsphase werden jene Karten, die noch immer beiseitegelegt sind, ins jeweilige Deck ihrer Besitzer gemischt.",
+    "text": "Verändert. Schnell. Spiele diese Karte zu Beginn der Ermittlungsphase.\nEnthülle nacheinander Karten oben von beliebigen Ermittlerdecks, bis genau 5 Karten enthüllt worden sind. Lege jene Karten als nicht im Spiel befindlich beseite. Solange jene Karten beiseitegelegt sind, darf sie jeder beliebiger Ermittler spielen, als ob sie sich auf seiner Hand befänden. Zu Beginn der nächsten Ermittlungsphase werden jene Karten, die noch immer beiseitegelegt sind, ins jeweilige Deck ihrer Besitzer gemischt. (Max. 1 pro Runde.)",
     "real_text": "Fast. Play at the start of the investigation phase.\nOne at a time, reveal cards from the top of any investigator deck(s) until exactly 5 cards have been revealed. Set those cards aside, out of play. While set aside, any investigator may play any of those cards as if they were in their hand. At the start of the next investigation phase, shuffle each of those cards still set aside into its owner's deck.",
     "quantity": 2,
     "xp": 2,
@@ -1856,9 +1790,7 @@
     "double_sided": false,
     "octgn_id": "82c3218f-cd87-42d7-a2d3-068fbc8a67f1",
     "url": "https://de.arkhamdb.com/card/08055",
-    "imagesrc": "/bundles/cards/08055.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Diese Karte erhält folgenden zusätzlichen Text: „(Max. 1 pro Runde.)“"
+    "imagesrc": "/bundles/cards/08055.png"
   },
   {
     "pack_code": "eoep",
@@ -1876,7 +1808,7 @@
     "name": "Karte der Zeitalter",
     "real_name": "Eon Chart",
     "cost": 2,
-    "text": "Anwendungen (3 Geheimnisse).\n[fast] Erschöpfe während deines Zuges Karte der Zeitalter und gib 1 Geheimnis aus: Wähle und nimm 1 der folgenden Aktionen (Bewegen, Entkommen oder Ermitteln).",
+    "text": "Verändert. Anwendungen (3 Geheimnisse).\n[fast] Erschöpfe während deines Zuges Karte der Zeitalter und gib 1 Geheimnis aus: Wähle und nimm 1 der folgenden Basis-Aktionen (Bewegen, Entkommen oder Ermitteln).",
     "real_text": "Uses (3 secrets).\n[fast] During your turn, exhaust Eon Chart and spend 1 secret: Choose and take one of the following actions (move, evade, or investigate).",
     "quantity": 2,
     "skill_intellect": 1,
@@ -1894,9 +1826,7 @@
     "double_sided": false,
     "octgn_id": "86e023c2-9ce3-4285-ad91-92228094e6e9",
     "url": "https://de.arkhamdb.com/card/08098",
-    "imagesrc": "/bundles/cards/08098.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/08098.png"
   },
   {
     "pack_code": "eoep",
@@ -1914,7 +1844,7 @@
     "name": "Karte der Zeitalter",
     "real_name": "Eon Chart",
     "cost": 2,
-    "text": "Anwendungen (3 Geheimnisse).\n[fast] Erschöpfe während deines Zuges Karte der Zeitalter und gib 1 Geheimnis aus: Wähle 2 der folgenden Aktionen und nimm sie in beliebiger Reihenfolge (Bewegen, Entkommen oder Ermitteln).",
+    "text": "Verändert. Anwendungen (3 Geheimnisse).\n[fast] Erschöpfe während deines Zuges Karte der Zeitalter und gib 1 Geheimnis aus: Wähle 2 der folgenden Basis-Aktionen und nimm sie in beliebiger Reihenfolge (Bewegen, Entkommen oder Ermitteln).",
     "real_text": "Uses (3 secrets).\n[fast] During your turn, exhaust Eon Chart and spend 1 secret: Choose and take two of the following actions, in any order (move, evade, or investigate).",
     "quantity": 2,
     "skill_intellect": 1,
@@ -1933,9 +1863,7 @@
     "double_sided": false,
     "octgn_id": "8ff6fa90-3299-49ef-91a3-d160da2cf341",
     "url": "https://de.arkhamdb.com/card/08100",
-    "imagesrc": "/bundles/cards/08100.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/08100.png"
   },
   {
     "pack_code": "eoep",
@@ -1953,7 +1881,7 @@
     "name": "Zyklopischer Hammer",
     "real_name": "Cyclopean Hammer",
     "cost": 5,
-    "text": "[action]: <b>Kampf.</b> Füge für diesen Angriff deinen [willpower]-Wert zu deinem Fertigkeitswert hinzu. Du fügst für diesen Angriff +1 Schaden zu. Falls die Probe gelingt und der Gegner Nicht-[[Elite]] ist, darfst du ihn 1 Ort von dir weg bewegen. (Falls die Probe um 3 oder mehr gelingt, füge dem Gegner stattdessen +2 Schaden zu und du darfst ihn bis zu 2 Orte von dir weg bewegen.)",
+    "text": "Verändert.\n[action]: <b>Kampf.</b> Füge für diesen Angriff deinen [willpower]-Wert zu deinem Fertigkeitswert hinzu. Du fügst für diesen Angriff +1 Schaden zu. Falls die Probe gelingt und der Gegner Nicht-[[Elite]] ist, darfst du ihn 1 Ort von dir weg bewegen. (Falls die Probe um 3 oder mehr gelingt, darfst du den Cyclopischen Hammer erschöpfen, um dem Gegner stattdessen +2 Schaden zuzufügen und ihn bis zu 2 Orte von dir wegzubewegen.)",
     "real_text": "[action]: <b>Fight.</b> Add your [willpower] to your skill value for this attack. You deal +1 damage for this attack. If you succeed and the enemy is non-[[Elite]], you may move it one location away from you. (If you succeed by 3 or more, you instead deal +2 damage and may move the enemy up to two locations away from you.)",
     "quantity": 2,
     "skill_willpower": 2,
@@ -1971,8 +1899,6 @@
     "double_sided": false,
     "octgn_id": "b1a10946-6c96-447a-9919-70f258792508",
     "url": "https://de.arkhamdb.com/card/08093",
-    "imagesrc": "/bundles/cards/08093.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": ""
+    "imagesrc": "/bundles/cards/08093.png"
   }
 ]
