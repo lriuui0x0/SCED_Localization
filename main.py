@@ -436,6 +436,7 @@ def get_se_deck_line(card, index):
     return line
 
 def get_se_header(header):
+    # NOTE: Some header text at the back of agenda/act may have markup text in it.
     header = get_se_markup(header)
     return process_lang(header)
 
@@ -894,8 +895,11 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
     translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, True, card)
 
     back_url = deck['BackURL']
-    # NOTE: Test whether it's generic player or encounter card backs.
+    # NOTE: Test whether it's generic player or encounter card back urls.
     if 'EcbhVuh' in back_url or 'sRsWiSG' in back_url:
+        return
+    # NOTE: Special cases to handle generic player or encounter card back in deck images.
+    if (deck_id, deck_x, deck_y) in [(2335, 9, 5)]:
         return
 
     # NOTE: Some cards on ADB have separate entries for front and back. Get the correct card data through the 'linked_card' property.
