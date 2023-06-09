@@ -549,6 +549,11 @@ def get_se_location_icon(icon):
         'Tee': 'T',
         'Hourglass': 'Hourglass',
         'SlantedEquals': 'DoubleSlash',
+        'Apostrophe': 'Quote',
+        'Clover': 'Clover',
+        'Star': 'Star',
+        'Heart': 'Heart',
+        'Spade': 'Spade',
     }
     # NOTE: SCED metadata on location may include special location types for game logic, they are not printed on cards.
     return icon_map.get(icon, 'None')
