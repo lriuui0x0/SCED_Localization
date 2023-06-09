@@ -534,6 +534,8 @@ def get_se_victory(card):
         return ''
     if args.lang == langs.simplified_chinese:
         return f'胜利<size 50%> </size>{victory}。'
+    elif args.lang == langs.german:
+        return f'Sieg {victory}.'
     else:
         return f'Victory {victory}.'
 
