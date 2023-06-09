@@ -86,9 +86,15 @@ def get_se_faction(card, index):
     return faction_map[faction]
 
 def get_se_cost(card):
-    return str(get_field(card, 'cost', '-'))
+    cost = get_field(card, 'cost', '-')
+    if cost == -2:
+        cost = 'X'
+    return str(cost)
 
 def get_se_xp(card):
+    rule = get_field(card, 'real_text', '')
+    if 'deck only.' in rule:
+        return 'None'
     return str(get_field(card, 'xp', 0))
 
 def get_se_willpower(card):
