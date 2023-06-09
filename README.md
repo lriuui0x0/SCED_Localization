@@ -48,15 +48,17 @@ The script is `main.py` in the root directory. You can run `python main.py --hel
 
     The imgur access token for uploading deck images. Explained in more details below.
 
-The main script runs in the following steps. Each step only requires on-disk data generated from the previous steps, so if you kill the script half way, you should be able to continue from the last unfinished steps.
+The main script runs in the following steps. Each step only requires persisted data generated from the previous steps, so if you kill the script half way, you should be able to continue from the last unfinished steps.
 
-1. Process the card objects in the mod repositories and prepare the translation data. The translation data will be saved in the `SE_Generator/data` directory as CSV files.
+1. *Translate* the card objects in the mod repositories. The translation data will be saved in the `SE_Generator/data` directory as CSV files.
 
-2. Run the Strange Eons script to generate a list of individual translated card images, saved in the `SE_Generator/build/images` directory.
+2. *Generate* the Strange Eons script to generate a list of individual translated card images, saved in the `SE_Generator/build/images` directory.
 
-3. Pack the individual translated images into deck images and save them into the deck image directory.
+3. *Pack* the individual translated images into deck images and save them into the deck image directory.
 
-4. Upload all the translated deck images to the image host and update the objects in the mod repositoires.
+4. *Upload* all the translated deck images to the image host.
+
+5. *Update* the objects in the mod repositoires.
 
 Upon finishing the above steps, the mod repositories in the cache directory will have unstaged changes ready for you to commit. If you use your own fork, you also need to manually update the [repository URL](https://github.com/argonui/SCED/blob/545181308bdb9266e0ac16005f1d51ecbde043fb/src/core/Global.ttslua#L45) in the mod.
 
@@ -80,7 +82,7 @@ Some cards don't have direct entries on ArkhamDB, e.g. taboo cards, so we includ
 
 ### Imgur access token
 
-To get an access token for imgur, you need to first [create an application](https://api.imgur.com/oauth2/addclient) (make sure selecting the no callback option), then use the client id to visit `https://api.imgur.com/oauth2/authorize?client_id=<client id>&response_type=token` and get the access token from the redirected URL.
+To get an access token for imgur, you need to first [create an application](https://api.imgur.com/oauth2/addclient) (make sure selecting the no callback option), then use the [client id](https://imgur.com/account/settings/apps) to visit `https://api.imgur.com/oauth2/authorize?client_id=<client id>&response_type=token` and get the access token from the redirected URL.
 
 The access token may become expired after certain time and the script will fail at the beginning. In that case, you can simply generate a new access token to avoid the token refreshing procedure.
 

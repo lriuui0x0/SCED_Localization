@@ -1,19 +1,20 @@
 import argparse
-import re
 import csv
 import json
 import os
 import sys
 import shutil
 import subprocess
+import re
 import base64
 import urllib.request
 import requests
 import inspect
 import importlib
+import time
 from PIL import Image
 
-steps = ['prepare', 'generate', 'pack', 'update']
+steps = ['translate', 'generate', 'pack', 'upload', 'update']
 langs = ['es', 'de', 'it', 'fr', 'ko', 'uk', 'pl', 'ru', 'zh_TW', 'zh_CN']
 
 parser = argparse.ArgumentParser()
@@ -52,12 +53,25 @@ def process_lang(value):
     func = getattr(module, func_name, None)
     return func(value) if func else value
 
-def imgur_auth():
-    return { 'Authorization': f'Bearer {args.imgur_access_token}' }
+def request_imgur(method, api, data=None):
+    if args.imgur_access_token is None:
+        raise Exception('Imgur access token not found.')
+    req = getattr(requests, method)
+    headers = {
+        'Authorization': f'Bearer {args.imgur_access_token}',
+    }
+    res = req(api, headers=headers, data=data)
+    limits = [int(res.headers[key]) for key in ['X-RateLimit-UserRemaining', 'X-RateLimit-ClientRemaining', 'X-Post-Rate-Limit-Remaining'] if key in res.headers]
+    danger = any(limit < 50 for limit in limits)
+    if danger:
+        raise Exception('Close to imgur rate limits.')
+    if res.status_code // 100 != 2: 
+        raise Exception(res.content)
+    return res.json()
 
 # NOTE: Run a protected API test to detect expired access token early.
 if args.imgur_access_token is not None:
-    res = requests.get('https://api.imgur.com/3/account/me/settings', headers=imgur_auth()).json()
+    res = request_imgur('get', 'https://api.imgur.com/3/account/me/settings')
     if not res['success']:
         raise Exception('Invalid imgur access token.')
 
@@ -1011,7 +1025,7 @@ def write_csv():
                 for component in components:
                     writer.writerow(component)
 
-def run_se():
+def generate_images():
     se_script = 'SE_Generator/make.js'
     print(f'Running {se_script}...')
     subprocess.run([args.se_executable, '--glang', args.lang, '--run', se_script])
@@ -1043,14 +1057,13 @@ def pack_images():
     for deck_url_id, deck_image in deck_images.items():
         print(f'Writing {deck_url_id}.jpg...')
         deck_image = deck_image.convert('RGB')
-        deck_image.save(f'{args.deck_images_dir}/{deck_url_id}.jpg')
+        deck_image.save(f'{args.deck_images_dir}/{deck_url_id}.jpg', progressive=True, optimize=True)
 
-deck_urls = {}
-def upload_deck_images():
+def upload_images():
     # NOTE: Create an localized album if not already exists.
-    res = requests.get('https://api.imgur.com/3/account/me/settings', headers=imgur_auth()).json()
+    res = request_imgur('get', 'https://api.imgur.com/3/account/me/settings')
     username = res['data']['account_url']
-    res = requests.get(f'https://api.imgur.com/3/account/{username}/albums', headers=imgur_auth()).json()
+    res = request_imgur('get', f'https://api.imgur.com/3/account/{username}/albums')
     album_title = f'SCED localization deck images {args.lang}'
     album_id = None
     for album in res['data']:
@@ -1059,39 +1072,46 @@ def upload_deck_images():
             break
     if album_id is None:
         print('Creating album...')
-        res = requests.post(f'https://api.imgur.com/3/album', headers=imgur_auth(), data={
+        res = request_imgur('post', 'https://api.imgur.com/3/album', {
             'title': album_title,
             # NOTE: Use a fixed image here to avoid imgur throwing HTTP 417 code when it cannot generate the cover for the album.
             'cover': 'czPnwbw',
-        }).json()
+        })
         album_id = res['data']['id']
 
-    res = requests.get('https://api.imgur.com/3/account/me/images', headers=imgur_auth()).json()
+    res = request_imgur('get', 'https://api.imgur.com/3/account/me/images')
     old_images = res['data']
-
     for filename in os.listdir(args.deck_images_dir):
         deck_url_id = filename.split('.')[0]
         for image in old_images:
-            image_url_id = encode_url(image['link'])
-            # NOTE: Delete old deck image with the same url to avoid uploading the same deck image twice.
-            if image_url_id == deck_url_id:
+            curr_url_id = encode_url(image['link'])
+            prev_url_id = image['description']
+            # NOTE: Delete the old deck image either matching the current url (in the case of running the script again after the mod has been updated),
+            # or the previous url (in the case of simply uploading the images again under the same mod state).
+            if deck_url_id in [curr_url_id, prev_url_id]:
                 print(f'Deleting old {filename}...')
-                requests.delete(f'https://api.imgur.com/3/image/{image["id"]}', headers=imgur_auth())
+                request_imgur('delete', f'https://api.imgur.com/3/image/{image["id"]}')
                 break
 
         print(f'Uploading {filename}...')
         with open(f'{args.deck_images_dir}/{filename}', 'rb') as file:
             deck_image_data = base64.b64encode(file.read())
-            res = requests.post(f'https://api.imgur.com/3/upload', headers=imgur_auth(), data={
+            res = request_imgur('post', f'https://api.imgur.com/3/upload', {
                 'image': deck_image_data,
                 'type': 'base64',
-                'title': f'SCED localization deck image',
-                'description': '',
+                'title': 'SCED localization deck image',
+                'description': deck_url_id,
                 'album': album_id,
-            }).json()
-            deck_urls[deck_url_id] = res['data']['link']
+            })
+        # Wait for a while to not trigger the rate limit of 1250 POST requests per IP per hour.
+        time.sleep(3)
 
-def write_sced_card_object(object, metadata, card, filename, root):
+uploaded_images = []
+def update_sced_card_object(object, metadata, card, filename, root):
+    if not len(uploaded_images):
+        res = request_imgur('get', 'https://api.imgur.com/3/account/me/images')
+        uploaded_images.extend(res['data'])
+
     deck_id, deck = get_deck(object)
     if card:
         name = get_se_front_name(card)
@@ -1109,9 +1129,9 @@ def write_sced_card_object(object, metadata, card, filename, root):
 
     for url_key in ('FaceURL', 'BackURL'):
         url_id = encode_url(deck[url_key])
-        # NOTE: The SCED deck objects may not be translated before.
-        if url_id in deck_urls:
-            deck[url_key] = deck_urls[url_id]
+        for image in uploaded_images:
+            if image['description'] == url_id:
+                deck[url_key] = image['link']
 
     with open(filename, 'w', encoding='utf-8') as file:
         json_str = json.dumps(root, indent=2, ensure_ascii=False)
@@ -1125,13 +1145,15 @@ if args.step in [None, steps[0]]:
     write_csv()
 
 if args.step in [None, steps[1]]:
-    run_se()
+    generate_images()
 
 if args.step in [None, steps[2]]:
     pack_images()
 
 if args.step in [None, steps[3]]:
-    upload_deck_images()
-    process_player_cards(write_sced_card_object)
-    process_encounter_cards(write_sced_card_object, process_decks=True)
+    upload_images()
+
+if args.step in [None, steps[4]]:
+    process_player_cards(update_sced_card_object)
+    process_encounter_cards(update_sced_card_object, process_decks=True)
 
