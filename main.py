@@ -87,12 +87,14 @@ def get_se_faction(card, index):
 
 def get_se_cost(card):
     cost = get_field(card, 'cost', '-')
+    # NOTE: ADB uses -2 to indicate variable cost.
     if cost == -2:
         cost = 'X'
     return str(cost)
 
 def get_se_xp(card):
     rule = get_field(card, 'real_text', '')
+    # NOTE: Signature cards don't have xp indicator on cards.
     if 'deck only.' in rule:
         return 'None'
     return str(get_field(card, 'xp', 0))
@@ -718,6 +720,9 @@ def download_card(ahdb_id):
             cards.extend(json.loads(file.read()))
         for card in cards:
             ahdb[card['code']] = card
+
+    # NOTE: Patching some notable errors from ADB.
+    ahdb['01513']['subtype_code'] = 'weakness'
 
     return ahdb[ahdb_id]
 
