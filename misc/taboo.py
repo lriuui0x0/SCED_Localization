@@ -36,9 +36,7 @@ for lang in langs:
     for taboo in taboos:
         card = data[taboo['code']]
         card['code'] = f'{card["code"]}-t'
-        card['xp'] = card.get('xp', 0) + taboo.get('xp', 0)
         if 'text' in taboo:
-            card['WARNING'] = 'NOT UPDATED'
             taboo_text = taboo['text'].replace('\n', ' ')
             for entry in po:
                 taboo_text_variant = taboo_text.replace('“', '"').replace('”', '"')
@@ -46,9 +44,12 @@ for lang in langs:
                     taboo_text = entry.msgstr
                     break
             card['taboo_text'] = taboo_text
+        if 'xp' in taboo:
+            card['taboo_xp'] = taboo['xp']
+        card['WARNING'] = 'NOT UPDATED'
         translations[lang].append(card)
 
-    with open(f'translations/{lang}.json', 'w') as file:
+    with open(f'translations/{lang}.json', 'w', encoding='utf-8') as file:
         file.write(json.dumps(translations[lang], indent=2, ensure_ascii=False))
 
 try:

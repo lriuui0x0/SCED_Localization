@@ -34,8 +34,8 @@
     "duplicated_by": [
       "01550"
     ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité de cette carte indique désormais : « Désengagez-vous de chaque ennemi engagé avec vous et déplacez-vous vers un lieu connexe sans ennemi. »"
+    "taboo_text": "Mutée.\nLa capacité de cette carte indique désormais : « Désengagez-vous de chaque ennemi engagé avec vous et déplacez-vous vers un lieu connexe sans ennemi. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "tmm",
@@ -55,7 +55,7 @@
     "real_text": "[free]During your turn, if you are not engaged with any enemies, exhaust Pathfinder: Move to a connecting location.",
     "quantity": 2,
     "skill_agility": 1,
-    "xp": 3,
+    "xp": 1,
     "health_per_investigator": false,
     "deck_limit": 2,
     "real_slot": "",
@@ -68,7 +68,9 @@
     "double_sided": false,
     "octgn_id": "3d114b67-5461-4acf-9cb3-3dbd054d5975",
     "url": "https://fr.arkhamdb.com/card/02108",
-    "imagesrc": "/bundles/cards/02108.png"
+    "imagesrc": "/bundles/cards/02108.png",
+    "taboo_xp": 2,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "tece",
@@ -89,7 +91,7 @@
     "quantity": 2,
     "skill_combat": 1,
     "skill_agility": 1,
-    "xp": 3,
+    "xp": 2,
     "health_per_investigator": false,
     "deck_limit": 2,
     "slot": "Main",
@@ -102,7 +104,9 @@
     "double_sided": false,
     "octgn_id": "de2cf76a-1686-47f6-b683-d7967703b225",
     "url": "https://fr.arkhamdb.com/card/02152",
-    "imagesrc": "/bundles/cards/02152.png"
+    "imagesrc": "/bundles/cards/02152.png",
+    "taboo_xp": 1,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "bota",
@@ -120,7 +124,7 @@
     "text": "Permanent.\nTant que vous avez au moins 5 cartes en main, Études Supérieures gagnent :\n« [free] Dépensez 1 ressource : vous gagnez +2 [willpower] pour ce test de compétence.\n[free] Dépensez 1 ressource : vous gagnez +2 [intellect] pour ce test de compétence. »",
     "real_text": "Permanent.\nWhile you have 5 or more cards in your hand, Higher Education gains:\n\"[free] Spend 1 resource: You get +2 [willpower] for this skill test.\n[free] Spend 1 resource: You get +2 [intellect] for this skill test.\"",
     "quantity": 2,
-    "xp": 6,
+    "xp": 3,
     "health_per_investigator": false,
     "deck_limit": 2,
     "real_slot": "",
@@ -132,7 +136,9 @@
     "double_sided": false,
     "octgn_id": "244b0f20-4b87-4e48-b034-29dc07c192d1",
     "url": "https://fr.arkhamdb.com/card/02187",
-    "imagesrc": "/bundles/cards/02187.png"
+    "imagesrc": "/bundles/cards/02187.png",
+    "taboo_xp": 3,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "bota",
@@ -150,7 +156,7 @@
     "text": "Permanent.\n[free] Dépensez 2 ressources : vous gagnez +3 [intellect] pour ce test de compétence.\n[free] Dépensez 2 ressources : vous gagnez +3 [agility] pour ce test de compétence.",
     "real_text": "Permanent.\n[free] Spend 2 resources: You get +3 [intellect] for this skill test.\n[free] Spend 2 resources: You get +3 [agility] for this skill test.",
     "quantity": 2,
-    "xp": 6,
+    "xp": 3,
     "health_per_investigator": false,
     "deck_limit": 2,
     "real_slot": "",
@@ -162,7 +168,9 @@
     "double_sided": false,
     "octgn_id": "d2420579-a3de-46e2-b223-5300a271d415",
     "url": "https://fr.arkhamdb.com/card/02189",
-    "imagesrc": "/bundles/cards/02189.png"
+    "imagesrc": "/bundles/cards/02189.png",
+    "taboo_xp": 3,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "bota",
@@ -180,7 +188,7 @@
     "text": "Permanent.\n[free] Dépensez 1 ressource : vous gagnez +1 [combat] pour ce test de compétence.\n[free] Dépensez 1 ressource : vous gagnez +1 [agility] pour ce test de compétence.",
     "real_text": "Permanent.\n[free] Spend 1 resource: You get +1 [combat] for this skill test.\n[free] Spend 1 resource: You get +1 [agility] for this skill test.",
     "quantity": 2,
-    "xp": 4,
+    "xp": 3,
     "health_per_investigator": false,
     "deck_limit": 2,
     "real_slot": "",
@@ -192,7 +200,9 @@
     "double_sided": false,
     "octgn_id": "6b00da0c-2c80-4717-ac77-d33dfcef8a69",
     "url": "https://fr.arkhamdb.com/card/02193",
-    "imagesrc": "/bundles/cards/02193.png"
+    "imagesrc": "/bundles/cards/02193.png",
+    "taboo_xp": 1,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "uau",
@@ -227,8 +237,8 @@
     "octgn_id": "0ddd4332-6338-3470-3816-14e36d0acba0",
     "url": "https://fr.arkhamdb.com/card/02226",
     "imagesrc": "/bundles/cards/02226.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité [action] de cette carte gagne : « Cette attaque peut cibler un ennemi non-[[Élite]] éloigné jusqu’à un lieu de sa portée standard, en ignorant les mots-clés Distant et Riposte. »"
+    "taboo_text": "Mutée.\nLa capacité [action] de cette carte gagne : « Cette attaque peut cibler un ennemi non-[[Élite]] éloigné jusqu’à un lieu de sa portée standard, en ignorant les mots-clés Distant et Riposte. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "sha",
@@ -249,7 +259,7 @@
     "quantity": 2,
     "skill_combat": 2,
     "skill_wild": 1,
-    "xp": 6,
+    "xp": 5,
     "health_per_investigator": false,
     "deck_limit": 2,
     "slot": "Corps – Main x2",
@@ -262,7 +272,9 @@
     "double_sided": false,
     "octgn_id": "2d5a7b01-f50d-42a3-8db3-3c383cb17912",
     "url": "https://fr.arkhamdb.com/card/04305",
-    "imagesrc": "/bundles/cards/04305.png"
+    "imagesrc": "/bundles/cards/04305.png",
+    "taboo_xp": 1,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "wos",
@@ -300,8 +312,8 @@
     "octgn_id": "7d69d529-8921-4ab8-94d6-9602ef6aee5a",
     "url": "https://fr.arkhamdb.com/card/05153",
     "imagesrc": "/bundles/cards/05153.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité [fast] de cette carte est désormais une capacité [action]."
+    "taboo_text": "Mutée.\nLa capacité [fast] de cette carte est désormais une capacité [action].",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "wos",
@@ -321,7 +333,7 @@
     "real_text": "[reaction] When you initiate a skill test, exhaust Drawing Thin: Increase the difficulty of this skill test by 2. Gain 2 resources or draw 1 card.",
     "quantity": 2,
     "skill_willpower": 1,
-    "xp": 3,
+    "xp": 0,
     "health_per_investigator": false,
     "deck_limit": 2,
     "real_slot": "",
@@ -333,7 +345,9 @@
     "double_sided": false,
     "octgn_id": "e723c262-3e6b-4e60-a464-377dbc29a45f",
     "url": "https://fr.arkhamdb.com/card/05159",
-    "imagesrc": "/bundles/cards/05159.png"
+    "imagesrc": "/bundles/cards/05159.png",
+    "taboo_xp": 3,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "uad",
@@ -368,8 +382,8 @@
     "octgn_id": "d5b0032a-c405-4564-a4a4-afedd20df99b",
     "url": "https://fr.arkhamdb.com/card/05230",
     "imagesrc": "/bundles/cards/05230.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte perd le texte : « Le soutien attaché ne peut pas être utilisé pour attaquer des ennemis engagés avec vous. »"
+    "taboo_text": "Mutée.\nCette carte perd le texte : « Le soutien attaché ne peut pas être utilisé pour attaquer des ennemis engagés avec vous. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "uad",
@@ -390,7 +404,7 @@
     "quantity": 2,
     "skill_willpower": 1,
     "skill_intellect": 1,
-    "xp": 2,
+    "xp": 0,
     "health_per_investigator": false,
     "deck_limit": 2,
     "real_slot": "",
@@ -403,7 +417,9 @@
     "double_sided": false,
     "octgn_id": "89bc2232-5465-41e0-8ed9-3fccd32eb904",
     "url": "https://fr.arkhamdb.com/card/05231",
-    "imagesrc": "/bundles/cards/05231.png"
+    "imagesrc": "/bundles/cards/05231.png",
+    "taboo_xp": 2,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "bbt",
@@ -439,8 +455,8 @@
     "duplicated_by": [
       "01692"
     ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité de cette carte gagne : « Retirez Eucatastrophe de la partie. »"
+    "taboo_text": "Mutée.\nLa capacité de cette carte gagne : « Retirez Eucatastrophe de la partie. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "tde",
@@ -474,9 +490,8 @@
     "octgn_id": "dc7600e3-a132-42b0-b96b-67ca0cee4aff",
     "url": "https://fr.arkhamdb.com/card/06022",
     "imagesrc": "/bundles/cards/06022.png",
-    "xp": 0,
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité permanente de cette carte indique désormais : « Si cette carte n'a pas de charges, retirez-la de la partie. »"
+    "taboo_text": "Mutée.\nLa capacité permanente de cette carte indique désormais : « Si cette carte n'a pas de charges, retirez-la de la partie. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "dsm",
@@ -508,8 +523,8 @@
     "octgn_id": "583a859c-01f8-4a2f-b963-4bccef10ca34",
     "url": "https://fr.arkhamdb.com/card/06199",
     "imagesrc": "/bundles/cards/06199.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité de cette carte gagne : « Retirez de la partie chaque exemplaire de Brelan d'As attribué au test de compétence. »"
+    "taboo_text": "Mutée.\nLa capacité de cette carte gagne : « Retirez de la partie chaque exemplaire de Brelan d'As attribué au test de compétence. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "har",
@@ -530,7 +545,7 @@
     "real_text": "Uses (6 secrets). Limit 1 per deck.\n[free] Spend 1 secret: You get +2 skill value for this skill test.\n[free] Spend 2 secrets: Draw 2 cards.\n[free] Spend 3 secrets: Discover 1 clue at any location.\n[free] Spend 4 secrets: Deal 3 damage to an enemy engaged with you.",
     "quantity": 1,
     "skill_intellect": 5,
-    "xp": 8,
+    "xp": 5,
     "health_per_investigator": false,
     "deck_limit": 1,
     "slot": "Main",
@@ -542,7 +557,9 @@
     "permanent": false,
     "double_sided": false,
     "octgn_id": "a9f273be-3907-4d7d-881e-b5b6a77605dd",
-    "url": "https://fr.arkhamdb.com/card/60233"
+    "url": "https://fr.arkhamdb.com/card/60233",
+    "taboo_xp": 3,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "eotp",
@@ -563,7 +580,7 @@
     "real_text": "While David Renfield has at least 1 doom on him, you get +1 [willpower].\n[fast] Exhaust David Renfield: You may place 1 doom on David Renfield. Gain 1 resource for each doom on David Renfield.",
     "quantity": 2,
     "skill_intellect": 1,
-    "xp": 3,
+    "xp": 0,
     "health": 2,
     "health_per_investigator": false,
     "sanity": 1,
@@ -578,7 +595,9 @@
     "double_sided": false,
     "octgn_id": "83fc44d4-edfe-4fb3-a7f8-8e42244c7064",
     "url": "https://fr.arkhamdb.com/card/03112",
-    "imagesrc": "/bundles/cards/03112.png"
+    "imagesrc": "/bundles/cards/03112.png",
+    "taboo_xp": 3,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "hhg",
@@ -597,7 +616,7 @@
     "real_text": "Commit only to a skill test you are performing, and only if the difficulty of that test is higher than your base skill value.\nAfter you commit Signum Crucis to a skill test, add X [bless] tokens to the chaos bag. X is the difference between the test's difficulty and your base skill value.",
     "quantity": 2,
     "skill_wild": 1,
-    "xp": 0,
+    "xp": 2,
     "health_per_investigator": false,
     "deck_limit": 2,
     "traits": "Entraîné. Béni.",
@@ -608,7 +627,9 @@
     "double_sided": false,
     "octgn_id": "069e664e-0e0f-457b-aa50-e3f0c8735359",
     "url": "https://fr.arkhamdb.com/card/07197",
-    "imagesrc": "/bundles/cards/07197.png"
+    "imagesrc": "/bundles/cards/07197.png",
+    "taboo_xp": -2,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "itm",
@@ -628,7 +649,7 @@
     "real_text": "Either (choose one):\n- Add X [curse] tokens to the chaos bag to add X [bless] tokens to the chaos bag.\n- Remove X [curse] and X [bless] tokens from the chaos bag to heal X total horror from among cards at your location.",
     "quantity": 2,
     "skill_wild": 1,
-    "xp": 3,
+    "xp": 5,
     "health_per_investigator": false,
     "deck_limit": 2,
     "traits": "Sort. Béni. Maudit.",
@@ -640,7 +661,9 @@
     "double_sided": false,
     "octgn_id": "6d836ed1-fc30-4e1d-ba89-619971aea3c5",
     "url": "https://fr.arkhamdb.com/card/07308",
-    "imagesrc": "/bundles/cards/07308.png"
+    "imagesrc": "/bundles/cards/07308.png",
+    "taboo_xp": -2,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "eoep",
@@ -661,7 +684,7 @@
     "real_text": "You get +1 [intellect].\n[reaction] After Jeremiah Kirby enters play, choose \"even\" or \"odd:\" Reveal the top 5 cards of your deck. Draw each card with a cost that matches the chosen option. Shuffle the remaining cards into your deck.",
     "quantity": 2,
     "skill_intellect": 1,
-    "xp": 2,
+    "xp": 0,
     "health": 2,
     "health_per_investigator": false,
     "sanity": 1,
@@ -676,7 +699,9 @@
     "double_sided": false,
     "octgn_id": "b5b399d6-072b-428b-8dd5-85122d007aa2",
     "url": "https://fr.arkhamdb.com/card/08032",
-    "imagesrc": "/bundles/cards/08032.png"
+    "imagesrc": "/bundles/cards/08032.png",
+    "taboo_xp": 2,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "eoep",
@@ -700,7 +725,7 @@
     "quantity": 2,
     "skill_intellect": 1,
     "skill_agility": 1,
-    "xp": 5,
+    "xp": 3,
     "health": 2,
     "health_per_investigator": false,
     "sanity": 2,
@@ -715,7 +740,9 @@
     "double_sided": false,
     "octgn_id": "3ec817e4-3a54-4494-adc7-d362a4f74df8",
     "url": "https://fr.arkhamdb.com/card/08099",
-    "imagesrc": "/bundles/cards/08099.png"
+    "imagesrc": "/bundles/cards/08099.png",
+    "taboo_xp": 2,
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "lod",
@@ -747,8 +774,8 @@
     "octgn_id": "4543ebb4-35da-489f-bf9f-820e1078352c",
     "url": "https://fr.arkhamdb.com/card/07269",
     "imagesrc": "/bundles/cards/07269.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité de cette carte gagne : « Retirez Une Brève Accalmie de la partie. »"
+    "taboo_text": "Mutée.\nLa capacité de cette carte gagne : « Retirez Une Brève Accalmie de la partie. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "itm",
@@ -782,8 +809,8 @@
     "octgn_id": "a2642077-3897-4563-83f6-d4e26123768d",
     "url": "https://fr.arkhamdb.com/card/07301",
     "imagesrc": "/bundles/cards/07301.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité de cette carte gagne : « Retirez Sanctifier de la partie. »"
+    "taboo_text": "Mutée.\nLa capacité de cette carte gagne : « Retirez Sanctifier de la partie. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "core",
@@ -824,8 +851,8 @@
     "duplicated_by": [
       "01533"
     ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "This card’s [reaction] ability now reads: “After you successfully investigate, exhaust Dr. Milan Christopher...”"
+    "taboo_text": "This card’s [reaction] ability now reads: “After you successfully investigate, exhaust Dr. Milan Christopher...”",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "dwl",
@@ -914,9 +941,8 @@
     "url": "https://fr.arkhamdb.com/card/02002",
     "imagesrc": "/bundles/cards/02002.png",
     "backimagesrc": "/bundles/cards/02002b.png",
-    "xp": 0,
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité [reaction] de cette carte gagne : « Limite d’une fois par round. »"
+    "taboo_text": "Mutée.\nLa capacité [reaction] de cette carte gagne : « Limite d’une fois par round. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "tmm",
@@ -950,8 +976,8 @@
     "octgn_id": "e26a0dbf-cdf7-4c32-a80a-ffee470baaae",
     "url": "https://fr.arkhamdb.com/card/02111",
     "imagesrc": "/bundles/cards/02111.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte gagne : « Limite collective de 2 exemplaires de Creuser Trop Profondément dans la pile de victoire. »"
+    "taboo_text": "Mutée.\nCette carte gagne : « Limite collective de 2 exemplaires de Creuser Trop Profondément dans la pile de victoire. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "uau",
@@ -983,8 +1009,8 @@
     "octgn_id": "4f457cbf-7876-398d-8891-02d168d35117",
     "url": "https://fr.arkhamdb.com/card/02229",
     "imagesrc": "/bundles/cards/02229.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte gagne : « max. une fois par round. » à la fin de sa capacité."
+    "taboo_text": "Mutée.\nCette carte gagne : « max. une fois par round. » à la fin de sa capacité.",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "wda",
@@ -1016,8 +1042,8 @@
     "octgn_id": "0b63b793-9228-3e85-f368-25da786550b7",
     "url": "https://fr.arkhamdb.com/card/02266",
     "imagesrc": "/bundles/cards/02266.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte gagne : « max. une fois par round. »"
+    "taboo_text": "Mutée.\nCette carte gagne : « max. une fois par round. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "ptc",
@@ -1051,8 +1077,8 @@
     "octgn_id": "31c82a7c-e642-4c53-a1ad-13b589edac18",
     "url": "https://fr.arkhamdb.com/card/03029",
     "imagesrc": "/bundles/cards/03029.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité de cette carte indique désormais :\n« Mettez en jeu un soutien [[Objet]] de niveau 0 à 3 de votre main. »"
+    "taboo_text": "Mutée.\nLa capacité de cette carte indique désormais :\n« Mettez en jeu un soutien [[Objet]] de niveau 0 à 3 de votre main. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "dca",
@@ -1089,8 +1115,8 @@
     "octgn_id": "aeadfc53-16cd-4869-89eb-0f47908d7fe2",
     "url": "https://fr.arkhamdb.com/card/03315",
     "imagesrc": "/bundles/cards/03315.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte gagne le mot-clé Exceptionnel."
+    "taboo_text": "Mutée.\nCette carte gagne le mot-clé Exceptionnel.",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "sha",
@@ -1122,8 +1148,8 @@
     "octgn_id": "3394aa3b-c35a-49d3-b1b6-bc0bc0162ff9",
     "url": "https://fr.arkhamdb.com/card/04309",
     "imagesrc": "/bundles/cards/04309.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte gagne : « Retirez Le Tout pour le Tout de la partie. » à la fin de sa capacité."
+    "taboo_text": "Mutée.\nCette carte gagne : « Retirez Le Tout pour le Tout de la partie. » à la fin de sa capacité.",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "tsn",
@@ -1159,8 +1185,8 @@
     "octgn_id": "a9990ab5-25b1-40aa-9436-e24bd889bfd7",
     "url": "https://fr.arkhamdb.com/card/05116",
     "imagesrc": "/bundles/cards/05116.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité [action] de cette carte est désormais une capacité [fast]."
+    "taboo_text": "Mutée.\nLa capacité [action] de cette carte est désormais une capacité [fast].",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "fgg",
@@ -1194,8 +1220,8 @@
     "octgn_id": "f6e6bd79-7d2a-4ee8-a469-6e72ebbfa25c",
     "url": "https://fr.arkhamdb.com/card/05188",
     "imagesrc": "/bundles/cards/05188.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité [action] de cette carte est désormais une capacité [fast]."
+    "taboo_text": "Mutée.\nLa capacité [action] de cette carte est désormais une capacité [fast].",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "fgg",
@@ -1230,8 +1256,8 @@
     "octgn_id": "8c671c80-d9a1-400d-a11d-75678e3b5bd7",
     "url": "https://fr.arkhamdb.com/card/05189",
     "imagesrc": "/bundles/cards/05189.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité [action] de cette carte est désormais une capacité [fast]."
+    "taboo_text": "Mutée.\nLa capacité [action] de cette carte est désormais une capacité [fast].",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "dsm",
@@ -1270,8 +1296,8 @@
     "octgn_id": "56924231-f626-4110-a6cb-110051423225",
     "url": "https://fr.arkhamdb.com/card/06195",
     "imagesrc": "/bundles/cards/06195.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité [action] de cette carte dit désormais : « [action] Dépensez 1 munition : <b>Combattre</b>. Vous gagnez +2 [combat] pour cette attaque. Si un pion Chaos avec un modificateur non-négatif est révélé lors de cette attaque, cette attaque inflige +2 dégâts. »"
+    "taboo_text": "Mutée.\nLa capacité [action] de cette carte dit désormais : « [action] Dépensez 1 munition : <b>Combattre</b>. Vous gagnez +2 [combat] pour cette attaque. Si un pion Chaos avec un modificateur non-négatif est révélé lors de cette attaque, cette attaque inflige +2 dégâts. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "dwl",
@@ -1303,8 +1329,8 @@
     "octgn_id": "6804e6e3-6a7c-458c-a1b7-185bc4928f4c",
     "url": "https://fr.arkhamdb.com/card/02026",
     "imagesrc": "/bundles/cards/02026.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Interdite."
+    "taboo_text": "Interdite.",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "dwl",
@@ -1342,8 +1368,8 @@
     "duplicated_by": [
       "60405"
     ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole » au lieu de la liste de symboles indiqués."
+    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole » au lieu de la liste de symboles indiqués.",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "wda",
@@ -1378,8 +1404,8 @@
     "octgn_id": "015a2f11-fe7a-3aed-a970-76b6ee7db684",
     "url": "https://fr.arkhamdb.com/card/02269",
     "imagesrc": "/bundles/cards/02269.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole » au lieu de la liste de symboles indiqués."
+    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole » au lieu de la liste de symboles indiqués.",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "jac",
@@ -1411,8 +1437,8 @@
     "octgn_id": "43e01cef-8b84-4247-8257-f4f628a4c8e6",
     "url": "https://fr.arkhamdb.com/card/60416",
     "imagesrc": "/bundles/cards/60416.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole » au lieu de la liste de symboles indiqués."
+    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole » au lieu de la liste de symboles indiqués.",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "wda",
@@ -1451,8 +1477,8 @@
     "octgn_id": "33cfc081-1ed0-3c8e-1ad0-7cc2b9060f51",
     "url": "https://fr.arkhamdb.com/card/02263",
     "imagesrc": "/bundles/cards/02263.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité Combattre de cette carte indique désormais « +1 dégât » au lieu de  « +2 dégâts. »"
+    "taboo_text": "Mutée.\nLa capacité Combattre de cette carte indique désormais « +1 dégât » au lieu de  « +2 dégâts. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "ptc",
@@ -1539,9 +1565,8 @@
     "url": "https://fr.arkhamdb.com/card/03006",
     "imagesrc": "/bundles/cards/03006.png",
     "backimagesrc": "/bundles/cards/03006b.png",
-    "xp": 0,
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité Forcé de cette carte est déplacée sur son verso et indique désormais : « <b>Mise en Place Complémentaire</b> : Après avoir pioché votre main de départ : choisissez un rôle ([survivor], [guardian], [seeker], [rogue], [mystic], or Neutral). »\nDe plus, le recto de cette carte gagne : « [action]: Changez de rôle. Cette action ne provoque pas d'attaque d'opportunité. »"
+    "taboo_text": "Mutée.\nLa capacité Forcé de cette carte est déplacée sur son verso et indique désormais : « <b>Mise en Place Complémentaire</b> : Après avoir pioché votre main de départ : choisissez un rôle ([survivor], [guardian], [seeker], [rogue], [mystic], or Neutral). »\nDe plus, le recto de cette carte gagne : « [action]: Changez de rôle. Cette action ne provoque pas d'attaque d'opportunité. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "ptc",
@@ -1579,9 +1604,8 @@
     "octgn_id": "1364260b-3c1d-4931-bb8d-8cc976640d7f",
     "url": "https://fr.arkhamdb.com/card/03019",
     "imagesrc": "/bundles/cards/03019.png",
-    "xp": 0,
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité Révélation de cette carte indique désormais : « Défaussez une carte de votre rôle actuel depuis votre main ou de votre zone de jeu. Ensuite… »"
+    "taboo_text": "Mutée.\nLa capacité Révélation de cette carte indique désormais : « Défaussez une carte de votre rôle actuel depuis votre main ou de votre zone de jeu. Ensuite… »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "tfa",
@@ -1619,8 +1643,8 @@
     "duplicated_by": [
       "60417"
     ],
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole non-[elder_sign] » au lieu de « un symbole [skull], [cultist], [tablet], [elder_thing] ou [auto_fail]. »"
+    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole non-[elder_sign] » au lieu de « un symbole [skull], [cultist], [tablet], [elder_thing] ou [auto_fail]. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "tof",
@@ -1655,8 +1679,8 @@
     "octgn_id": "410909a0-d960-43ff-8cc1-b92c69b52c08",
     "url": "https://fr.arkhamdb.com/card/04110",
     "imagesrc": "/bundles/cards/04110.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole non-[auto_fail] » au lieu de « un symbole [skull], [cultist], [tablet] ou [elder_thing]. »"
+    "taboo_text": "Mutée.\nCette carte indique désormais « un symbole non-[auto_fail] » au lieu de « un symbole [skull], [cultist], [tablet] ou [elder_thing]. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "tde",
@@ -1751,9 +1775,8 @@
     "url": "https://fr.arkhamdb.com/card/06002",
     "imagesrc": "/bundles/cards/06002.png",
     "backimagesrc": "/bundles/cards/06002b.png",
-    "xp": 0,
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte investigateur indique désormais : « Taille du deck : 50 » et « Exigences du deck (ne comptent pas dans la limite de taille du deck) : 3 exemplaires de Preuve Occulte... »\","
+    "taboo_text": "Mutée.\nCette carte investigateur indique désormais : « Taille du deck : 50 » et « Exigences du deck (ne comptent pas dans la limite de taille du deck) : 3 exemplaires de Preuve Occulte... »\",",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "lod",
@@ -1789,8 +1812,8 @@
     "octgn_id": "a9c306cc-b82a-43e8-a6eb-5dbe309afa7c",
     "url": "https://fr.arkhamdb.com/card/07268",
     "imagesrc": "/bundles/cards/07268.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte perd le mot-clé Exceptionnel et gagne « Limite de 1 par deck. »"
+    "taboo_text": "Mutée.\nCette carte perd le mot-clé Exceptionnel et gagne « Limite de 1 par deck. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "eoep",
@@ -1825,8 +1848,8 @@
     "octgn_id": "01b9c020-cc85-4162-ac85-8424c707d570",
     "url": "https://fr.arkhamdb.com/card/08045",
     "imagesrc": "/bundles/cards/08045.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLa capacité permanente de cette carte indique désormais : “…vous gagnez +1 [intellect], +1 [agility] et vous avez le droit d'ignorer la première attaque d'opportunité que vous subissez à chaque round.”"
+    "taboo_text": "Mutée.\nLa capacité permanente de cette carte indique désormais : “…vous gagnez +1 [intellect], +1 [agility] et vous avez le droit d'ignorer la première attaque d'opportunité que vous subissez à chaque round.”",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "eoep",
@@ -1857,8 +1880,8 @@
     "octgn_id": "82c3218f-cd87-42d7-a2d3-068fbc8a67f1",
     "url": "https://fr.arkhamdb.com/card/08055",
     "imagesrc": "/bundles/cards/08055.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte gagne : « max. une fois par round. »"
+    "taboo_text": "Mutée.\nCette carte gagne : « max. une fois par round. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "eoep",
@@ -1895,8 +1918,8 @@
     "octgn_id": "86e023c2-9ce3-4285-ad91-92228094e6e9",
     "url": "https://fr.arkhamdb.com/card/08098",
     "imagesrc": "/bundles/cards/08098.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte indique désormais « actions basiques suivantes » au lieu de « action suivantes. »"
+    "taboo_text": "Mutée.\nCette carte indique désormais « actions basiques suivantes » au lieu de « action suivantes. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "eoep",
@@ -1934,8 +1957,8 @@
     "octgn_id": "8ff6fa90-3299-49ef-91a3-d160da2cf341",
     "url": "https://fr.arkhamdb.com/card/08100",
     "imagesrc": "/bundles/cards/08100.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nCette carte indique désormais « actions basiques suivantes » au lieu de « action suivantes. »"
+    "taboo_text": "Mutée.\nCette carte indique désormais « actions basiques suivantes » au lieu de « action suivantes. »",
+    "WARNING": "NOT UPDATED"
   },
   {
     "pack_code": "eoep",
@@ -1972,7 +1995,7 @@
     "octgn_id": "b1a10946-6c96-447a-9919-70f258792508",
     "url": "https://fr.arkhamdb.com/card/08093",
     "imagesrc": "/bundles/cards/08093.png",
-    "WARNING": "NOT UPDATED",
-    "taboo_text": "Mutée.\nLe texte entre parenthèses de cette carte indique désormais : « …(En cas de réussite avec une différence de 3 ou plus, vous avez le droit d'incliner le Marteau Cyclopéen pour infliger +2 dégâts et le déplacer jusqu'à 2 lieux en l'éloignant de vous, à la place.) »"
+    "taboo_text": "Mutée.\nLe texte entre parenthèses de cette carte indique désormais : « …(En cas de réussite avec une différence de 3 ou plus, vous avez le droit d'incliner le Marteau Cyclopéen pour infliger +2 dégâts et le déplacer jusqu'à 2 lieux en l'éloignant de vous, à la place.) »",
+    "WARNING": "NOT UPDATED"
   }
 ]
