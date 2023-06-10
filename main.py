@@ -1122,6 +1122,7 @@ def update_sced_card_object(object, metadata, card, filename, root):
             object['Description'] = name
         else:
             object['Nickname'] = name
+            object['Description'] = get_se_traits(card)
         print(f'Writing {name}...')
     else:
         print(f'Writing deck {deck_id}...')
