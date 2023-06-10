@@ -60,6 +60,8 @@ The main script runs in the following steps. Each step only requires persisted d
 
 5. *Update* the objects in the mod repositoires.
 
+6. *Commit* all of local filenames to match the updated image URL.
+
 Upon finishing the above steps, the mod repositories in the cache directory will have unstaged changes ready for you to commit. If you use your own fork, you also need to manually update the [repository URL](https://github.com/argonui/SCED/blob/545181308bdb9266e0ac16005f1d51ecbde043fb/src/core/Global.ttslua#L45) in the mod.
 
 ### Cache directory
@@ -79,6 +81,8 @@ The `SE_Generator` directory is a self-contained Strange Eons project. This mean
 ### Translation directory
 
 Some cards don't have direct entries on ArkhamDB, e.g. taboo cards, so we include their translation data in the `translations` folder. Each card will be assigned a special id. For taboo cards, the id will be the card id of the non-taboo version suffixed with `-t`.
+
+If you want to perform any language dependent transformation on generated text, you can add a `transform.py` file and declare the corresponding [transformation functions](https://github.com/lriuui0x0/SCED_Localization/blob/master/translations/zh/transform_CN.py). You will likely need to declare an entry for `transform_victory` at least.
 
 ### Dropbox access token
 

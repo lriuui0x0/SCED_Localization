@@ -2,4 +2,5 @@ __pycache__
 cache
 decks
 SE_Generator/data
-SE_Generator/build
+SE_Generator/cards
+SE_Generator/images*
