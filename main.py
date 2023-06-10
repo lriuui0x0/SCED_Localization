@@ -1151,10 +1151,12 @@ def commit_local_filenames():
     url_id_map = get_uploaded_images(url_id_map=True)
     for pattern in ['**/*.jpg', '**/*.png', '**/*.eon']:
         for filename in glob.glob(pattern, recursive=True):
-            print(f'Renaming {filename}...')
+            new_filename = filename
             for prev_url_id, curr_url_id in url_id_map.items():
-                new_filename = filename.replace(prev_url_id, curr_url_id)
-            os.rename(filename, new_filename)
+                new_filename = new_filename.replace(prev_url_id, curr_url_id)
+            if new_filename != filename:
+                print(f'Renaming {filename}...')
+                os.rename(filename, new_filename)
 
 if args.step in [None, steps[0]]:
     process_player_cards(translate_sced_card_object)
