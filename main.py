@@ -181,7 +181,6 @@ def get_se_copyright(card):
     pack = get_field(card, 'pack_code', None)
     year_map = {
         'core': '2016',
-        'rcore': '2020',
         'dwl': '2016',
         'tmm': '2016',
         'tece': '2016',
@@ -189,6 +188,14 @@ def get_se_copyright(card):
         'uau': '2016',
         'wda': '2016',
         'litas': '2016',
+        'rtnotz': '2017', 
+        'rtdwl': '2018',
+        'nat': '2019',
+        'har': '2019',
+        'win': '2019',
+        'jac': '2019',
+        'ste': '2019',
+        'rcore': '2020',
     }
     return f'<cop> {year_map[pack]} FFG'
 
@@ -196,7 +203,6 @@ def get_se_pack(card):
     pack = get_field(card, 'pack_code', None)
     pack_map = {
         'core': 'CoreSet',
-        'rcore': 'CoreSet',
         'dwl': 'TheDunwichLegacy',
         'tmm': 'TheDunwichLegacy',
         'tece': 'TheDunwichLegacy',
@@ -204,6 +210,14 @@ def get_se_pack(card):
         'uau': 'TheDunwichLegacy',
         'wda': 'TheDunwichLegacy',
         'litas': 'TheDunwichLegacy',
+        'rtnotz': 'ReturnToTheNightOfTheZealot', 
+        'rtdwl': 'ReturnToTheDunwichLegacy',
+        'nat': 'NathanielCho',
+        'har': 'HarveyWalters',
+        'win': 'WinifredHabbamock',
+        'jac': 'JacquelineFine',
+        'ste': 'StellaClark',
+        'rcore': 'CoreSet',
     }
     return pack_map[pack]
 
@@ -1015,26 +1029,26 @@ def generate_images():
 
 def pack_images():
     deck_images = {}
-    image_dir = 'SE_Generator/images'
-    for filename in os.listdir(image_dir):
-        print(f'Packing {filename}...')
-        result_id = filename.split('.')[0]
-        url, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
-        deck_image_filename = download_deck_image(url)
-        deck_url_id = encode_url(url)
-        if deck_url_id not in deck_images:
-            deck_images[deck_url_id] = Image.open(deck_image_filename)
-        deck_image = deck_images[deck_url_id]
-        card_image_filename = f'{image_dir}/{filename}'
-        card_image = Image.open(card_image_filename)
-        if rotate:
-            card_image = card_image.transpose(method=Image.Transpose.ROTATE_270)
-        width = deck_image.width // deck_w
-        height = deck_image.height // deck_h
-        left = deck_x * width
-        top = deck_y * height
-        card_image = card_image.resize((width, height))
-        deck_image.paste(card_image, box=(left, top))
+    for image_dir in glob.glob('SE_Generator/images*'):
+        for filename in os.listdir(image_dir):
+            print(f'Packing {filename}...')
+            result_id = filename.split('.')[0]
+            url, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
+            deck_image_filename = download_deck_image(url)
+            deck_url_id = encode_url(url)
+            if deck_url_id not in deck_images:
+                deck_images[deck_url_id] = Image.open(deck_image_filename)
+            deck_image = deck_images[deck_url_id]
+            card_image_filename = f'{image_dir}/{filename}'
+            card_image = Image.open(card_image_filename)
+            if rotate:
+                card_image = card_image.transpose(method=Image.Transpose.ROTATE_270)
+            width = deck_image.width // deck_w
+            height = deck_image.height // deck_h
+            left = deck_x * width
+            top = deck_y * height
+            card_image = card_image.resize((width, height))
+            deck_image.paste(card_image, box=(left, top))
 
     recreate_dir(args.deck_images_dir)
     for deck_url_id, deck_image in deck_images.items():
