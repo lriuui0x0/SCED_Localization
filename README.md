@@ -44,9 +44,9 @@ The script is `main.py` in the root directory. You can run `python main.py --hel
 
     These two paths point to the local mod repositories. If you don't provide them, the script will clone the [argonui/SCED](https://github.com/argonui/SCED) and [Chr1Z93/loadable-objects](https://github.com/Chr1Z93/loadable-objects) repsitories into the cache directory.
 
-- `--imgur-access-token`
+- `--dropbox-token`
 
-    The imgur access token for uploading deck images. Explained in more details below.
+    The Dropbox access token for uploading deck images. Explained in more details below.
 
 The main script runs in the following steps. Each step only requires persisted data generated from the previous steps, so if you kill the script half way, you should be able to continue from the last unfinished steps.
 
@@ -80,9 +80,7 @@ The `SE_Generator` directory is a self-contained Strange Eons project. This mean
 
 Some cards don't have direct entries on ArkhamDB, e.g. taboo cards, so we include their translation data in the `translations` folder. Each card will be assigned a special id. For taboo cards, the id will be the card id of the non-taboo version suffixed with `-t`.
 
-### Imgur access token
+### Dropbox access token
 
-To get an access token for imgur, you need to first [create an application](https://api.imgur.com/oauth2/addclient) (make sure selecting the no callback option), then use the [client id](https://imgur.com/account/settings/apps) to visit `https://api.imgur.com/oauth2/authorize?client_id=<client id>&response_type=token` and get the access token from the redirected URL.
-
-The access token may become expired after certain time and the script will fail at the beginning. In that case, you can simply generate a new access token to avoid the token refreshing procedure.
+To get an access token for Dropbox, you need to first [create an application](https://www.dropbox.com/developers/apps), then make sure you tick everything in the permissions tab. Generate an access token on the settings tab.
 

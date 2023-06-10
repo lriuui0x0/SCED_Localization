@@ -12,6 +12,8 @@ import requests
 import inspect
 import importlib
 import time
+import dropbox
+import uuid
 from PIL import Image
 
 steps = ['translate', 'generate', 'pack', 'upload', 'update']
@@ -26,7 +28,7 @@ parser.add_argument('--filter', default='True', help='A Python expression filter
 parser.add_argument('--step', default=None, choices=steps, help='The particular automation step to run')
 parser.add_argument('--repo-primary', default=None, help='The primary repository path for the SCED mod')
 parser.add_argument('--repo-secondary', default=None, help='The secondary repository path for the SCED mod')
-parser.add_argument('--imgur-access-token', default=None, help='The imgur access token for uploading translated deck images')
+parser.add_argument('--dropbox-token', default=None, help='The dropbox token for uploading translated deck images')
 args = parser.parse_args()
 
 def get_lang_code_region():
@@ -52,28 +54,6 @@ def process_lang(value):
     func_name = f'transform_{attr}'
     func = getattr(module, func_name, None)
     return func(value) if func else value
-
-def request_imgur(method, api, data=None):
-    if args.imgur_access_token is None:
-        raise Exception('Imgur access token not found.')
-    req = getattr(requests, method)
-    headers = {
-        'Authorization': f'Bearer {args.imgur_access_token}',
-    }
-    res = req(api, headers=headers, data=data)
-    limits = [int(res.headers[key]) for key in ['X-RateLimit-UserRemaining', 'X-RateLimit-ClientRemaining', 'X-Post-Rate-Limit-Remaining'] if key in res.headers]
-    danger = any(limit < 50 for limit in limits)
-    if danger:
-        raise Exception('Close to imgur rate limits.')
-    if res.status_code // 100 != 2: 
-        raise Exception(res.content)
-    return res.json()
-
-# NOTE: Run a protected API test to detect expired access token early.
-if args.imgur_access_token is not None:
-    res = request_imgur('get', 'https://api.imgur.com/3/account/me/settings')
-    if not res['success']:
-        raise Exception('Invalid imgur access token.')
 
 # NOTE: ADB data may contain explicit null fields, that should be treated the same as missing.
 def get_field(card, key, default):
@@ -1059,64 +1039,83 @@ def pack_images():
         deck_image = deck_image.convert('RGB')
         deck_image.save(f'{args.deck_images_dir}/{deck_url_id}.jpg', progressive=True, optimize=True)
 
-def upload_images():
-    # NOTE: Create an localized album if not already exists.
-    res = request_imgur('get', 'https://api.imgur.com/3/account/me/settings')
-    username = res['data']['account_url']
-    res = request_imgur('get', f'https://api.imgur.com/3/account/{username}/albums')
-    album_title = f'SCED localization deck images {args.lang}'
-    album_id = None
-    for album in res['data']:
-        if album['title'] == album_title:
-            album_id = album['id']
-            break
-    if album_id is None:
-        print('Creating album...')
-        res = request_imgur('post', 'https://api.imgur.com/3/album', {
-            'title': album_title,
-            # NOTE: Use a fixed image here to avoid imgur throwing HTTP 417 code when it cannot generate the cover for the album.
-            'cover': 'czPnwbw',
-        })
-        album_id = res['data']['id']
+def get_uploaded_folder():
+    dbx = dropbox.Dropbox(args.dropbox_token)
+    # NOTE: Create a folder if not already exists.
+    folder = f'/SCED_Localization_Deck_Images_{args.lang}'
+    try:
+        dbx.files_create_folder(folder)
+    except:
+        pass
+    return folder
 
-    res = request_imgur('get', 'https://api.imgur.com/3/account/me/images')
-    old_images = res['data']
+# NOTE: To attach metadata to dropbox, we need to create a property group template as the schema for the metadata first.
+def get_uploaded_property_template():
+    dbx = dropbox.Dropbox(args.dropbox_token)
+    if not dbx.file_properties_templates_list_for_user().template_ids:
+        property_field_template = dropbox.file_properties.PropertyFieldTemplate('prev_url_id', '', dropbox.file_properties.PropertyType.string)
+        dbx.file_properties_templates_add_for_user('SCED_Localization', '', [property_field_template])
+    return dbx.file_properties_templates_list_for_user().template_ids[0]
+
+def get_uploaded_image_url(image):
+    dbx = dropbox.Dropbox(args.dropbox_token)
+    # NOTE: Dropbox will reuse the old sharing link if there's already one exist.
+    url = dbx.sharing_create_shared_link(image.path_display, short_url=True).url
+    # NOTE: Get direct download link from the dropbox sharing link.
+    url = url.replace('?dl=0', '').replace('www.dropbox.com', 'dl.dropboxusercontent.com')
+    return url
+
+uploaded_images = {}
+def get_uploaded_images():
+    if not uploaded_images:
+        dbx = dropbox.Dropbox(args.dropbox_token)
+        folder = get_uploaded_folder()
+        property_template = get_uploaded_property_template()
+        for image in dbx.files_list_folder(folder, include_property_groups=dropbox.file_properties.TemplateFilterBase.filter_some([property_template])).entries:
+            print(f'Getting url for {image.path_display}...')
+            uploaded_images[image.path_display] = {
+                'curr_url_id': encode_url(get_uploaded_image_url(image)),
+                'prev_url_id':image.property_groups[0].fields[0].value,
+            }
+    return uploaded_images
+
+def upload_images():
+    dbx = dropbox.Dropbox(args.dropbox_token)
+    folder = get_uploaded_folder()
+    property_template = get_uploaded_property_template()
+    uploaded_images = get_uploaded_images()
+
+    # NOTE: Delete the old deck image either matching the current url (in the case of running the script again after the mod has been updated),
+    # or the previous url (in the case of simply uploading the images again under the same mod state).
     for filename in os.listdir(args.deck_images_dir):
         deck_url_id = filename.split('.')[0]
-        for image in old_images:
-            curr_url_id = encode_url(image['link'])
-            prev_url_id = image['description']
-            # NOTE: Delete the old deck image either matching the current url (in the case of running the script again after the mod has been updated),
-            # or the previous url (in the case of simply uploading the images again under the same mod state).
-            if deck_url_id in [curr_url_id, prev_url_id]:
+        for image_path, image in uploaded_images.items():
+            if deck_url_id in [image['curr_url_id'], image['prev_url_id']]:
                 print(f'Deleting old {filename}...')
-                request_imgur('delete', f'https://api.imgur.com/3/image/{image["id"]}')
+                dbx.files_delete(image_path)
+                del uploaded_images[image_path]
                 break
 
         print(f'Uploading {filename}...')
         with open(f'{args.deck_images_dir}/{filename}', 'rb') as file:
-            deck_image_data = base64.b64encode(file.read())
-            res = request_imgur('post', f'https://api.imgur.com/3/upload', {
-                'image': deck_image_data,
-                'type': 'base64',
-                'title': 'SCED localization deck image',
-                'description': deck_url_id,
-                'album': album_id,
-            })
-        # Wait for a while to not trigger the rate limit of 1250 POST requests per IP per hour.
-        time.sleep(3)
+            deck_image_data = file.read()
+            deck_image_filename = f'{folder}/{uuid.uuid4()}.jpg'
+            # NOTE: Add the previous url id as the image metadata.
+            property_template = get_uploaded_property_template()
+            property = dropbox.file_properties.PropertyGroup(property_template, [dropbox.file_properties.PropertyField('prev_url_id', deck_url_id)])
+            image = dbx.files_upload(deck_image_data, deck_image_filename, property_groups=[property])
+            uploaded_images[image.path_display] = {
+                'curr_url_id': encode_url(get_uploaded_image_url(image)),
+                'prev_url_id':deck_url_id
+            }
 
-uploaded_images = []
 def update_sced_card_object(object, metadata, card, filename, root):
-    if not len(uploaded_images):
-        res = request_imgur('get', 'https://api.imgur.com/3/account/me/images')
-        uploaded_images.extend(res['data'])
-
+    uploaded_images = get_uploaded_images()
     deck_id, deck = get_deck(object)
     if card:
         name = get_se_front_name(card)
         xp = get_se_xp(card)
-        if xp != '0':
+        if xp not in ['0', 'None']:
             name += f' ({xp})'
         # NOTE: The scenario card names are saved in the 'Description' field in SCED used for the scenario splash screen.
         if object['Nickname'] == 'Scenario':
@@ -1129,9 +1128,9 @@ def update_sced_card_object(object, metadata, card, filename, root):
 
     for url_key in ('FaceURL', 'BackURL'):
         url_id = encode_url(deck[url_key])
-        for image in uploaded_images:
-            if image['description'] == url_id:
-                deck[url_key] = image['link']
+        for image_path, image in uploaded_images.items():
+            if image['prev_url_id'] == url_id:
+                deck[url_key] = decode_url(image['curr_url_id'])
 
     with open(filename, 'w', encoding='utf-8') as file:
         json_str = json.dumps(root, indent=2, ensure_ascii=False)
