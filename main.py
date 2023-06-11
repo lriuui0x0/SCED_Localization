@@ -144,6 +144,7 @@ def get_se_slot(card, index):
         'Ally': 'Ally',
         'Body': 'Body',
         'Accessory': 'Accessory',
+        'Tarot': 'Tarot',
     }
     slots = get_field(card, 'real_slot', '')
     slots = [slot_map[slot.strip()] for slot in slots.split('.') if slot.strip()]
