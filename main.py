@@ -7,28 +7,27 @@ import shutil
 import subprocess
 import re
 import base64
-import urllib.request
 import requests
 import inspect
 import importlib
+import urllib.request
 import time
 import dropbox
 import uuid
 import glob
 from PIL import Image
 
-steps = ['translate', 'generate', 'pack', 'upload', 'update', 'commit']
+steps = ['translate', 'generate', 'pack', 'upload', 'update']
 langs = ['es', 'de', 'it', 'fr', 'ko', 'uk', 'pl', 'ru', 'zh_TW', 'zh_CN']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--lang', default='zh_CN', choices=langs, help='The language to translate into')
 parser.add_argument('--se-executable', default=r'C:\Program Files\StrangeEons\bin\eons.exe', help='The Strange Eons executable path')
-parser.add_argument('--cache-dir', default='cache', help='The directory to keep intermediate resources during processing')
-parser.add_argument('--deck-images-dir', default='decks', help='The directory to keep translated deck images')
 parser.add_argument('--filter', default='True', help='A Python expression filter for what cards to process')
+parser.add_argument('--cache-dir', default='cache', help='The directory to keep intermediate resources during processing')
+parser.add_argument('--decks-dir', default='decks', help='The directory to keep translated deck images')
+parser.add_argument('--mod-dir', default=None, help='The directory to the mod repository')
 parser.add_argument('--step', default=None, choices=steps, help='The particular automation step to run')
-parser.add_argument('--repo-primary', default=None, help='The primary repository path for the SCED mod')
-parser.add_argument('--repo-secondary', default=None, help='The secondary repository path for the SCED mod')
 parser.add_argument('--dropbox-token', default=None, help='The dropbox token for uploading translated deck images')
 args = parser.parse_args()
 
@@ -188,8 +187,16 @@ def get_se_copyright(card):
         'uau': '2016',
         'wda': '2016',
         'litas': '2016',
+        'ptc': '2017',
+        'eotp': '2017',
+        'tuo': '2017',
+        'apot': '2017',
+        'tpm': '2017',
+        'bsr': '2017',
+        'dca': '2017',
         'rtnotz': '2017', 
         'rtdwl': '2018',
+        'rtptc': '2019',
         'nat': '2019',
         'har': '2019',
         'win': '2019',
@@ -210,8 +217,16 @@ def get_se_pack(card):
         'uau': 'TheDunwichLegacy',
         'wda': 'TheDunwichLegacy',
         'litas': 'TheDunwichLegacy',
+        'ptc': 'ThePathToCarcosa',
+        'eotp': 'ThePathToCarcosa',
+        'tuo': 'ThePathToCarcosa',
+        'apot': 'ThePathToCarcosa',
+        'tpm': 'ThePathToCarcosa',
+        'bsr': 'ThePathToCarcosa',
+        'dca': 'ThePathToCarcosa',
         'rtnotz': 'ReturnToTheNightOfTheZealot', 
         'rtdwl': 'ReturnToTheDunwichLegacy',
+        'rtptc': 'ReturnToThePathToCarcosa',
         'nat': 'NathanielCho',
         'har': 'HarveyWalters',
         'win': 'WinifredHabbamock',
@@ -707,14 +722,16 @@ def recreate_dir(dir):
 
 ahdb = {}
 def download_card(ahdb_id):
-    ensure_dir(args.cache_dir)
+    ahdb_folder = f'{args.cache_dir}/ahdb'
+    ensure_dir(ahdb_folder)
     lang_code, _ = get_lang_code_region()
-    filename = f'{args.cache_dir}/ahdb-{lang_code}.json'
-
+    filename = f'{ahdb_folder}/{lang_code}.json'
     if not os.path.isfile(filename):
         print(f'Downloading ArkhamDB data...')
-        urllib.request.urlretrieve(f'https://{lang_code}.arkhamdb.com/api/public/cards/?encounter=1', filename)
-
+        res = requests.get(f'https://{lang_code}.arkhamdb.com/api/public/cards/?encounter=1').json()
+        with open(filename, 'w', encoding='utf-8') as file:
+            json_str = json.dumps(res, indent=2, ensure_ascii=False)
+            file.write(json_str)
     if not len(ahdb):
         print(f'Processing ArkhamDB data...')
         cards = []
@@ -730,32 +747,65 @@ def download_card(ahdb_id):
 
     return ahdb[ahdb_id]
 
-# NOTE: Use base32 to encode URL so we don't generate characters like '/' or '-' hence can be used as filenames.
-def encode_url(url):
-    return base64.b32encode(url.encode('ascii')).decode('ascii')
+url_map = None
+def load_url_map():
+    global url_map
+    ensure_dir(args.cache_dir)
+    filename = f'{args.cache_dir}/urls.json'
+    if not os.path.isfile(filename):
+        with open(filename, 'w', encoding='utf-8') as file:
+            json_str = json.dumps({}, indent=2, ensure_ascii=False)
+            file.write(json_str)
+    if url_map is None:
+        with open(filename, 'r', encoding='utf-8') as file:
+            url_map = json.loads(file.read())
+    return url_map
 
-def decode_url(url_id):
-    return base64.b32decode(url_id.encode('ascii')).decode('ascii')
+def save_url_map():
+    global url_map
+    ensure_dir(args.cache_dir)
+    filename = f'{args.cache_dir}/urls.json'
+    if url_map is not None:
+        with open(filename, 'w', encoding='utf-8') as file:
+            json_str = json.dumps(url_map, indent=2, ensure_ascii=False)
+            file.write(json_str)
 
-def encode_result_id(url, deck_w, deck_h, deck_x, deck_y, rotate, sheet):
-    return f'{encode_url(url)}-{deck_w}-{deck_h}-{deck_x}-{deck_y}-{1 if rotate else 0}-{sheet}'
+def get_url_id(url):
+    global url_map
+    url_map = load_url_map()
+    if url in url_map:
+        return url_map[url]
+    url_map[url] = str(uuid.uuid4()).replace('-', '')
+    save_url_map()
+    return url_map[url]
+
+def add_url_id(url, url_id):
+    global url_map
+    url_map = load_url_map()
+    url_map[url] = url_id
+    save_url_map()
+
+def encode_result_id(url_id, deck_w, deck_h, deck_x, deck_y, rotate, sheet):
+    return f'{url_id}-{deck_w}-{deck_h}-{deck_x}-{deck_y}-{1 if rotate else 0}-{sheet}'
 
 def decode_result_id(result_id):
     parts = result_id.split('-')
-    return decode_url(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]), int(parts[4]), bool(int(parts[5])), int(parts[6])
+    return parts[0], int(parts[1]), int(parts[2]), int(parts[3]), int(parts[4]), bool(int(parts[5])), int(parts[6])
 
 def download_deck_image(url):
-    ensure_dir(args.cache_dir)
-    url_id = encode_url(url)
-    filename = f'{args.cache_dir}/{url_id}.jpg'
+    decks_folder = f'{args.cache_dir}/decks'
+    ensure_dir(decks_folder)
+    url_id = get_url_id(url)
+    filename = f'{decks_folder}/{url_id}.jpg'
     if not os.path.isfile(filename):
         print(f'Downloading {url_id}.jpg...')
         urllib.request.urlretrieve(url, filename)
     return filename
 
 def crop_card_image(result_id, deck_image_filename):
-    ensure_dir(args.cache_dir)
-    filename = f'{args.cache_dir}/{result_id}.png'
+    cards_folder = f'{args.cache_dir}/cards'
+    ensure_dir(cards_folder)
+    filename = f'{cards_folder}/{result_id}.png'
     if not os.path.isfile(filename):
         print(f'Cropping {result_id}.png...')
         _, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
@@ -794,13 +844,14 @@ se_types = [
 se_cards = dict(zip(se_types, [[] for _ in range(len(se_types))]))
 result_set = set()
 
-def get_deck(object):
-    deck_id = int(list(object['CustomDeck'].keys())[0])
-    deck = list(object['CustomDeck'].values())[0]
-    return deck_id, deck
+def get_decks(object):
+    decks = []
+    for deck_id, deck in object['CustomDeck'].items():
+        decks.append((int(deck_id), deck))
+    return decks
 
 def translate_sced_card_object(object, metadata, card, _1, _2):
-    deck_id, deck = get_deck(object)
+    deck_id, deck = get_decks(object)[0]
     deck_w = deck['NumWidth']
     deck_h = deck['NumHeight']
     deck_xy = object['CardID'] % 100
@@ -815,7 +866,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
         # front are generated for front, back for back for the location cards. Some location cards only have single face, so they need to be special cased.
         if card_type == 'location' and card['code'] not in ['02214', '02324', '02325', '02326', '02327', '02328']:
             sheet = 1 - sheet
-        result_id = encode_result_id(url, deck_w, deck_h, deck_x, deck_y, rotate, sheet)
+        result_id = encode_result_id(get_url_id(url), deck_w, deck_h, deck_x, deck_y, rotate, sheet)
         if result_id in result_set:
             return
         print(f'Translating {result_id}...')
@@ -941,7 +992,7 @@ def is_id_translatable(ahdb_id):
     return '-' not in ahdb_id or ahdb_id.endswith('-t')
 
 def process_player_cards(callback):
-    repo_folder = download_repo(args.repo_primary, 'argonui/SCED')
+    repo_folder = download_repo(args.mod_dir, 'argonui/SCED')
     player_folder = f'{repo_folder}/objects/AllPlayerCards.15bb07'
     for filename in os.listdir(player_folder):
         if filename.endswith('.gmnotes'):
@@ -958,8 +1009,8 @@ def process_player_cards(callback):
                         callback(object, metadata, card, object_filename, object)
 
 def process_encounter_cards(callback, **kwargs):
-    process_decks = kwargs.get('process_decks', False)
-    repo_folder = download_repo(args.repo_secondary, 'Chr1Z93/loadable-objects')
+    include_decks = kwargs.get('include_decks', False)
+    repo_folder = download_repo(args.mod_dir, 'Chr1Z93/loadable-objects')
     folders = ['campaigns', 'scenarios']
     # NOTE: These campaigns don't have data on ADB yet.
     skip_files = [
@@ -977,7 +1028,7 @@ def process_encounter_cards(callback, **kwargs):
             with open(campaign_filename, 'r', encoding='utf-8') as object_file:
                 def find_encounter_objects(object):
                     if type(object) == dict:
-                        if process_decks and object.get('Name', None) == 'Deck':
+                        if include_decks and object.get('Name', None) == 'Deck':
                             results = find_encounter_objects(object['ContainedObjects'])
                             results.append(object)
                             return results
@@ -1029,13 +1080,19 @@ def generate_images():
 
 def pack_images():
     deck_images = {}
+    url_map = load_url_map()
     for image_dir in glob.glob('SE_Generator/images*'):
         for filename in os.listdir(image_dir):
             print(f'Packing {filename}...')
             result_id = filename.split('.')[0]
-            url, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
-            deck_image_filename = download_deck_image(url)
-            deck_url_id = encode_url(url)
+            deck_url_id, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
+            deck_url = None
+            for url, url_id in url_map.items():
+                if url_id == deck_url_id and 'steamusercontent.com' in url:
+                    deck_url = url
+            if not deck_url:
+                raise Exception(f'Cannot find deck id {deck_url_id} in the url map.')
+            deck_image_filename = download_deck_image(deck_url)
             if deck_url_id not in deck_images:
                 deck_images[deck_url_id] = Image.open(deck_image_filename)
             deck_image = deck_images[deck_url_id]
@@ -1050,11 +1107,12 @@ def pack_images():
             card_image = card_image.resize((width, height))
             deck_image.paste(card_image, box=(left, top))
 
-    recreate_dir(args.deck_images_dir)
+    decks_dir = f'{args.decks_dir}/{args.lang}'
+    recreate_dir(decks_dir)
     for deck_url_id, deck_image in deck_images.items():
         print(f'Writing {deck_url_id}.jpg...')
         deck_image = deck_image.convert('RGB')
-        deck_image.save(f'{args.deck_images_dir}/{deck_url_id}.jpg', progressive=True, optimize=True)
+        deck_image.save(f'{decks_dir}/{deck_url_id}.jpg', progressive=True, optimize=True)
 
 def get_uploaded_folder():
     dbx = dropbox.Dropbox(args.dropbox_token)
@@ -1066,14 +1124,6 @@ def get_uploaded_folder():
         pass
     return folder
 
-# NOTE: To attach metadata to dropbox, we need to create a property group template as the schema for the metadata first.
-def get_uploaded_property_template():
-    dbx = dropbox.Dropbox(args.dropbox_token)
-    if not dbx.file_properties_templates_list_for_user().template_ids:
-        property_field_template = dropbox.file_properties.PropertyFieldTemplate('prev_url_id', '', dropbox.file_properties.PropertyType.string)
-        dbx.file_properties_templates_add_for_user('SCED_Localization', '', [property_field_template])
-    return dbx.file_properties_templates_list_for_user().template_ids[0]
-
 def get_uploaded_image_url(image):
     dbx = dropbox.Dropbox(args.dropbox_token)
     # NOTE: Dropbox will reuse the old sharing link if there's already one exist.
@@ -1082,60 +1132,36 @@ def get_uploaded_image_url(image):
     url = url.replace('?dl=0', '').replace('www.dropbox.com', 'dl.dropboxusercontent.com')
     return url
 
-uploaded_images = {}
-def get_uploaded_images(**kwargs):
-    url_id_map = kwargs.get('url_id_map', False)
-    if not uploaded_images:
-        dbx = dropbox.Dropbox(args.dropbox_token)
-        folder = get_uploaded_folder()
-        property_template = get_uploaded_property_template()
-        for image in dbx.files_list_folder(folder, include_property_groups=dropbox.file_properties.TemplateFilterBase.filter_some([property_template])).entries:
-            print(f'Getting image data for {image.path_display}...')
-            uploaded_images[image.path_display] = {
-                'curr_url_id': encode_url(get_uploaded_image_url(image)),
-                'prev_url_id':image.property_groups[0].fields[0].value,
-            }
-    if url_id_map:
-        result = {}
-        for _, image in uploaded_images.items():
-            result[image['prev_url_id']] = image['curr_url_id']
-        return result
-    else:
-        return uploaded_images
-
 def upload_images():
     dbx = dropbox.Dropbox(args.dropbox_token)
     folder = get_uploaded_folder()
-    property_template = get_uploaded_property_template()
-    uploaded_images = get_uploaded_images()
-
-    # NOTE: Delete the old deck image either matching the current url (in the case of running the script again after the mod has been updated),
-    # or the previous url (in the case of simply uploading the images again under the same mod state).
-    for filename in os.listdir(args.deck_images_dir):
-        deck_url_id = filename.split('.')[0]
-        for image_path, image in uploaded_images.items():
-            if deck_url_id in (image['curr_url_id'], image['prev_url_id']):
-                print(f'Deleting old {filename}...')
-                dbx.files_delete(image_path)
-                del uploaded_images[image_path]
-                break
-
+    decks_dir = f'{args.decks_dir}/{args.lang}'
+    for filename in os.listdir(decks_dir):
         print(f'Uploading {filename}...')
-        with open(f'{args.deck_images_dir}/{filename}', 'rb') as file:
+        with open(f'{decks_dir}/{filename}', 'rb') as file:
             deck_image_data = file.read()
-            deck_image_filename = f'{folder}/{uuid.uuid4()}.jpg'
-            # NOTE: Add the previous url id as the image metadata.
-            property_template = get_uploaded_property_template()
-            property = dropbox.file_properties.PropertyGroup(property_template, [dropbox.file_properties.PropertyField('prev_url_id', deck_url_id)])
-            image = dbx.files_upload(deck_image_data, deck_image_filename, property_groups=[property])
-            uploaded_images[image.path_display] = {
-                'curr_url_id': encode_url(get_uploaded_image_url(image)),
-                'prev_url_id':deck_url_id
-            }
+            deck_filename = f'{folder}/{filename}'
+            # NOTE: Setting overwrite to true so that the old deck image is replaced, and the sharing link still maintains.
+            image = dbx.files_upload(deck_image_data, deck_filename, mode=dropbox.files.WriteMode.overwrite)
+            url = get_uploaded_image_url(image)
+            url_id = filename.split('.')[0]
+            add_url_id(url, url_id)
 
+uploaded_images = {}
+def get_uploaded_images():
+    if not uploaded_images:
+        dbx = dropbox.Dropbox(args.dropbox_token)
+        folder = get_uploaded_folder()
+        for image in dbx.files_list_folder(folder).entries:
+            print(f'Getting image data for {image.path_display}...')
+            url_id = image.path_display.split('/')[-1].split('.')[0]
+            uploaded_images[url_id] = get_uploaded_image_url(image)
+    return uploaded_images
+
+updated_files = {}
 def update_sced_card_object(object, metadata, card, filename, root):
-    url_id_map = get_uploaded_images(url_id_map=True)
-    deck_id, deck = get_deck(object)
+    url_id_map = get_uploaded_images()
+    updated_files[filename] = root
     if card:
         name = get_se_front_name(card)
         xp = get_se_xp(card)
@@ -1146,31 +1172,23 @@ def update_sced_card_object(object, metadata, card, filename, root):
             object['Description'] = name
         else:
             object['Nickname'] = name
-            object['Description'] = get_se_traits(card)
-        print(f'Writing {name}...')
-    else:
-        print(f'Writing deck {deck_id}...')
-    for url_key in ('FaceURL', 'BackURL'):
-        url_id = encode_url(deck[url_key])
-        if url_id in url_id_map:
-            deck[url_key] = decode_url(url_id_map[url_id])
+            object['Description'] = re.sub(r'<[^>]*>', '', get_se_traits(card))
+        print(f'Updating {name}...')
 
-    with open(filename, 'w', encoding='utf-8') as file:
-        json_str = json.dumps(root, indent=2, ensure_ascii=False)
-        # NOTE: Reverse the lower case scientific notation 'e' to upper case, in order to be consistent with those generated by TTS.
-        json_str = re.sub(r'(\d+)e-(\d\d)', r'\1E-\2', json_str)
-        file.write(json_str)
+    for _, deck in get_decks(object):
+        for url_key in ('FaceURL', 'BackURL'):
+            url_id = get_url_id(deck[url_key])
+            if url_id in url_id_map:
+                deck[url_key] = url_id_map[url_id]
 
-def commit_local_filenames():
-    url_id_map = get_uploaded_images(url_id_map=True)
-    for pattern in ['**/*.jpg', '**/*.png', '**/*.eon']:
-        for filename in glob.glob(pattern, recursive=True):
-            new_filename = filename
-            for prev_url_id, curr_url_id in url_id_map.items():
-                new_filename = new_filename.replace(prev_url_id, curr_url_id)
-            if new_filename != filename:
-                print(f'Renaming {filename}...')
-                os.rename(filename, new_filename)
+def update_sced_files():
+    for filename, root in updated_files.items():
+        with open(filename, 'w', encoding='utf-8') as file:
+            print(f'Writing {filename}...')
+            json_str = json.dumps(root, indent=2, ensure_ascii=False)
+            # NOTE: Reverse the lower case scientific notation 'e' to upper case, in order to be consistent with those generated by TTS.
+            json_str = re.sub(r'(\d+)e-(\d\d)', r'\1E-\2', json_str)
+            file.write(json_str)
 
 if args.step in [None, steps[0]]:
     process_player_cards(translate_sced_card_object)
@@ -1188,8 +1206,6 @@ if args.step in [None, steps[3]]:
 
 if args.step in [None, steps[4]]:
     process_player_cards(update_sced_card_object)
-    process_encounter_cards(update_sced_card_object, process_decks=True)
-
-if args.step in [None, steps[5]]:
-    commit_local_filenames()
+    process_encounter_cards(update_sced_card_object, include_decks=True)
+    update_sced_files()
 
