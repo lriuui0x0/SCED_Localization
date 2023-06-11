@@ -189,7 +189,7 @@ def get_se_illustrator(card):
 
 def get_se_copyright(card):
     pack = get_field(card, 'pack_code', None)
-    # NOTE: This list is maintained in the product id order.
+    # NOTE: This list is maintained in the product id order, then print-and-play cards.
     year_map = {
         'core': '2016',
         'dwl': '2016',
@@ -246,6 +246,11 @@ def get_se_copyright(card):
         'rcore': '2020',
         'rttcu': '2021',
         'eoep': '2021',
+        'rod': '2020',
+        'aon': '2020',
+        'bad': '2020',
+        'btb': '2021',
+        'rtr': '2021',
     }
     return f'<cop> {year_map[pack]} FFG'
 
@@ -307,6 +312,11 @@ def get_se_pack(card):
         'rcore': 'CoreSet',
         'rttcu': 'ReturnToTheCircleUndone',
         'eoep': 'EdgeOfTheEarthInv',
+        'rod': 'ParallelInvestigators',
+        'aon': 'ParallelInvestigators',
+        'bad': 'ParallelInvestigators',
+        'btb': 'ParallelInvestigators',
+        'rtr': 'ParallelInvestigators',
     }
     return pack_map[pack]
 
