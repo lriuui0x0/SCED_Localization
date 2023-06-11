@@ -156,11 +156,19 @@ def get_se_slot(card, index):
 
 def get_se_health(card):
     sanity = get_field(card, 'sanity', 'None')
-    return str(get_field(card, 'health', '-' if sanity != 'None' else 'None'))
+    health = get_field(card, 'health', '-' if sanity != 'None' else 'None')
+    # NOTE: ADB uses -2 to indicate variable health.
+    if health == -2:
+        health = 'Star'
+    return str(health)
 
 def get_se_sanity(card):
     health = get_field(card, 'health', 'None')
-    return str(get_field(card, 'sanity', '-' if health != 'None' else 'None'))
+    sanity = get_field(card, 'sanity', '-' if health != 'None' else 'None')
+    # NOTE: ADB uses -2 to indicate variable sanity.
+    if sanity == -2:
+        sanity = 'Star'
+    return str(sanity)
 
 def get_se_enemy_damage(card):
     return str(get_field(card, 'enemy_damage', 0))
