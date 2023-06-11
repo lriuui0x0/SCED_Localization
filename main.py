@@ -1177,9 +1177,8 @@ def update_sced_card_object(object, metadata, card, filename, root):
 
     for _, deck in get_decks(object):
         for url_key in ('FaceURL', 'BackURL'):
-            url_id = get_url_id(deck[url_key])
-            if url_id in url_id_map:
-                deck[url_key] = url_id_map[url_id]
+            if deck[url_key] in url_id_map:
+                deck[url_key] = url_id_map[deck[url_key]]
 
 def update_sced_files():
     for filename, root in updated_files.items():
