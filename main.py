@@ -1061,9 +1061,9 @@ def download_repo(repo_folder, repo):
         subprocess.run(['git', 'clone', '--quiet', f'https://github.com/{repo}.git', repo_folder])
     return repo_folder
 
-# TODO: Remove this check, for minicards, parallels
-def is_id_translatable(ahdb_id):
-    return '-' not in ahdb_id or ahdb_id.endswith('-t')
+def is_translation_available(ahdb_id):
+    # NOTE: Skip minicards or parallel cards.
+    return not any(suffix in ahdb_id for suffix in ('-m', '-p', '-pf', '-pb'))
 
 def process_player_cards(callback):
     repo_folder = download_repo(args.mod_dir, 'argonui/SCED')
@@ -1074,7 +1074,7 @@ def process_player_cards(callback):
             with open(metadata_filename, 'r', encoding='utf-8') as metadata_file:
                 metadata = json.loads(metadata_file.read())
                 ahdb_id = metadata['id']
-                if is_id_translatable(ahdb_id):
+                if is_translation_available(ahdb_id):
                     card = download_card(ahdb_id)
                     if eval(args.filter):
                         object_filename = metadata_filename.replace('.gmnotes', '.json')
@@ -1127,7 +1127,7 @@ def process_encounter_cards(callback, **kwargs):
                     else:
                         metadata = json.loads(object['GMNotes'])
                         ahdb_id = metadata['id']
-                        if is_id_translatable(ahdb_id):
+                        if is_translation_available(ahdb_id):
                             card = download_card(ahdb_id)
                             if eval(args.filter):
                                 callback(object, metadata, card, campaign_filename, campaign)
