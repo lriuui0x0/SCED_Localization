@@ -38,8 +38,8 @@ def get_lang_code_region():
     else:
         return parts[0], ''
 
-def process_lang(value):
-    # NOTE: Import language dependent processing functions.
+def import_lang_module():
+    # NOTE: Import language dependent functions.
     lang_code, region = get_lang_code_region()
     lang_folder = f'translations/{lang_code}'
     if lang_folder not in sys.path:
@@ -48,11 +48,13 @@ def process_lang(value):
     if region:
         module_name += f'_{region}'
     try:
-        module = importlib.import_module(module_name)
+        return importlib.import_module(module_name)
     except:
-        pass
+        return None
 
+def transform_lang(value):
     # NOTE: Get the corresponding process function from stack frame. Therefore it's important to call this function from the correct 'get_se_xxx' function.
+    module = import_lang_module()
     attr = inspect.stack()[1].function.replace('get_se_', '')
     func_name = f'transform_{attr}'
     func = getattr(module, func_name, None)
@@ -424,7 +426,7 @@ def get_se_unique(card):
     return '1' if get_field(card, 'is_unique', False) or card['type_code'] == 'investigator' else '0'
 
 def get_se_name(name):
-    return process_lang(name)
+    return transform_lang(name)
 
 def get_se_front_name(card):
     name = get_field(card, 'name', '')
@@ -446,7 +448,7 @@ def get_se_traits(card):
     traits = get_field(card, 'traits', '')
     traits = [f'{trait.strip()}.' for trait in traits.split('.') if trait.strip()]
     traits = ' '.join(traits)
-    return process_lang(traits)
+    return transform_lang(traits)
 
 def get_se_markup(rule):
     markup = [
@@ -493,7 +495,7 @@ def get_se_rule(rule):
     # NOTE: We intentionally add a space at the end to hack around a problem with SE scenario card layout. If we don't add this space,
     # the text on scenario cards doesn't automatically break lines.
     rule = f'{rule} ' if rule.strip() else ''
-    return process_lang(rule)
+    return transform_lang(rule)
 
 def get_se_front_rule(card):
     rule = get_field(card, 'text', '')
@@ -537,7 +539,7 @@ def get_se_deck_line(card, index):
 def get_se_header(header):
     # NOTE: Some header text at the back of agenda/act may have markup text in it.
     header = get_se_markup(header)
-    return process_lang(header)
+    return transform_lang(header)
 
 def get_se_deck_header(card, index):
     header, _ = get_se_deck_line(card, index)
@@ -549,7 +551,7 @@ def get_se_deck_rule(card, index):
     return get_se_rule(rule)
 
 def get_se_flavor(flavor):
-    return process_lang(flavor)
+    return transform_lang(flavor)
 
 def get_se_front_flavor(card):
     flavor = get_field(card, 'flavor', '')
@@ -621,7 +623,7 @@ def get_se_victory(card):
     if type(victory) != int:
         return ''
     victory = f'Victory {victory}.'
-    return process_lang(victory)
+    return transform_lang(victory)
 
 def get_se_location_icon(icon):
     icon_map = {
@@ -1220,7 +1222,7 @@ def upload_images():
             add_url_id(url, url_id)
 
 uploaded_images = {}
-def get_uploaded_images():
+def load_uploaded_images():
     if not uploaded_images:
         dbx = dropbox.Dropbox(args.dropbox_token)
         folder = get_uploaded_folder()
@@ -1232,13 +1234,18 @@ def get_uploaded_images():
 
 updated_files = {}
 def update_sced_card_object(object, metadata, card, filename, root):
-    url_id_map = get_uploaded_images()
+    url_map = load_url_map()
+    url_id_map = load_uploaded_images()
     updated_files[filename] = root
     if card:
         name = get_se_front_name(card)
         xp = get_se_xp(card)
         if xp not in ['0', 'None']:
             name += f' ({xp})'
+        if card['code'].endswith('-t'):
+            module = import_lang_module()
+            taboo_func = getattr(module, 'transform_taboo', None)
+            name += f' ({taboo_func() if taboo_func else "Taboo"})'
         # NOTE: The scenario card names are saved in the 'Description' field in SCED used for the scenario splash screen.
         if object['Nickname'] == 'Scenario':
             object['Description'] = name
@@ -1249,8 +1256,12 @@ def update_sced_card_object(object, metadata, card, filename, root):
 
     for _, deck in get_decks(object):
         for url_key in ('FaceURL', 'BackURL'):
-            if deck[url_key] in url_id_map:
-                deck[url_key] = url_id_map[deck[url_key]]
+            # NOTE: Only update if we have seen this URL and assigned an id to it before.
+            if deck[url_key] in url_map:
+                deck_url_id = url_map[deck[url_key]]
+                # NOTE: Only update if we have uploaded the deck image and has a sharing URL before.
+                if deck_url_id in url_id_map:
+                    deck[url_key] = url_id_map[deck_url_id]
 
 def update_sced_files():
     for filename, root in updated_files.items():

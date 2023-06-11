@@ -1,24 +1,27 @@
 import re
 from hanziconv import HanziConv
 
-def transform_common(text):
+def to_simplified(text):
     # NOTE: Replace the middle dot for asset names that the font doesn't recognize.
     return HanziConv.toSimplified(text).replace('‧', '·')
 
+def transform_taboo():
+    return '限卡'
+
 def transform_name(name):
-    return transform_common(name)
+    return to_simplified(name)
 
 def transform_rule(rule):
-    return transform_common(rule)
+    return to_simplified(rule)
 
 def transform_flavor(flavor):
-    return transform_common(flavor)
+    return to_simplified(flavor)
 
 def transform_header(header):
-    return transform_common(header)
+    return to_simplified(header)
 
 def transform_traits(traits):
-    return transform_common('<size 50%> </size>'.join(traits.split(' ')))
+    return to_simplified('<size 50%> </size>'.join(traits.split(' ')))
 
 def transform_victory(victory):
     match = re.search(r'\d+', victory)
