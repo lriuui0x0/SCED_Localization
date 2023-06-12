@@ -15,6 +15,7 @@ import time
 import dropbox
 import uuid
 import glob
+import copy
 from PIL import Image
 
 steps = ['translate', 'generate', 'pack', 'upload', 'update']
@@ -73,9 +74,9 @@ def get_se_subtype(card):
     subtype = get_field(card, 'subtype_code', None)
     return subtype_map[subtype]
 
-def get_se_faction(card, index):
-    # NOTE: Weakness assets in SE have are represented as faction types as well.
+def get_se_faction(card, index, sheet):
     if index == 0:
+        # NOTE: Weakness assets in SE have are represented as faction types as well.
         subtype = get_se_subtype(card)
         if subtype != 'None':
             return subtype
@@ -93,7 +94,15 @@ def get_se_faction(card, index):
         None: 'None'
     }
     faction = get_field(card, faction_field[index], None)
-    return faction_map[faction]
+    faction = faction_map[faction]
+
+    # NOTE: Handle parallel cards.
+    ahdb_id = card['code']
+    for pid in parallel_ids:
+        if ahdb_id == pid or (ahdb_id == f'{pid}-pf' and sheet == 0) or (ahdb_id == f'{pid}-pb' and sheet == 1):
+            faction = f'Parallel{faction}'
+            break
+    return faction
 
 def get_se_cost(card):
     cost = get_field(card, 'cost', '-')
@@ -189,7 +198,6 @@ def get_se_illustrator(card):
 
 def get_se_copyright(card):
     pack = get_field(card, 'pack_code', None)
-    # NOTE: This list is maintained in the product id order, then print-and-play cards.
     year_map = {
         'core': '2016',
         'dwl': '2016',
@@ -251,6 +259,13 @@ def get_se_copyright(card):
         'bad': '2020',
         'btb': '2021',
         'rtr': '2021',
+        'hoth': '2017',
+        'tdor': '2017',
+        'iotv': '2017',
+        'tdg': '2017',
+        'tftbw': '2017',
+        'bob': '2020',
+        'dre': '2020',
     }
     return f'<cop> {year_map[pack]} FFG'
 
@@ -317,6 +332,13 @@ def get_se_pack(card):
         'bad': 'ParallelInvestigators',
         'btb': 'ParallelInvestigators',
         'rtr': 'ParallelInvestigators',
+        'hoth': '',
+        'tdor': '',
+        'iotv': '',
+        'tdg': '',
+        'tftbw': '',
+        'bob': '',
+        'dre': '',
     }
     return pack_map[pack]
 
@@ -700,9 +722,9 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$TitleBack': get_se_back_name(card),
         '$Subtype': get_se_subtype(card),
         '$Unique': get_se_unique(card),
-        '$CardClass': get_se_faction(card, 0),
-        '$CardClass2': get_se_faction(card, 1),
-        '$CardClass3': get_se_faction(card, 2),
+        '$CardClass': get_se_faction(card, 0, image_sheet),
+        '$CardClass2': get_se_faction(card, 1, image_sheet),
+        '$CardClass3': get_se_faction(card, 2, image_sheet),
         '$ResourceCost': get_se_cost(card),
         '$Level': get_se_xp(card),
         '$Willpower': get_se_willpower(card),
@@ -805,6 +827,7 @@ def recreate_dir(dir):
     os.makedirs(dir)
 
 ahdb = {}
+parallel_ids = ['90001', '90008', '90017', '90024', '90037']
 def download_card(ahdb_id):
     ahdb_folder = f'{args.cache_dir}/ahdb'
     ensure_dir(ahdb_folder)
@@ -818,16 +841,39 @@ def download_card(ahdb_id):
             file.write(json_str)
     if not len(ahdb):
         print(f'Processing ArkhamDB data...')
+
         cards = []
         with open(filename, 'r', encoding='utf-8') as file:
             cards.extend(json.loads(file.read()))
+        # NOTE: Add taboo cards with -t suffix.
         with open(f'translations/{lang_code}/taboo.json', 'r', encoding='utf-8') as file:
             cards.extend(json.loads(file.read()))
         for card in cards:
             ahdb[card['code']] = card
+        # NOTE: Add parallel front/back cards with -pf/-pb suffix.
+        for pid in parallel_ids:
+            card = ahdb[pid]
+            try:
+                old_card = ahdb[card['alternate_of_code']]
+            except:
+                print(card)
+                exit()
 
-    # NOTE: Patching some notable errors from ADB.
-    ahdb['01513']['subtype_code'] = 'weakness'
+            pfid = f'{pid}-pf'
+            pf_card = copy.deepcopy(card)
+            pf_card['code'] = pfid
+            pf_card['back_text'] = get_field(old_card, 'back_text', '')
+            pf_card['back_flavor'] = get_field(old_card, 'back_flavor', '')
+            ahdb[pfid] = pf_card
+
+            pbid = f'{pid}-pb'
+            pb_card = copy.deepcopy(card)
+            pb_card['code'] = pbid
+            pb_card['text'] = get_field(old_card, 'text', '')
+            pb_card['flavor'] = get_field(old_card, 'flavor', '')
+            ahdb[pbid] = pb_card
+        # NOTE: Patching some notable errors from ADB.
+        ahdb['01513']['subtype_code'] = 'weakness'
 
     return ahdb[ahdb_id]
 
@@ -1071,9 +1117,9 @@ def download_repo(repo_folder, repo):
         subprocess.run(['git', 'clone', '--quiet', f'https://github.com/{repo}.git', repo_folder])
     return repo_folder
 
-def is_translation_available(ahdb_id):
-    # NOTE: Skip minicards or parallel cards.
-    return not any(suffix in ahdb_id for suffix in ('-m', '-p', '-pf', '-pb'))
+def is_translatable(ahdb_id):
+    # NOTE: Skip minicards.
+    return '-m' not in ahdb_id
 
 def process_player_cards(callback):
     repo_folder = download_repo(args.mod_dir, 'argonui/SCED')
@@ -1084,7 +1130,7 @@ def process_player_cards(callback):
             with open(metadata_filename, 'r', encoding='utf-8') as metadata_file:
                 metadata = json.loads(metadata_file.read())
                 ahdb_id = metadata['id']
-                if is_translation_available(ahdb_id):
+                if is_translatable(ahdb_id):
                     card = download_card(ahdb_id)
                     if eval(args.filter):
                         object_filename = metadata_filename.replace('.gmnotes', '.json')
@@ -1137,7 +1183,7 @@ def process_encounter_cards(callback, **kwargs):
                     else:
                         metadata = json.loads(object['GMNotes'])
                         ahdb_id = metadata['id']
-                        if is_translation_available(ahdb_id):
+                        if is_translatable(ahdb_id):
                             card = download_card(ahdb_id)
                             if eval(args.filter):
                                 callback(object, metadata, card, campaign_filename, campaign)
