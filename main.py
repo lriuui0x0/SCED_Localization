@@ -188,10 +188,18 @@ def get_se_enemy_horror(card):
     return str(get_field(card, 'enemy_horror', 0))
 
 def get_se_enemy_fight(card):
-    return str(get_field(card, 'enemy_fight', '-'))
+    fight = get_field(card, 'enemy_fight', '-')
+    # NOTE: ADB uses -2 to indicate variable fight.
+    if fight == -2:
+        fight = 'X'
+    return str(fight)
 
 def get_se_enemy_evade(card):
-    return str(get_field(card, 'enemy_evade', '-'))
+    evade = get_field(card, 'enemy_evade', '-')
+    # NOTE: ADB uses -2 to indicate variable evade.
+    if evade == -2:
+        evade = 'X'
+    return str(evade)
 
 def get_se_illustrator(card):
     return get_field(card, 'illustrator', '')
@@ -382,6 +390,25 @@ def get_se_encounter(card):
         'undimensioned_and_unseen': 'UndimensionedAndUnseen',
         'where_doom_awaits': 'WhereDoomAwaits',
         'lost_in_time_and_space': 'LostInTimeAndSpace',
+        'curtain_call': 'CurtainCall',
+        'the_last_king': 'TheLastKing',
+        'delusions': 'Delusions',
+        'byakhee': 'Byakhee',
+        'inhabitants_of_carcosa': 'InhabitantsOfCarcosa',
+        'evil_portents': 'EvilPortents',
+        'hauntings': 'Hauntings',
+        'hasturs_gift': 'HastursGift',
+        'cult_of_the_yellow_sign': 'CultOfTheYellowSign',
+        'decay': 'DecayAndFilth',
+        'stranger': 'TheStranger',
+        'echoes_of_the_past': 'EchoesOfThePast',
+        'the_unspeakable_oath': 'TheUnspeakableOath',
+        'a_phantom_of_truth': 'APhantomOfTruth',
+        'the_pallid_mask': 'ThePallidMask',
+        'black_stars_rise': 'BlackStarsRise',
+        'vortex': 'TheVortexAbove',
+        'flood': 'TheFloodBelow',
+        'dim_carcosa': 'DimCarcosa',
         None: '',
     }
     return encounter_map[encounter]
@@ -423,6 +450,25 @@ def get_se_encounter_total(card):
         'undimensioned_and_unseen': 38,
         'where_doom_awaits': 32,
         'lost_in_time_and_space': 36,
+        'curtain_call': 20,
+        'the_last_king': 25,
+        'delusions': 6,
+        'byakhee': 4,
+        'inhabitants_of_carcosa': 3,
+        'evil_portents': 6,
+        'hauntings': 4,
+        'hasturs_gift': 6,
+        'cult_of_the_yellow_sign': 6,
+        'decay': 6,
+        'stranger': 3,
+        'echoes_of_the_past': 32,
+        'the_unspeakable_oath': 36,
+        'a_phantom_of_truth': 38,
+        'the_pallid_mask': 36,
+        'black_stars_rise': 38,
+        'vortex': 38,
+        'flood': 38,
+        'dim_carcosa': 36,
         None: 0,
     }
     return str(encounter_map[encounter])
@@ -537,25 +583,52 @@ def get_se_back_rule(card):
     rule = get_field(card, 'back_text', '')
     return get_se_rule(rule)
 
-def get_se_chaos(lines, index):
-    lines = [line.strip() for line in lines.split('\n')]
-    lines = lines[1:]
-    token = ['[skull]', '[cultist]', '[tablet]', '[elder_thing]'][index]
-    for line in lines:
-        line = line.replace('：', ':').replace(':', '')
-        if line.startswith(token):
-            return line.replace(token, '').strip()
-    return ''
+def get_se_chaos(rule, index):
+    rule = [line.strip() for line in rule.split('\n')]
+    rule = rule[1:]
+    tokens = ['[skull]', '[cultist]', '[tablet]', '[elder_thing]']
+    curr_token = tokens[index]
+    next_token = tokens[index + 1] if index + 1 < len(tokens) else ''
+    token_map = {
+        '[skull]': 'Skull',
+        '[cultist]': 'Cultist',
+        '[tablet]': 'Tablet',
+        '[elder_thing]': 'ElderThing',
+        '': 'None',
+    }
+    for line in rule:
+        if curr_token in line:
+            merge = token_map[next_token] if next_token in line else 'None'
+            line = re.sub(r'[:：]', '', line)
+            for token in tokens:
+                line = line.replace(token, '')
+            line = line.strip()
+            return line, merge
+    return '', 'None'
 
 def get_se_front_chaos(card, index):
-    lines = get_field(card, 'text', '')
-    rule = get_se_chaos(lines, index)
-    return get_se_rule(rule)
+    rule = get_field(card, 'text', '')
+    return get_se_chaos(rule, index)
 
 def get_se_back_chaos(card, index):
-    lines = get_field(card, 'back_text', '')
-    rule = get_se_chaos(lines, index)
+    rule = get_field(card, 'back_text', '')
+    return get_se_chaos(rule, index)
+
+def get_se_front_chaos_rule(card, index):
+    rule, _ = get_se_front_chaos(card, index)
     return get_se_rule(rule)
+
+def get_se_front_chaos_merge(card, index):
+    _, merge = get_se_front_chaos(card, index)
+    return merge
+
+def get_se_back_chaos_rule(card, index):
+    rule, _ = get_se_back_chaos(card, index)
+    return get_se_rule(rule)
+
+def get_se_back_chaos_merge(card, index):
+    _, merge = get_se_back_chaos(card, index)
+    return merge
 
 def get_se_deck_line(card, index):
     lines = get_field(card, 'back_text', '')
@@ -593,10 +666,15 @@ def get_se_back_flavor(card):
     flavor = get_field(card, 'back_flavor', '')
     return get_se_flavor(flavor)
 
-def get_se_progress_line(card, index):
-    text = get_field(card, 'back_text', '')
-    flavor = get_field(card, 'back_flavor', '')
-    # NOTE: For simple layout, ADB data will split out the flavor part as a separate field in 'back_flavor'.
+def get_se_paragraph_line(card, text, flavor, index):
+    # NOTE: The following algorithm is a best-effort guess on the formatting. We make special cases for the cards if the algorithm doesn't work.
+    if card['code'] in ['03064']:
+        if index == 0:
+            return ['', flavor.strip(), text.strip()]
+        else:
+            return ['', '', '']
+
+    # NOTE: For simple layout, ADB data will split out the flavor part separately.
     if flavor:
         lines = [(1, flavor.strip()), (2, text.strip())]
     else:
@@ -638,16 +716,38 @@ def get_se_progress_line(card, index):
 
     return filled_lines[index * 3:(index + 1) * 3]
 
-def get_se_progress_header(card, index):
-    header, _, _ = get_se_progress_line(card, index)
+def get_se_front_paragraph_line(card, index):
+    text = get_field(card, 'text', '')
+    flavor = get_field(card, 'flavor', '')
+    return get_se_paragraph_line(card, text, flavor, index)
+
+def get_se_front_paragraph_header(card, index):
+    header, _, _ = get_se_front_paragraph_line(card, index)
     return get_se_header(header)
 
-def get_se_progress_flavor(card, index):
-    _, flavor, _ = get_se_progress_line(card, index)
+def get_se_front_paragraph_flavor(card, index):
+    _, flavor, _ = get_se_front_paragraph_line(card, index)
     return get_se_flavor(flavor)
 
-def get_se_progress_rule(card, index):
-    _, _, rule = get_se_progress_line(card, index)
+def get_se_front_paragraph_rule(card, index):
+    _, _, rule = get_se_front_paragraph_line(card, index)
+    return get_se_rule(rule)
+
+def get_se_back_paragraph_line(card, index):
+    text = get_field(card, 'back_text', '')
+    flavor = get_field(card, 'back_flavor', '')
+    return get_se_paragraph_line(card, text, flavor, index)
+
+def get_se_back_paragraph_header(card, index):
+    header, _, _ = get_se_back_paragraph_line(card, index)
+    return get_se_header(header)
+
+def get_se_back_paragraph_flavor(card, index):
+    _, flavor, _ = get_se_back_paragraph_line(card, index)
+    return get_se_flavor(flavor)
+
+def get_se_back_paragraph_rule(card, index):
+    _, _, rule = get_se_back_paragraph_line(card, index)
     return get_se_rule(rule)
 
 def get_se_victory(card):
@@ -784,15 +884,24 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$ScenarioDeckID': get_se_stage_letter(card),
         '$AgendaStory': get_se_front_flavor(card),
         '$ActStory': get_se_front_flavor(card),
-        '$HeaderABack': get_se_progress_header(card, 0),
-        '$AccentedStoryABack': get_se_progress_flavor(card, 0),
-        '$RulesABack': get_se_progress_rule(card, 0),
-        '$HeaderBBack': get_se_progress_header(card, 1),
-        '$AccentedStoryBBack': get_se_progress_flavor(card, 1),
-        '$RulesBBack': get_se_progress_rule(card, 1),
-        '$HeaderCBack': get_se_progress_header(card, 2),
-        '$AccentedStoryCBack': get_se_progress_flavor(card, 2),
-        '$RulesCBack': get_se_progress_rule(card, 2),
+        '$HeaderA': get_se_front_paragraph_header(card, 0),
+        '$AccentedStoryA': get_se_front_paragraph_flavor(card, 0),
+        '$RulesA': get_se_front_paragraph_rule(card, 0),
+        '$HeaderB': get_se_front_paragraph_header(card, 1),
+        '$AccentedStoryB': get_se_front_paragraph_flavor(card, 1),
+        '$RulesB': get_se_front_paragraph_rule(card, 1),
+        '$HeaderC': get_se_front_paragraph_header(card, 2),
+        '$AccentedStoryC': get_se_front_paragraph_flavor(card, 2),
+        '$RulesC': get_se_front_paragraph_rule(card, 2),
+        '$HeaderABack': get_se_back_paragraph_header(card, 0),
+        '$AccentedStoryABack': get_se_back_paragraph_flavor(card, 0),
+        '$RulesABack': get_se_back_paragraph_rule(card, 0),
+        '$HeaderBBack': get_se_back_paragraph_header(card, 1),
+        '$AccentedStoryBBack': get_se_back_paragraph_flavor(card, 1),
+        '$RulesBBack': get_se_back_paragraph_rule(card, 1),
+        '$HeaderCBack': get_se_back_paragraph_header(card, 2),
+        '$AccentedStoryCBack': get_se_back_paragraph_flavor(card, 2),
+        '$RulesCBack': get_se_back_paragraph_rule(card, 2),
         '$StoryBack': get_se_back_flavor(card),
         '$RulesBack': get_se_back_rule(card),
         '$LocationIconBack': get_se_front_location(metadata),
@@ -809,14 +918,20 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Connection4Icon': get_se_back_connection(metadata, 3),
         '$Connection5Icon': get_se_back_connection(metadata, 4),
         '$Connection6Icon': get_se_back_connection(metadata, 5),
-        '$Skull': get_se_front_chaos(card, 0),
-        '$Cultist': get_se_front_chaos(card, 1),
-        '$Tablet': get_se_front_chaos(card, 2),
-        '$ElderThing': get_se_front_chaos(card, 3),
-        '$SkullBack': get_se_back_chaos(card, 0),
-        '$CultistBack': get_se_back_chaos(card, 1),
-        '$TabletBack': get_se_back_chaos(card, 2),
-        '$ElderThingBack': get_se_back_chaos(card, 3),
+        '$Skull': get_se_front_chaos_rule(card, 0),
+        '$MergeSkull': get_se_front_chaos_merge(card, 0),
+        '$Cultist': get_se_front_chaos_rule(card, 1),
+        '$MergeCultist': get_se_front_chaos_merge(card, 1),
+        '$Tablet': get_se_front_chaos_rule(card, 2),
+        '$MergeTablet': get_se_front_chaos_merge(card, 2),
+        '$ElderThing': get_se_front_chaos_rule(card, 3),
+        '$SkullBack': get_se_back_chaos_rule(card, 0),
+        '$MergeSkullBack': get_se_back_chaos_merge(card, 0),
+        '$CultistBack': get_se_back_chaos_rule(card, 1),
+        '$MergeCultistBack': get_se_back_chaos_merge(card, 1),
+        '$TabletBack': get_se_back_chaos_rule(card, 2),
+        '$MergeTabletBack': get_se_back_chaos_merge(card, 2),
+        '$ElderThingBack': get_se_back_chaos_rule(card, 3),
     }
 
 def ensure_dir(dir):
@@ -853,11 +968,7 @@ def download_card(ahdb_id):
         # NOTE: Add parallel front/back cards with -pf/-pb suffix.
         for pid in parallel_ids:
             card = ahdb[pid]
-            try:
-                old_card = ahdb[card['alternate_of_code']]
-            except:
-                print(card)
-                exit()
+            old_card = ahdb[card['alternate_of_code']]
 
             pfid = f'{pid}-pf'
             pf_card = copy.deepcopy(card)
@@ -970,6 +1081,7 @@ se_types = [
     'location_back',
     'scenario_front',
     'scenario_back',
+    'story',
 ]
 se_cards = dict(zip(se_types, [[] for _ in range(len(se_types))]))
 result_set = set()
@@ -1049,6 +1161,8 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                 se_type = 'scenario_front'
             else:
                 se_type = 'scenario_back'
+        elif card_type == 'story':
+            se_type = 'story'
         else:
             se_type = None
 
@@ -1078,6 +1192,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
             'location_back': (0, 81),
             'scenario_front': (0, 0),
             'scenario_back': (0, 0),
+            'story': (0, 0),
         }
         image_move_x, image_move_y = move_mapping[se_type]
         image_filename = os.path.abspath(image_filename)
