@@ -1307,6 +1307,7 @@ def update_sced_card_object(object, metadata, card, filename, root):
             object['Description'] = name
         else:
             object['Nickname'] = name
+            # NOTE: Remove any markup formatting in the tooltip traits text.
             object['Description'] = re.sub(r'<[^>]*>', '', get_se_traits(card))
         print(f'Updating {name}...')
 
