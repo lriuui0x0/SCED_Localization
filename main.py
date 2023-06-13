@@ -357,7 +357,7 @@ def get_se_pack(card):
 def get_se_pack_number(card):
     return str(get_field(card, 'position', 0))
 
-def get_se_encounter(card):
+def get_se_encounter(card, sheet):
     encounter = get_field(card, 'encounter_code', None)
     # NOTE: Special cases for two sides of cards with different encounter sets.
     if encounter == 'vortex' and card['code'] in ['03276a', '03279b'] and sheet == 0:
@@ -693,55 +693,54 @@ def get_se_back_flavor(card):
     return get_se_flavor(flavor)
 
 def get_se_paragraph_line(card, text, flavor, index):
-    # TODO: This function needs to be reworked upon, there're some problematic cards.
-
-    # NOTE: The following algorithm is a best-effort guess on the formatting. We use simple layout in the case of there's explicit flavor text,
-    # or in the special cases that following algorithm simply doesn't work.
-    if flavor or card['code'] in ['03064']:
+    # NOTE: The following algorithm is a best-effort guess on the formatting. We use simple layout in the case of there's explicit flavor text.
+    if flavor:
         if index == 0:
-            return ['', flavor.strip(), text.strip()]
+            return '', flavor.strip(), text.strip()
         else:
-            return ['', '', '']
+            return '', '', ''
 
     # NOTE: Deleting the tags that are not useful for the parsing.
     text = text.replace('<blockquote>', '').replace('</blockquote>', '').replace('<hr>', '')
 
-    # NOTE: Keep splitting header and flavor out of rule text until no more splitting happens. Encode header as 0, flavor as 1, and rule as 2.
-    lines = [(2, text)]
-    while True:
-        splitted = False
-        for i in range(len(lines)):
-            type, text = lines[i]
-            if type == 2:
-                # NOTE: Determine header by bold text ending with a colon.
-                re_header = r'(.*)<b>([^<]+[:：])</b>(.*)'
-                header = re.search(re_header, text, flags=re.S)
-                if header:
-                    lines = lines[0:i] + [(2, header.group(1))] + [(0, header.group(2))] + [(2, header.group(3))] + lines[i+1:]
-                    splitted = True
-                    break
-                # NOTE: Determine flavor by italic text.
-                re_flavor = r'(.*)<i>([^<]+)</i>(.*)'
-                flavor = re.search(re_flavor, text, flags=re.S)
-                if flavor:
-                    lines = lines[0:i] + [(2, flavor.group(1))] + [(1, flavor.group(2))] + [(2, flavor.group(3))] + lines[i+1:]
-                    splitted = True
-                    break
-        if not splitted:
-            break
-    lines = [(type, text.strip()) for type, text in lines if text.strip()]
+    # NOTE: Determine header by bold text ending with a colon, either inside the bold tag or outside.
+    re_header = r'<b>[^<]+([:：]</b>|</b>[:：])'
+    headers = [match.group(0).replace('<b>', '').replace('</b>', '').strip() for match in re.finditer(re_header, text)]
 
-    # NOTE: Arrange text in the standard form (header, flavor, rule, header, flavor, rule, header, flavor, rule). Fill text at the corresponding location based on its type.
-    filled_index = -1
-    filled_lines = ['', '', '', '', '', '', '', '', '']
-    for type, text in lines:
-        for i in range(filled_index + 1, len(filled_lines)):
-            if i % 3 == type:
-                filled_lines[i] = text
-                filled_index = i
-                break
+    # NOTE: Use headers to find the number of paragraphs.
+    rules = [text.strip()]
+    rule_index = 0
+    for header in headers:
+        rule = rules[rule_index]
+        match = re.search(re_header, rule)
+        rule_before = rule[0:match.start()]
+        rule_after = rule[match.end():]
+        rules = rules[0:rule_index] + [rule_before.strip()] + [rule_after.strip()] + rules[rule_index+1:]
+        rule_index += 1
 
-    return filled_lines[index * 3:(index + 1) * 3]
+    # NOTE: At this point the number of rules is one greater than the number of headers, adjust them to the same number.
+    if rules[0]:
+        headers = [''] + headers
+    else:
+        rules = rules[1:]
+
+    # NOTE: Find flavors by italic text from the beginning.
+    re_flavor = r'<i>([^<]+)</i>'
+    flavors = []
+    for rule_index in range(len(rules)):
+        rule = rules[rule_index]
+        match = re.match(re_flavor, rule)
+        if match:
+            flavor = match.group(1).strip()
+            rules[rule_index] = re.sub(re_flavor, '', rule).strip()
+            flavors.append(flavor)
+        else:
+            flavors.append('')
+
+    if index < len(headers):
+        return headers[index], flavors[index], rules[index]
+    else:
+        return '', '', ''
 
 def get_se_front_paragraph_line(card, index):
     text = get_field(card, 'text', '')
@@ -900,7 +899,7 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Copyright': get_se_copyright(card),
         '$Collection': get_se_pack(card),
         '$CollectionNumber': get_se_pack_number(card),
-        '$Encounter': get_se_encounter(card),
+        '$Encounter': get_se_encounter(card, image_sheet),
         '$EncounterNumber': get_se_encounter_number(card),
         '$EncounterTotal': get_se_encounter_total(card),
         '$Doom': get_se_doom(card),
@@ -1172,7 +1171,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                 se_type = 'enemy_encounter'
         elif card_type == 'agenda':
             # NOTE: Agenda with image back are special cased.
-            if card['code'] in ['01145', '02314']:
+            if card['code'] in ['01145', '02314'] and sheet == 1:
                 se_type = 'progress_image'
             else:
                 if is_front:
@@ -1181,7 +1180,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                     se_type = 'agenda_back'
         elif card_type == 'act':
             # NOTE: Act with image back are special cased.
-            if card['code'] in ['03322a', '03323a']
+            if card['code'] in ['03322a', '03323a'] and sheet == 1:
                 se_type = 'progress_image'
             else:
                 if is_front:
@@ -1231,6 +1230,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
             'scenario_back': (0, 0),
             'story': (0, 0),
         }
+        # NOTE: Handle the case where agenda and act direction reversed on cards.
         if se_type in ['agenda_front', 'act_front'] and is_progress_reversed(card):
             if se_type == 'agenda_front':
                 move_map_se_type = 'act_front'
