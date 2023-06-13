@@ -98,10 +98,8 @@ def get_se_faction(card, index, sheet):
 
     # NOTE: Handle parallel cards.
     ahdb_id = card['code']
-    for pid in parallel_ids:
-        if ahdb_id == pid or (ahdb_id == f'{pid}-pf' and sheet == 0) or (ahdb_id == f'{pid}-pb' and sheet == 1):
-            faction = f'Parallel{faction}'
-            break
+    if ahdb_id.endswith('-p') or (ahdb_id.endswith('-pf') and sheet == 0) or (ahdb_id.endswith('-pb') and sheet == 1):
+        faction = f'Parallel{faction}'
     return faction
 
 def get_se_cost(card):
@@ -359,7 +357,7 @@ def get_se_pack(card):
 def get_se_pack_number(card):
     return str(get_field(card, 'position', 0))
 
-def get_se_encounter(card, sheet):
+def get_se_encounter(card):
     encounter = get_field(card, 'encounter_code', None)
     # NOTE: Special cases for two sides of cards with different encounter sets.
     if encounter == 'vortex' and card['code'] in ['03276a', '03279b'] and sheet == 0:
@@ -902,7 +900,7 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Copyright': get_se_copyright(card),
         '$Collection': get_se_pack(card),
         '$CollectionNumber': get_se_pack_number(card),
-        '$Encounter': get_se_encounter(card, image_sheet),
+        '$Encounter': get_se_encounter(card),
         '$EncounterNumber': get_se_encounter_number(card),
         '$EncounterTotal': get_se_encounter_total(card),
         '$Doom': get_se_doom(card),
@@ -972,7 +970,6 @@ def recreate_dir(dir):
     os.makedirs(dir)
 
 ahdb = {}
-parallel_ids = ['90001', '90008', '90017', '90024', '90037']
 def download_card(ahdb_id):
     ahdb_folder = f'{args.cache_dir}/ahdb'
     ensure_dir(ahdb_folder)
@@ -995,19 +992,25 @@ def download_card(ahdb_id):
             cards.extend(json.loads(file.read()))
         for card in cards:
             ahdb[card['code']] = card
-        # NOTE: Add parallel front/back cards with -pf/-pb suffix.
-        for pid in parallel_ids:
-            card = ahdb[pid]
-            old_card = ahdb[card['alternate_of_code']]
+        # NOTE: Add parallel cards with all front back combinations.
+        for ahdb_id in ['90001', '90008', '90017', '90024', '90037']:
+            card = ahdb[ahdb_id]
+            old_id = card['alternate_of_code']
+            old_card = ahdb[old_id]
 
-            pfid = f'{pid}-pf'
+            pid = f'{old_id}-p'
+            pp_card = copy.deepcopy(card)
+            pp_card['code'] = pid
+            ahdb[pid] = pp_card
+
+            pfid = f'{old_id}-pf'
             pf_card = copy.deepcopy(card)
             pf_card['code'] = pfid
             pf_card['back_text'] = get_field(old_card, 'back_text', '')
             pf_card['back_flavor'] = get_field(old_card, 'back_flavor', '')
             ahdb[pfid] = pf_card
 
-            pbid = f'{pid}-pb'
+            pbid = f'{old_id}-pb'
             pb_card = copy.deepcopy(card)
             pb_card['code'] = pbid
             pb_card['text'] = get_field(old_card, 'text', '')
@@ -1104,9 +1107,9 @@ se_types = [
     'enemy_encounter',
     'agenda_front',
     'agenda_back',
-    'agenda_act_image',
     'act_front',
     'act_back',
+    'progress_image',
     'location_front',
     'location_back',
     'scenario_front',
@@ -1169,8 +1172,8 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                 se_type = 'enemy_encounter'
         elif card_type == 'agenda':
             # NOTE: Agenda with image back are special cased.
-            if card['code'] in ['01145', '02314'] and not is_front:
-                se_type = 'agenda_act_image'
+            if card['code'] in ['01145', '02314']:
+                se_type = 'progress_image'
             else:
                 if is_front:
                     se_type = 'agenda_front'
@@ -1178,8 +1181,8 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                     se_type = 'agenda_back'
         elif card_type == 'act':
             # NOTE: Act with image back are special cased.
-            if card['code'] in ['03322a', '03323a'] and not is_front:
-                se_type = 'agenda_act_image'
+            if card['code'] in ['03322a', '03323a']
+                se_type = 'progress_image'
             else:
                 if is_front:
                     se_type = 'act_front'
@@ -1219,9 +1222,9 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
             'enemy_encounter': (0, -122),
             'agenda_front': (110, 0),
             'agenda_back': (0, 0),
-            'agenda_act_image': (0, 0),
             'act_front': (-98, 0),
             'act_back': (0, 0),
+            'progress_image': (0, 0),
             'location_front': (0, 83),
             'location_back': (0, 83),
             'scenario_front': (0, 0),
