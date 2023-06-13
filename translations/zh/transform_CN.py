@@ -21,9 +21,9 @@ def transform_header(header):
     return to_simplified(header)
 
 def transform_traits(traits):
-    return to_simplified('<size 50%> </size>'.join(traits.split(' ')))
+    return to_simplified('<size 50%> <size 200%>'.join(traits.split(' ')))
 
 def transform_victory(victory):
     match = re.search(r'\d+', victory)
-    return f'胜利<size 50%> </size>{match.group(0)}。' if match else ''
+    return f'胜利<size 50%> <size 200%>{match.group(0)}。' if match else ''
 

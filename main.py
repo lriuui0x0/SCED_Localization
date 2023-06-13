@@ -166,16 +166,22 @@ def get_se_slot(card, index):
     return slots[index]
 
 def get_se_health(card):
-    sanity = get_field(card, 'sanity', 'None')
-    health = get_field(card, 'health', '-' if sanity != 'None' else 'None')
+    # NOTE: For enemy or asset with sanity, missing health means '-', otherwise it's completely empty.
+    default_health = 'None'
+    if get_field(card, 'type_code', None) == 'enemy' or get_field(card, 'sanity', None) is not None:
+        default_health = '-'
+    health = get_field(card, 'health', default_health)
     # NOTE: ADB uses -2 to indicate variable health.
     if health == -2:
         health = 'Star'
     return str(health)
 
 def get_se_sanity(card):
-    health = get_field(card, 'health', 'None')
-    sanity = get_field(card, 'sanity', '-' if health != 'None' else 'None')
+    # NOTE: For asset with health, missing sanity means '-', otherwise it's completely empty.
+    default_sanity = 'None'
+    if get_field(card, 'health', None) is not None:
+        default_sanity = '-'
+    sanity = get_field(card, 'sanity', default_sanity)
     # NOTE: ADB uses -2 to indicate variable sanity.
     if sanity == -2:
         sanity = 'Star'
@@ -353,8 +359,17 @@ def get_se_pack(card):
 def get_se_pack_number(card):
     return str(get_field(card, 'position', 0))
 
-def get_se_encounter(card):
+def get_se_encounter(card, sheet):
     encounter = get_field(card, 'encounter_code', None)
+    # NOTE: Special cases for two sides of cards with different encounter sets.
+    if encounter == 'vortex' and card['code'] in ['03276a', '03279b'] and sheet == 0:
+        encounter = 'black_stars_rise'
+    elif encounter == 'vortex' and card['code'] in ['03297', '03298'] and sheet == 1:
+        encounter = 'black_stars_rise'
+    elif encounter == 'flood' and card['code'] in ['03276b', '03279a'] and sheet == 0:
+        encounter = 'black_stars_rise'
+    elif encounter == 'flood' and card['code'] in ['03296', '03299'] and sheet == 1:
+        encounter = 'black_stars_rise'
     encounter_map = {
         'torch': 'TheGathering',
         'arkham': 'TheMidnightMasks',
@@ -492,12 +507,23 @@ def get_se_per_investigator(card):
     else:
         return '1' if get_field(card, 'health_per_investigator', False) else '0'
 
-def get_se_stage_number(card):
+def get_se_progress_number(card):
     return str(get_field(card, 'stage', 0))
 
-def get_se_stage_letter(card):
-    # TODO: Add special cases for stage letter.
+def get_se_progress_letter(card):
+    # NOTE: Special case agenda and act letters.
+    if card['code'] in ['03278', '03279a', '03279b', '03280', '03282']:
+        return 'c'
     return 'a'
+
+def is_progress_reversed(card):
+    return card['code'] in ['03278', '03279a', '03279b', '03280', '03281']
+
+def get_se_progress_direction(card):
+    # NOTE: Special case agenda and act direction.
+    if is_progress_reversed(card):
+        return 'Reversed'
+    return 'Standard'
 
 def get_se_unique(card):
     # NOTE: ADB doesn't specify 'is_unique' property for investigator cards but they are always unique.
@@ -560,14 +586,16 @@ def get_se_markup(rule):
 
 def get_se_rule(rule):
     rule = get_se_markup(rule)
-    # NOTE: Format traits.
-    rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t></size><size 30%> </size>', rule)
+    # NOTE: Format traits. We avoid the buggy behavior of </size> in SE instead we set font size by relative percentage, 0.9 * 0.33 * 3.37 = 1.00089.
+    rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t><size 33%> <size 337%>', rule)
     # NOTE: Get rid of the errata text, e.g. Wendy's Amulet.
     rule = re.sub(r'<i>\(Erratum[^<]*</i>', '', rule)
     # NOTE: Get rid of the FAQ text, e.g. Rex Murphy.
     rule = re.sub(r'<i>\(FAQ[^<]*</i>', '', rule)
     # NOTE: Format bold action keywords.
-    rule = re.sub(r'<b>([^<]*)</b>', r'<hdr><size 95%>\1</size></hdr>', rule)
+    rule = re.sub(r'<b>([^<]*)</b>', r'<size 95%><hdr>\1</hdr><size 105%>', rule)
+    # NOTE: Convert <p> tag to newline characters.
+    rule = rule.replace('</p><p>', '\n').replace('<p>', '').replace('</p>', '')
     # NOTE: Format bullet icon at the start of the line.
     rule = '\n'.join([re.sub(r'^\- ', '<bul> ', line.strip()) for line in rule.split('\n')])
     # NOTE: We intentionally add a space at the end to hack around a problem with SE scenario card layout. If we don't add this space,
@@ -648,7 +676,7 @@ def get_se_header(header):
 
 def get_se_deck_header(card, index):
     header, _ = get_se_deck_line(card, index)
-    header = f'<size 95%>{header}</size>'
+    header = f'<size 95%>{header}<size 105%>'
     return get_se_header(header)
 
 def get_se_deck_rule(card, index):
@@ -667,42 +695,43 @@ def get_se_back_flavor(card):
     return get_se_flavor(flavor)
 
 def get_se_paragraph_line(card, text, flavor, index):
-    # NOTE: The following algorithm is a best-effort guess on the formatting. We make special cases for the cards if the algorithm doesn't work.
-    if card['code'] in ['03064']:
+    # TODO: This function needs to be reworked upon, there're some problematic cards.
+
+    # NOTE: The following algorithm is a best-effort guess on the formatting. We use simple layout in the case of there's explicit flavor text,
+    # or in the special cases that following algorithm simply doesn't work.
+    if flavor or card['code'] in ['03064']:
         if index == 0:
             return ['', flavor.strip(), text.strip()]
         else:
             return ['', '', '']
 
-    # NOTE: For simple layout, ADB data will split out the flavor part separately.
-    if flavor:
-        lines = [(1, flavor.strip()), (2, text.strip())]
-    else:
-        # NOTE: Deleting the tags that are not useful for the parsing.
-        text = text.replace('<blockquote>', '').replace('</blockquote>', '').replace('<hr>', '')
+    # NOTE: Deleting the tags that are not useful for the parsing.
+    text = text.replace('<blockquote>', '').replace('</blockquote>', '').replace('<hr>', '')
 
-        # NOTE: Keep splitting header and flavor out of rule text until no more splitting. Encode header as 0, flavor as 1, and rule as 2.
-        lines = [(2, text)]
-        while True:
-            splitted = False
-            for i in range(len(lines)):
-                type, text = lines[i]
-                if type == 2:
-                    re_header = r'(.*)<b>([^<]+[:：])</b>(.*)'
-                    header = re.search(re_header, text, flags=re.S)
-                    if header:
-                        lines = lines[0:i] + [(2, header.group(1))] + [(0, header.group(2))] + [(2, header.group(3))] + lines[i+1:]
-                        splitted = True
-                        break
-                    re_flavor = r'(.*)<i>([^<]+)</i>(.*)'
-                    flavor = re.search(re_flavor, text, flags=re.S)
-                    if flavor:
-                        lines = lines[0:i] + [(2, flavor.group(1))] + [(1, flavor.group(2))] + [(2, flavor.group(3))] + lines[i+1:]
-                        splitted = True
-                        break
-            if not splitted:
-                break
-        lines = [(type, text.strip()) for type, text in lines if text.strip()]
+    # NOTE: Keep splitting header and flavor out of rule text until no more splitting happens. Encode header as 0, flavor as 1, and rule as 2.
+    lines = [(2, text)]
+    while True:
+        splitted = False
+        for i in range(len(lines)):
+            type, text = lines[i]
+            if type == 2:
+                # NOTE: Determine header by bold text ending with a colon.
+                re_header = r'(.*)<b>([^<]+[:：])</b>(.*)'
+                header = re.search(re_header, text, flags=re.S)
+                if header:
+                    lines = lines[0:i] + [(2, header.group(1))] + [(0, header.group(2))] + [(2, header.group(3))] + lines[i+1:]
+                    splitted = True
+                    break
+                # NOTE: Determine flavor by italic text.
+                re_flavor = r'(.*)<i>([^<]+)</i>(.*)'
+                flavor = re.search(re_flavor, text, flags=re.S)
+                if flavor:
+                    lines = lines[0:i] + [(2, flavor.group(1))] + [(1, flavor.group(2))] + [(2, flavor.group(3))] + lines[i+1:]
+                    splitted = True
+                    break
+        if not splitted:
+            break
+    lines = [(type, text.strip()) for type, text in lines if text.strip()]
 
     # NOTE: Arrange text in the standard form (header, flavor, rule, header, flavor, rule, header, flavor, rule). Fill text at the corresponding location based on its type.
     filled_index = -1
@@ -873,15 +902,16 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Copyright': get_se_copyright(card),
         '$Collection': get_se_pack(card),
         '$CollectionNumber': get_se_pack_number(card),
-        '$Encounter': get_se_encounter(card),
+        '$Encounter': get_se_encounter(card, image_sheet),
         '$EncounterNumber': get_se_encounter_number(card),
         '$EncounterTotal': get_se_encounter_total(card),
         '$Doom': get_se_doom(card),
         '$Clues': get_se_clue(card),
         '$Shroud': get_se_shroud(card),
         '$PerInvestigator': get_se_per_investigator(card),
-        '$ScenarioIndex': get_se_stage_number(card),
-        '$ScenarioDeckID': get_se_stage_letter(card),
+        '$ScenarioIndex': get_se_progress_number(card),
+        '$ScenarioDeckID': get_se_progress_letter(card),
+        '$Orientation': get_se_progress_direction(card),
         '$AgendaStory': get_se_front_flavor(card),
         '$ActStory': get_se_front_flavor(card),
         '$HeaderA': get_se_front_paragraph_header(card, 0),
@@ -904,20 +934,20 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$RulesCBack': get_se_back_paragraph_rule(card, 2),
         '$StoryBack': get_se_back_flavor(card),
         '$RulesBack': get_se_back_rule(card),
-        '$LocationIconBack': get_se_front_location(metadata),
-        '$Connection1IconBack': get_se_front_connection(metadata, 0),
-        '$Connection2IconBack': get_se_front_connection(metadata, 1),
-        '$Connection3IconBack': get_se_front_connection(metadata, 2),
-        '$Connection4IconBack': get_se_front_connection(metadata, 3),
-        '$Connection5IconBack': get_se_front_connection(metadata, 4),
-        '$Connection6IconBack': get_se_front_connection(metadata, 5),
-        '$LocationIcon': get_se_back_location(metadata),
-        '$Connection1Icon': get_se_back_connection(metadata, 0),
-        '$Connection2Icon': get_se_back_connection(metadata, 1),
-        '$Connection3Icon': get_se_back_connection(metadata, 2),
-        '$Connection4Icon': get_se_back_connection(metadata, 3),
-        '$Connection5Icon': get_se_back_connection(metadata, 4),
-        '$Connection6Icon': get_se_back_connection(metadata, 5),
+        '$LocationIcon': get_se_front_location(metadata),
+        '$Connection1Icon': get_se_front_connection(metadata, 0),
+        '$Connection2Icon': get_se_front_connection(metadata, 1),
+        '$Connection3Icon': get_se_front_connection(metadata, 2),
+        '$Connection4Icon': get_se_front_connection(metadata, 3),
+        '$Connection5Icon': get_se_front_connection(metadata, 4),
+        '$Connection6Icon': get_se_front_connection(metadata, 5),
+        '$LocationIconBack': get_se_back_location(metadata),
+        '$Connection1IconBack': get_se_back_connection(metadata, 0),
+        '$Connection2IconBack': get_se_back_connection(metadata, 1),
+        '$Connection3IconBack': get_se_back_connection(metadata, 2),
+        '$Connection4IconBack': get_se_back_connection(metadata, 3),
+        '$Connection5IconBack': get_se_back_connection(metadata, 4),
+        '$Connection6IconBack': get_se_back_connection(metadata, 5),
         '$Skull': get_se_front_chaos_rule(card, 0),
         '$MergeSkull': get_se_front_chaos_merge(card, 0),
         '$Cultist': get_se_front_chaos_rule(card, 1),
@@ -1074,7 +1104,7 @@ se_types = [
     'enemy_encounter',
     'agenda_front',
     'agenda_back',
-    'agenda_image',
+    'agenda_act_image',
     'act_front',
     'act_back',
     'location_front',
@@ -1104,10 +1134,10 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
         card_type = card['type_code']
         rotate = card_type in ['investigator', 'agenda', 'act']
         sheet = 0 if is_front else 1
-        # NOTE: SCED and SE consider the front and back for location cards differently. Reverse here and encode the sheet number in the 'result_id' so that
-        # front are generated for front, back for back for the location cards. Some location cards only have single face, so they need to be special cased.
-        if card_type == 'location' and card['code'] not in ['02214', '02324', '02325', '02326', '02327', '02328']:
-            sheet = 1 - sheet
+        # # NOTE: SCED and SE consider the front and back for location cards differently. Reverse here and encode the sheet number in the 'result_id' so that
+        # # front are generated for front, back for back for the location cards. Some location cards only have single face, so they need to be special cased.
+        # if card_type == 'location' and card['code'] not in ['02214', '02324', '02325', '02326', '02327', '02328']:
+        #     sheet = 1 - sheet
         result_id = encode_result_id(get_url_id(url), deck_w, deck_h, deck_x, deck_y, rotate, sheet)
         if result_id in result_set:
             return
@@ -1140,17 +1170,21 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
         elif card_type == 'agenda':
             # NOTE: Agenda with image back are special cased.
             if card['code'] in ['01145', '02314'] and not is_front:
-                se_type = 'agenda_image'
+                se_type = 'agenda_act_image'
             else:
                 if is_front:
                     se_type = 'agenda_front'
                 else:
                     se_type = 'agenda_back'
         elif card_type == 'act':
-            if is_front:
-                se_type = 'act_front'
+            # NOTE: Act with image back are special cased.
+            if card['code'] in ['03322a', '03323a'] and not is_front:
+                se_type = 'agenda_act_image'
             else:
-                se_type = 'act_back'
+                if is_front:
+                    se_type = 'act_front'
+                else:
+                    se_type = 'act_back'
         elif card_type == 'location':
             if is_front:
                 se_type = 'location_front'
@@ -1172,7 +1206,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
         template_width = 375
         template_height = 525
         image_scale = template_width / (image.height if rotate else image.width)
-        move_mapping = {
+        move_map = {
             'asset': (0, 93),
             'asset_encounter': (0, 93),
             'event': (0, 118),
@@ -1181,26 +1215,67 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
             'investigator_back': (168, 86),
             'treachery_weakness': (0, 114),
             'treachery_encounter': (0, 114),
-            'enemy_weakness': (0, -125),
+            'enemy_weakness': (0, -122),
             'enemy_encounter': (0, -122),
             'agenda_front': (110, 0),
             'agenda_back': (0, 0),
-            'agenda_image': (0, 0),
+            'agenda_act_image': (0, 0),
             'act_front': (-98, 0),
             'act_back': (0, 0),
             'location_front': (0, 83),
-            'location_back': (0, 81),
+            'location_back': (0, 83),
             'scenario_front': (0, 0),
             'scenario_back': (0, 0),
             'story': (0, 0),
         }
-        image_move_x, image_move_y = move_mapping[se_type]
+        if se_type in ['agenda_front', 'act_front'] and is_progress_reversed(card):
+            if se_type == 'agenda_front':
+                move_map_se_type = 'act_front'
+            else:
+                move_map_se_type = 'agenda_front'
+        else:
+            move_map_se_type = se_type
+        image_move_x, image_move_y = move_map[move_map_se_type]
         image_filename = os.path.abspath(image_filename)
         se_cards[se_type].append(get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y))
         result_set.add(result_id)
 
+    front_card = card
+    back_card = card
+    # NOTE: The first front means the front side in SCED using front url, the second front means whether it's the logical front side for the card type.
+    front_is_front = True
+    back_is_front = False
+    # NOTE: Some cards on ADB have separate entries for front and back. Get the correct card data through the 'linked_card' property.
+    if 'linked_card' in card:
+        back_card = card['linked_card']
+        back_is_front = True
+        # NOTE: In certain cases the face order in SCED is opposite to that on ArkhamDB.
+        if card['code'] in [
+                '03182b',
+                '03221b',
+                '03325b',
+                '03326b',
+                '03326d',
+                '03327b',
+                '03327d',
+                '03327f',
+                '03328b',
+                '03328d',
+                '03328f',
+                '03329b',
+                '03329d',
+                '03330b',
+                '03331b'
+        ]:
+            front_card, back_card = back_card, front_card
+    else:
+        # NOTE: SCED thinks the front side of location is the unrevealed side, which is different from what SE expects. Reverse it here apart from single faced locations.
+        if card['type_code'] == 'location' and card['code'] not in ['02214', '02324', '02325', '02326', '02327', '02328']:
+            front_is_front = False
+            back_is_front = True
+
     front_url = deck['FaceURL']
-    translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, True, card)
+    translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, front_is_front, front_card)
 
     back_url = deck['BackURL']
     # NOTE: Test whether it's generic player or encounter card back urls.
@@ -1210,16 +1285,12 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
     if (deck_id, deck_x, deck_y) in [(2335, 9, 5)]:
         return
 
-    # NOTE: Some cards on ADB have separate entries for front and back. Get the correct card data through the 'linked_card' property.
-    is_front = False
-    if 'linked_card' in card:
-        card = card['linked_card']
-        is_front = True
+    # NOTE: If back side has a separate entry, then it's treated as if it's the front side of the card.
     if deck['UniqueBack']:
-        translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, is_front, card)
+        translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, back_is_front, back_card)
     else:
         # NOTE: Even if the back is non-unique, SCED may still use it for interesting cards, e.g. Sophie: It Was All My Fault.
-        translate_sced_card(back_url, 1, 1, 0, 0, is_front, card)
+        translate_sced_card(back_url, 1, 1, 0, 0, back_is_front, back_card)
 
 def download_repo(repo_folder, repo):
     if repo_folder is not None:
@@ -1333,6 +1404,7 @@ def pack_images():
             deck_url_id, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
             deck_url = None
             for url, url_id in url_map.items():
+                # NOTE: Use the original English url on steam as the base deck image.
                 if url_id == deck_url_id and 'steamusercontent.com' in url:
                     deck_url = url
             if not deck_url:
