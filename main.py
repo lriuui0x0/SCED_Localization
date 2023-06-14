@@ -443,6 +443,7 @@ def get_se_encounter(card, sheet):
         'the_city_of_archives': 'TheCityOfArchives',
         'the_depths_of_yoth': 'TheDepthsOfYoth',
         'shattered_aeons': 'ShatteredAeons',
+        'turn_back_time': 'TurnBackTime',
         None: '',
     }
     return encounter_map[encounter]
@@ -524,6 +525,7 @@ def get_se_encounter_total(card):
         'the_city_of_archives': 44,
         'the_depths_of_yoth': 36,
         'shattered_aeons': 36,
+        'turn_back_time': 4,
         None: 0,
     }
     return str(encounter_map[encounter])
@@ -533,6 +535,10 @@ def get_se_encounter_number(card):
 
 def get_se_doom(card):
     return str(get_field(card, 'doom', '-'))
+
+def get_se_comment(card):
+    # NOTE: Special cases the cards with an asterisk comment on the doom or clue.
+    return '1' if card['code'] in ['04212'] else '0'
 
 def get_se_clue(card):
     return str(get_field(card, 'clues', '-'))
@@ -552,7 +558,9 @@ def get_se_progress_number(card):
 
 def get_se_progress_letter(card):
     # NOTE: Special case agenda and act letters.
-    if card['code'] in ['03278', '03279a', '03279b', '03280', '03282']:
+    if card['code'] in ['04133a', '04134a', '04135', '04136', '04137a', '04138', '04139', '04140']:
+        return 'e'
+    if card['code'] in ['03278', '03279a', '03279b', '03280', '03282', '04125a', '04126a', '04127', '04128a', '04129', '04130a', '04131', '04132']:
         return 'c'
     return 'a'
 
@@ -655,22 +663,24 @@ def get_se_chaos(rule, index):
     rule = [line.strip() for line in rule.split('\n')]
     rule = rule[1:]
     tokens = ['[skull]', '[cultist]', '[tablet]', '[elder_thing]']
-    curr_token = tokens[index]
-    next_token = tokens[index + 1] if index + 1 < len(tokens) else ''
-    token_map = {
-        '[skull]': 'Skull',
-        '[cultist]': 'Cultist',
-        '[tablet]': 'Tablet',
-        '[elder_thing]': 'ElderThing',
-        '': 'None',
-    }
+    merge_tokens = ['Skull', 'Cultist', 'Tablet', 'ElderThing']
+    token = tokens[index]
     for line in rule:
-        if curr_token in line:
-            merge = token_map[next_token] if next_token in line else 'None'
+        if token in line:
+            # NOTE: Find the greatest token this token is combined with.
+            max_index = index
+            for merge_token in tokens:
+                if merge_token in line:
+                    merge_index = tokens.index(merge_token)
+                    max_index = max(max_index, merge_index)
+
+            # NOTE: Remove tokens from the beginning of the line.
             line = re.sub(r'[:：]', '', line)
-            for token in tokens:
-                line = line.replace(token, '')
+            for merge_token in tokens:
+                line = line.replace(merge_token, '')
             line = line.strip()
+
+            merge = merge_tokens[max_index] if max_index > index else 'None'
             return line, merge
     return '', 'None'
 
@@ -831,10 +841,11 @@ def get_se_point(card):
         victory = f'Victory {victory}.'
     else:
         victory = ''
+    # NOTE: Vengeance and victory order have different formatting on location and enemy cards.
     if card['type_code'] == 'location':
         point = f'{vengeance}\n{victory}'.strip()
     else:
-        point = f'{vengeance} {victory}'.strip()
+        point = f'{victory} {vengeance}'.strip()
     return transform_lang(point)
 
 def get_se_location_icon(icon):
@@ -958,6 +969,7 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$EncounterTotal': get_se_encounter_total(card),
         '$Doom': get_se_doom(card),
         '$Clues': get_se_clue(card),
+        '$Asterisk': get_se_comment(card),
         '$Shroud': get_se_shroud(card),
         '$PerInvestigator': get_se_per_investigator(card),
         '$ScenarioIndex': get_se_progress_number(card),
@@ -1154,6 +1166,8 @@ se_types = [
     'skill',
     'investigator_front',
     'investigator_back',
+    'investigator_encounter_front',
+    'investigator_encounter_back',
     'treachery_weakness',
     'treachery_encounter',
     'enemy_weakness',
@@ -1209,10 +1223,16 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
         elif card_type == 'skill':
             se_type = 'skill'
         elif card_type == 'investigator':
-            if is_front:
-                se_type = 'investigator_front'
+            if get_field(card, 'encounter_code', None) is not None:
+                if is_front:
+                    se_type = 'investigator_encounter_front'
+                else:
+                    se_type = 'investigator_encounter_back'
             else:
-                se_type = 'investigator_back'
+                if is_front:
+                    se_type = 'investigator_front'
+                else:
+                    se_type = 'investigator_back'
         elif card_type == 'treachery':
             if get_field(card, 'subtype_code', None) in ['basicweakness', 'weakness']:
                 se_type = 'treachery_weakness'
@@ -1234,7 +1254,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                     se_type = 'agenda_back'
         elif card_type == 'act':
             # NOTE: Act with image back are special cased.
-            if card['code'] in ['03322a', '03323a', '04048', '04049'] and sheet == 1:
+            if card['code'] in ['03322a', '03323a', '04048', '04049', '04318'] and sheet == 1:
                 se_type = 'progress_image'
             else:
                 if is_front:
@@ -1269,6 +1289,8 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
             'skill': (0, 75),
             'investigator_front': (247, -48),
             'investigator_back': (168, 86),
+            'investigator_encounter_front': (247, -48),
+            'investigator_encounter_back': (168, 86),
             'treachery_weakness': (0, 114),
             'treachery_encounter': (0, 114),
             'enemy_weakness': (0, -122),
@@ -1302,7 +1324,8 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
     # NOTE: The first front means the front side in SCED using front url, the second front means whether it's the logical front side for the card type.
     front_is_front = True
     back_is_front = False
-    # NOTE: Some cards on ADB have separate entries for front and back. Get the correct card data through the 'linked_card' property.
+    # NOTE: Some cards on ADB have separate entries for front and back, where the front one is the main card data. Always ensure the card id in SCED is the front one,
+    # and get the correct back card data through the 'linked_card' property.
     if 'linked_card' in card:
         back_card = card['linked_card']
         back_is_front = True
@@ -1327,28 +1350,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
             front_card, back_card = back_card, front_card
     else:
         # NOTE: SCED thinks the front side of location is the unrevealed side, which is different from what SE expects. Reverse it here apart from single faced locations.
-        if card['type_code'] == 'location' and card['code'] not in [
-                '02214',
-                '02324',
-                '02325',
-                '02326',
-                '02327',
-                '02328',
-                '04053',
-                '04063',
-                '04064',
-                '04065',
-                '04066',
-                '04067',
-                '04068',
-                '04069',
-                '04070',
-                '04071',
-                '04072',
-                '04073',
-                '04074',
-                '04075',
-        ]:
+        if card['type_code'] == 'location' and card['double_sided']:
             front_is_front = False
             back_is_front = True
 

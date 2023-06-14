@@ -24,5 +24,5 @@ def transform_traits(traits):
     return to_simplified('<size 50%> <size 200%>'.join(traits.split(' ')))
 
 def transform_point(point):
-    return point.replace('Vengeance ', '复仇<size 50%> <size 200%>').replace('Victory ', '胜利<size 50%> <size 200%>').replace('.', '。')
+    return point.replace('. ', '.').replace('.', '。').replace('Vengeance', '复仇').replace('Victory', '胜利').replace(' ', '<size 50%> <size 200%>')
 
