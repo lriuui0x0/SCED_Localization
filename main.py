@@ -422,6 +422,27 @@ def get_se_encounter(card, sheet):
         'vortex': 'TheVortexAbove',
         'flood': 'TheFloodBelow',
         'dim_carcosa': 'DimCarcosa',
+        'wilds': 'TheUntamedWilds',
+        'eztli': 'TheDoomOfEztli',
+        'rainforest': 'Rainforest',
+        'serpents': 'Serpents',
+        'expedition': 'Expedition',
+        'agents_of_yig': 'AgentsOfYig',
+        'guardians_of_time': 'GuardiansOfTime',
+        'traps': 'DeadlyTraps',
+        'flux': 'TemporalFlux',
+        'ruins': 'ForgottenRuins',
+        'pnakotic_brotherhood': 'PnakoticBrotherhood',
+        'venom': 'YigsVenom',
+        'poison': 'Poison',
+        'threads_of_fate': 'ThreadsOfFate',
+        'the_boundary_beyond': 'TheBoundaryBeyond',
+        'heart_of_the_elders': 'HeartOfTheElders',
+        'pillars_of_judgment': 'PillarsOfJudgment',
+        'knyan': 'KnYan',
+        'the_city_of_archives': 'TheCityOfArchives',
+        'the_depths_of_yoth': 'TheDepthsOfYoth',
+        'shattered_aeons': 'ShatteredAeons',
         None: '',
     }
     return encounter_map[encounter]
@@ -482,6 +503,27 @@ def get_se_encounter_total(card):
         'vortex': 38,
         'flood': 38,
         'dim_carcosa': 36,
+        'wilds': 11,
+        'eztli': 15,
+        'rainforest': 11,
+        'serpents': 7,
+        'expedition': 5,
+        'agents_of_yig': 6,
+        'guardians_of_time': 4,
+        'traps': 5,
+        'flux': 5,
+        'ruins': 7,
+        'pnakotic_brotherhood': 6,
+        'venom': 5,
+        'poison': 6,
+        'threads_of_fate': 40,
+        'the_boundary_beyond': 36,
+        'heart_of_the_elders': 8,
+        'pillars_of_judgment': 13,
+        'knyan': 13,
+        'the_city_of_archives': 44,
+        'the_depths_of_yoth': 36,
+        'shattered_aeons': 36,
         None: 0,
     }
     return str(encounter_map[encounter])
@@ -694,12 +736,14 @@ def get_se_back_flavor(card):
 
 def get_se_paragraph_line(card, text, flavor, index):
     # NOTE: The following algorithm is a best-effort guess on the formatting. We use simple layout in the case of there's explicit flavor text.
+    # TODO: This is incorrect, the rule text might itself have formatting in it.
     if flavor:
         if index == 0:
             return '', flavor.strip(), text.strip()
         else:
             return '', '', ''
 
+    # TODO: This algorithm is problematic, try to make use of the following tags.
     # NOTE: Deleting the tags that are not useful for the parsing.
     text = text.replace('<blockquote>', '').replace('</blockquote>', '').replace('<hr>', '')
 
@@ -776,12 +820,22 @@ def get_se_back_paragraph_rule(card, index):
     _, _, rule = get_se_back_paragraph_line(card, index)
     return get_se_rule(rule)
 
-def get_se_victory(card):
+def get_se_point(card):
+    vengeance = get_field(card, 'vengeance', None)
+    if type(vengeance) == int:
+        vengeance = f'Vengeance {vengeance}.'
+    else:
+        vengeance = ''
     victory = get_field(card, 'victory', None)
-    if type(victory) != int:
-        return ''
-    victory = f'Victory {victory}.'
-    return transform_lang(victory)
+    if type(victory) == int:
+        victory = f'Victory {victory}.'
+    else:
+        victory = ''
+    if card['type_code'] == 'location':
+        point = f'{vengeance}\n{victory}'.strip()
+    else:
+        point = f'{vengeance} {victory}'.strip()
+    return transform_lang(point)
 
 def get_se_location_icon(icon):
     icon_map = {
@@ -893,7 +947,7 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Text7Back': get_se_deck_rule(card, 6),
         '$Text8NameBack': get_se_deck_header(card, 7),
         '$Text8Back': get_se_deck_rule(card, 7),
-        '$Victory': get_se_victory(card),
+        '$Victory': get_se_point(card),
         '$Artist': get_se_illustrator(card),
         '$ArtistBack': get_se_illustrator(card),
         '$Copyright': get_se_copyright(card),
@@ -1180,7 +1234,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                     se_type = 'agenda_back'
         elif card_type == 'act':
             # NOTE: Act with image back are special cased.
-            if card['code'] in ['03322a', '03323a'] and sheet == 1:
+            if card['code'] in ['03322a', '03323a', '04048', '04049'] and sheet == 1:
                 se_type = 'progress_image'
             else:
                 if is_front:
@@ -1273,7 +1327,28 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
             front_card, back_card = back_card, front_card
     else:
         # NOTE: SCED thinks the front side of location is the unrevealed side, which is different from what SE expects. Reverse it here apart from single faced locations.
-        if card['type_code'] == 'location' and card['code'] not in ['02214', '02324', '02325', '02326', '02327', '02328']:
+        if card['type_code'] == 'location' and card['code'] not in [
+                '02214',
+                '02324',
+                '02325',
+                '02326',
+                '02327',
+                '02328',
+                '04053',
+                '04063',
+                '04064',
+                '04065',
+                '04066',
+                '04067',
+                '04068',
+                '04069',
+                '04070',
+                '04071',
+                '04072',
+                '04073',
+                '04074',
+                '04075',
+        ]:
             front_is_front = False
             back_is_front = True
 
