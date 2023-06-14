@@ -444,6 +444,27 @@ def get_se_encounter(card, sheet):
         'the_depths_of_yoth': 'TheDepthsOfYoth',
         'shattered_aeons': 'ShatteredAeons',
         'turn_back_time': 'TurnBackTime',
+        'disappearance_at_the_twilight_estate': 'DisappearanceAtTheTwilightEstate',
+        'the_witching_hour': 'TheWitchingHour',
+        'at_deaths_doorstep': 'AtDeathsDoorstep',
+        'the_watcher': 'TheWatcher',
+        'agents_of_azathoth': 'AgentsOfAzathoth',
+        'anettes_coven': 'AnettesCoven',
+        'witchcraft': 'Witchcraft',
+        'silver_twilight_lodge': 'SilverTwilightLodge',
+        'city_of_sins': 'CityOfSins',
+        'spectral_predators': 'SpectralPredators',
+        'trapped_spirits': 'TrappedSpirits',
+        'realm_of_death': 'RealmOfDeath',
+        'inexorable_fate': 'InexorableFate',
+        'the_secret_name': 'TheSecretName',
+        'the_wages_of_sin': 'TheWagesOfSin',
+        'for_the_greater_good': 'ForTheGreaterGood',
+        'union_and_disillusion': 'UnionAndDisillusion',
+        'in_the_clutches_of_chaos': 'InTheClutchesOfChaos',
+        'music_of_the_damned': 'MusicOfTheDamned',
+        'secrets_of_the_universe': 'SecretsOfTheUniverse',
+        'before_the_black_throne': 'BeforeTheBlackThrone',
         None: '',
     }
     return encounter_map[encounter]
@@ -526,6 +547,27 @@ def get_se_encounter_total(card):
         'the_depths_of_yoth': 36,
         'shattered_aeons': 36,
         'turn_back_time': 4,
+        'disappearance_at_the_twilight_estate': 7,
+        'the_witching_hour': 15,
+        'at_deaths_doorstep': 21,
+        'the_watcher': 3,
+        'agents_of_azathoth': 4,
+        'anettes_coven': 4,
+        'witchcraft': 7,
+        'silver_twilight_lodge': 6,
+        'city_of_sins': 5,
+        'spectral_predators': 5,
+        'trapped_spirits': 4,
+        'realm_of_death': 4,
+        'inexorable_fate': 6,
+        'the_secret_name': 38,
+        'the_wages_of_sin': 40,
+        'for_the_greater_good': 38,
+        'union_and_disillusion': 42,
+        'in_the_clutches_of_chaos': 22,
+        'music_of_the_damned': 8,
+        'secrets_of_the_universe': 8,
+        'before_the_black_throne': 36,
         None: 0,
     }
     return str(encounter_map[encounter])
@@ -544,7 +586,11 @@ def get_se_clue(card):
     return str(get_field(card, 'clues', '-'))
 
 def get_se_shroud(card):
-    return str(get_field(card, 'shroud', 0))
+    shroud = get_field(card, 'shroud', 0)
+    # NOTE: ADB uses -2 to indicate variable shroud.
+    if shroud == -2:
+        shroud = 'X'
+    return str(shroud)
 
 def get_se_per_investigator(card):
     # NOTE: Location and act cards default to use per-investigator clue count, unless clue count is 0 or 'clues_fixed' is specified.
@@ -1204,10 +1250,6 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
         card_type = card['type_code']
         rotate = card_type in ['investigator', 'agenda', 'act']
         sheet = 0 if is_front else 1
-        # # NOTE: SCED and SE consider the front and back for location cards differently. Reverse here and encode the sheet number in the 'result_id' so that
-        # # front are generated for front, back for back for the location cards. Some location cards only have single face, so they need to be special cased.
-        # if card_type == 'location' and card['code'] not in ['02214', '02324', '02325', '02326', '02327', '02328']:
-        #     sheet = 1 - sheet
         result_id = encode_result_id(get_url_id(url), deck_w, deck_h, deck_x, deck_y, rotate, sheet)
         if result_id in result_set:
             return
@@ -1345,7 +1387,8 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                 '03329b',
                 '03329d',
                 '03330b',
-                '03331b'
+                '03331b',
+                '05085b',
         ]:
             front_card, back_card = back_card, front_card
     else:
