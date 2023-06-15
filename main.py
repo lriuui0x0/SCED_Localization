@@ -2,7 +2,6 @@
 # 03281 Open The Path Below and others, incorrect move offset of reversed agenda/act
 # 04318 Worlds Beyond, SE bug incorret text layout
 # 05171 Heretics' Graves and more, SE bug on '-' clue location
-# 06015a Dream-Gate, special location template
 # Parallel investigators, SE bug failing
 # Promo cards, SE missing cycle icon
 # General problems on agenda/act/story formatting
@@ -584,6 +583,10 @@ def get_se_encounter_total(card):
 def get_se_encounter_number(card):
     return str(get_field(card, 'encounter_position', 0))
 
+def get_se_encounter_visibility(card):
+    encounter = get_field(card, 'encounter_code', None)
+    return '1' if encounter else '0'
+
 def get_se_doom(card):
     return str(get_field(card, 'doom', '-'))
 
@@ -1029,6 +1032,8 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Encounter': get_se_encounter(card, image_sheet),
         '$EncounterNumber': get_se_encounter_number(card),
         '$EncounterTotal': get_se_encounter_total(card),
+        '$ShowEncounterIcon': get_se_encounter_visibility(card),
+        '$ShowEncounterIconBack': get_se_encounter_visibility(card),
         '$Doom': get_se_doom(card),
         '$Clues': get_se_clue(card),
         '$Asterisk': get_se_comment(card),
