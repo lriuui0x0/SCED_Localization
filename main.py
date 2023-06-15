@@ -1,12 +1,11 @@
 # TODO: Failing cards:
 # 03281 Open The Path Below and others, incorrect move offset of reversed agenda/act
-# 04277 The Depths of Yoth, special scenario template
 # 04318 Worlds Beyond, SE bug incorret text layout
 # 05171 Heretics' Graves and more, SE bug on '-' clue location
 # 06015a Dream-Gate, special location template
 # Parallel investigators, SE bug failing
 # Promo cards, SE missing cycle icon
-# General problems on formatting
+# General problems on agenda/act/story formatting
 
 import argparse
 import csv
@@ -764,6 +763,12 @@ def get_se_back_chaos_merge(card, index):
     _, merge = get_se_back_chaos(card, index)
     return merge
 
+def get_se_tracker(card):
+    tracker = ''
+    if card['code'] == '04277':
+        tracker = 'Current Depth'
+    return transform_lang(tracker)
+
 def get_se_deck_line(card, index):
     lines = get_field(card, 'back_text', '')
     lines = [line.strip() for line in lines.split('\n') if line.strip()]
@@ -790,6 +795,7 @@ def get_se_deck_rule(card, index):
     return get_se_rule(rule)
 
 def get_se_flavor(flavor):
+    flavor = get_se_markup(flavor)
     return transform_lang(flavor)
 
 def get_se_front_flavor(card):
@@ -1081,6 +1087,7 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$TabletBack': get_se_back_chaos_rule(card, 2),
         '$MergeTabletBack': get_se_back_chaos_merge(card, 2),
         '$ElderThingBack': get_se_back_chaos_rule(card, 3),
+        '$TrackerBox': get_se_tracker(card),
     }
 
 def ensure_dir(dir):
@@ -1248,128 +1255,128 @@ def get_decks(object):
         decks.append((int(deck_id), deck))
     return decks
 
-def translate_sced_card_object(object, metadata, card, _1, _2):
+def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, metadata):
+    card_type = card['type_code']
+    rotate = card_type in ['investigator', 'agenda', 'act']
+    sheet = 0 if is_front else 1
+    result_id = encode_result_id(get_url_id(url), deck_w, deck_h, deck_x, deck_y, rotate, sheet)
+    if result_id in result_set:
+        return
+    print(f'Translating {result_id}...')
+
+    if card_type == 'asset':
+        if get_field(card, 'encounter_code', None):
+            se_type = 'asset_encounter'
+        else:
+            se_type = 'asset'
+    elif card_type == 'event':
+        se_type = 'event'
+    elif card_type == 'skill':
+        se_type = 'skill'
+    elif card_type == 'investigator':
+        if get_field(card, 'encounter_code', None) is not None:
+            if is_front:
+                se_type = 'investigator_encounter_front'
+            else:
+                se_type = 'investigator_encounter_back'
+        else:
+            if is_front:
+                se_type = 'investigator_front'
+            else:
+                se_type = 'investigator_back'
+    elif card_type == 'treachery':
+        if get_field(card, 'subtype_code', None) in ['basicweakness', 'weakness']:
+            se_type = 'treachery_weakness'
+        else:
+            se_type = 'treachery_encounter'
+    elif card_type == 'enemy':
+        if get_field(card, 'subtype_code', None) in ['basicweakness', 'weakness']:
+            se_type = 'enemy_weakness'
+        else:
+            se_type = 'enemy_encounter'
+    elif card_type == 'agenda':
+        # NOTE: Agenda with image back are special cased.
+        if card['code'] in ['01145', '02314', '05199'] and not is_front:
+            se_type = 'progress_image'
+        else:
+            if is_front:
+                se_type = 'agenda_front'
+            else:
+                se_type = 'agenda_back'
+    elif card_type == 'act':
+        # NOTE: Act with image back are special cased.
+        if card['code'] in ['03322a', '03323a', '04048', '04049', '04318'] and not is_front:
+            se_type = 'progress_image'
+        else:
+            if is_front:
+                se_type = 'act_front'
+            else:
+                se_type = 'act_back'
+    elif card_type == 'location':
+        if is_front:
+            se_type = 'location_front'
+        else:
+            se_type = 'location_back'
+    elif card_type == 'scenario':
+        if is_front:
+            se_type = 'scenario_front'
+        else:
+            se_type = 'scenario_back'
+    elif card_type == 'story':
+        se_type = 'story'
+    else:
+        se_type = None
+
+    deck_image_filename = download_deck_image(url)
+    image_filename = crop_card_image(result_id, deck_image_filename)
+    image = Image.open(image_filename)
+    template_width = 375
+    template_height = 525
+    image_scale = template_width / (image.height if rotate else image.width)
+    move_map = {
+        'asset': (0, 93),
+        'asset_encounter': (0, 93),
+        'event': (0, 118),
+        'skill': (0, 75),
+        'investigator_front': (247, -48),
+        'investigator_back': (168, 86),
+        'investigator_encounter_front': (247, -48),
+        'investigator_encounter_back': (168, 86),
+        'treachery_weakness': (0, 114),
+        'treachery_encounter': (0, 114),
+        'enemy_weakness': (0, -122),
+        'enemy_encounter': (0, -122),
+        'agenda_front': (110, 0),
+        'agenda_back': (0, 0),
+        'act_front': (-98, 0),
+        'act_back': (0, 0),
+        'progress_image': (0, 0),
+        'location_front': (0, 83),
+        'location_back': (0, 83),
+        'scenario_front': (0, 0),
+        'scenario_back': (0, 0),
+        'story': (0, 0),
+    }
+    # NOTE: Handle the case where agenda and act direction reversed on cards.
+    if se_type in ['agenda_front', 'act_front'] and is_progress_reversed(card):
+        if se_type == 'agenda_front':
+            move_map_se_type = 'act_front'
+        else:
+            move_map_se_type = 'agenda_front'
+    else:
+        move_map_se_type = se_type
+    image_move_x, image_move_y = move_map[move_map_se_type]
+    image_filename = os.path.abspath(image_filename)
+    se_cards[se_type].append(get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y))
+    result_set.add(result_id)
+
+def translate_sced_card_object(object, metadata, card):
     deck_id, deck = get_decks(object)[0]
     deck_w = deck['NumWidth']
     deck_h = deck['NumHeight']
     deck_xy = object['CardID'] % 100
     deck_x = deck_xy % deck_w
     deck_y = deck_xy // deck_w
-
-    def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card):
-        card_type = card['type_code']
-        rotate = card_type in ['investigator', 'agenda', 'act']
-        sheet = 0 if is_front else 1
-        result_id = encode_result_id(get_url_id(url), deck_w, deck_h, deck_x, deck_y, rotate, sheet)
-        if result_id in result_set:
-            return
-        print(f'Translating {result_id}...')
-
-        if card_type == 'asset':
-            if get_field(card, 'encounter_code', None):
-                se_type = 'asset_encounter'
-            else:
-                se_type = 'asset'
-        elif card_type == 'event':
-            se_type = 'event'
-        elif card_type == 'skill':
-            se_type = 'skill'
-        elif card_type == 'investigator':
-            if get_field(card, 'encounter_code', None) is not None:
-                if is_front:
-                    se_type = 'investigator_encounter_front'
-                else:
-                    se_type = 'investigator_encounter_back'
-            else:
-                if is_front:
-                    se_type = 'investigator_front'
-                else:
-                    se_type = 'investigator_back'
-        elif card_type == 'treachery':
-            if get_field(card, 'subtype_code', None) in ['basicweakness', 'weakness']:
-                se_type = 'treachery_weakness'
-            else:
-                se_type = 'treachery_encounter'
-        elif card_type == 'enemy':
-            if get_field(card, 'subtype_code', None) in ['basicweakness', 'weakness']:
-                se_type = 'enemy_weakness'
-            else:
-                se_type = 'enemy_encounter'
-        elif card_type == 'agenda':
-            # NOTE: Agenda with image back are special cased.
-            if card['code'] in ['01145', '02314', '05199'] and not is_front:
-                se_type = 'progress_image'
-            else:
-                if is_front:
-                    se_type = 'agenda_front'
-                else:
-                    se_type = 'agenda_back'
-        elif card_type == 'act':
-            # NOTE: Act with image back are special cased.
-            if card['code'] in ['03322a', '03323a', '04048', '04049', '04318'] and not is_front:
-                se_type = 'progress_image'
-            else:
-                if is_front:
-                    se_type = 'act_front'
-                else:
-                    se_type = 'act_back'
-        elif card_type == 'location':
-            if is_front:
-                se_type = 'location_front'
-            else:
-                se_type = 'location_back'
-        elif card_type == 'scenario':
-            if is_front:
-                se_type = 'scenario_front'
-            else:
-                se_type = 'scenario_back'
-        elif card_type == 'story':
-            se_type = 'story'
-        else:
-            se_type = None
-
-        deck_image_filename = download_deck_image(url)
-        image_filename = crop_card_image(result_id, deck_image_filename)
-        image = Image.open(image_filename)
-        template_width = 375
-        template_height = 525
-        image_scale = template_width / (image.height if rotate else image.width)
-        move_map = {
-            'asset': (0, 93),
-            'asset_encounter': (0, 93),
-            'event': (0, 118),
-            'skill': (0, 75),
-            'investigator_front': (247, -48),
-            'investigator_back': (168, 86),
-            'investigator_encounter_front': (247, -48),
-            'investigator_encounter_back': (168, 86),
-            'treachery_weakness': (0, 114),
-            'treachery_encounter': (0, 114),
-            'enemy_weakness': (0, -122),
-            'enemy_encounter': (0, -122),
-            'agenda_front': (110, 0),
-            'agenda_back': (0, 0),
-            'act_front': (-98, 0),
-            'act_back': (0, 0),
-            'progress_image': (0, 0),
-            'location_front': (0, 83),
-            'location_back': (0, 83),
-            'scenario_front': (0, 0),
-            'scenario_back': (0, 0),
-            'story': (0, 0),
-        }
-        # NOTE: Handle the case where agenda and act direction reversed on cards.
-        if se_type in ['agenda_front', 'act_front'] and is_progress_reversed(card):
-            if se_type == 'agenda_front':
-                move_map_se_type = 'act_front'
-            else:
-                move_map_se_type = 'agenda_front'
-        else:
-            move_map_se_type = se_type
-        image_move_x, image_move_y = move_map[move_map_se_type]
-        image_filename = os.path.abspath(image_filename)
-        se_cards[se_type].append(get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y))
-        result_set.add(result_id)
 
     front_card = card
     back_card = card
@@ -1399,6 +1406,22 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                 '03330b',
                 '03331b',
                 '05085b',
+                '05166',
+                '05167',
+                '05168',
+                '05169',
+                '05170',
+                '05171',
+                '05172',
+                '05173',
+                '05174',
+                '05175',
+                '05176',
+                '05217',
+                '05262',
+                '05263',
+                '05264',
+                '05265',
         ]:
             front_card, back_card = back_card, front_card
     else:
@@ -1408,7 +1431,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
             back_is_front = True
 
     front_url = deck['FaceURL']
-    translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, front_is_front, front_card)
+    translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, front_is_front, front_card, metadata)
 
     back_url = deck['BackURL']
     # NOTE: Test whether it's generic player or encounter card back urls.
@@ -1420,10 +1443,21 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
 
     # NOTE: If back side has a separate entry, then it's treated as if it's the front side of the card.
     if deck['UniqueBack']:
-        translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, back_is_front, back_card)
+        translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, back_is_front, back_card, metadata)
     else:
         # NOTE: Even if the back is non-unique, SCED may still use it for interesting cards, e.g. Sophie: It Was All My Fault.
-        translate_sced_card(back_url, 1, 1, 0, 0, back_is_front, back_card)
+        translate_sced_card(back_url, 1, 1, 0, 0, back_is_front, back_card, metadata)
+
+def translate_sced_token_object(object, metadata, card):
+    image_url = object['CustomImage']['ImageURL']
+    is_front = object['Description'].endswith('Easy/Standard')
+    translate_sced_card(image_url, 1, 1, 0, 0, is_front, card, metadata)
+
+def translate_sced_object(object, metadata, card, _1, _2):
+    if object['Name'] == 'Card':
+        translate_sced_card_object(object, metadata, card)
+    elif object['Name'] == 'Custom_Token':
+        translate_sced_token_object(object, metadata, card)
 
 def download_repo(repo_folder, repo):
     if repo_folder is not None:
@@ -1482,6 +1516,9 @@ def process_encounter_cards(callback, **kwargs):
                             results.append(object)
                             return results
                         elif object.get('Name', None) == 'Card' and object.get('GMNotes', '').startswith('{'):
+                            return [object]
+                        # NOTE: Some scenario cards have tracker box on them and are custom token object instead.
+                        elif object.get('Name', None) == 'Custom_Token' and object.get('Nickname', None) == 'Scenario' and object.get('GMNotes', '').startswith('{'):
                             return [object]
                         elif 'ContainedObjects' in object:
                             return find_encounter_objects(object['ContainedObjects'])
@@ -1650,8 +1687,8 @@ def update_sced_files():
             file.write(json_str)
 
 if args.step in [None, steps[0]]:
-    process_player_cards(translate_sced_card_object)
-    process_encounter_cards(translate_sced_card_object)
+    process_player_cards(translate_sced_object)
+    process_encounter_cards(translate_sced_object)
     write_csv()
 
 if args.step in [None, steps[1]]:

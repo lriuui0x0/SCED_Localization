@@ -26,3 +26,8 @@ def transform_traits(traits):
 def transform_point(point):
     return point.replace('. ', '.').replace('.', '。').replace('Vengeance', '复仇').replace('Victory', '胜利').replace(' ', '<size 50%> <size 200%>')
 
+def transform_tracker(tracker):
+    if tracker == 'Current Depth':
+        return '当前深度'
+    return tracker
+
