@@ -1,3 +1,13 @@
+# TODO: Failing cards:
+# 03281 Open The Path Below and others, incorrect move offset of reversed agenda/act
+# 04277 The Depths of Yoth, special scenario template
+# 04318 Worlds Beyond, SE bug incorret text layout
+# 05171 Heretics' Graves and more, SE bug on '-' clue location
+# 06015a Dream-Gate, special location template
+# Parallel investigators, SE bug failing
+# Promo cards, SE missing cycle icon
+# General problems on formatting
+
 import argparse
 import csv
 import json
@@ -1287,7 +1297,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                 se_type = 'enemy_encounter'
         elif card_type == 'agenda':
             # NOTE: Agenda with image back are special cased.
-            if card['code'] in ['01145', '02314'] and sheet == 1:
+            if card['code'] in ['01145', '02314', '05199'] and not is_front:
                 se_type = 'progress_image'
             else:
                 if is_front:
@@ -1296,7 +1306,7 @@ def translate_sced_card_object(object, metadata, card, _1, _2):
                     se_type = 'agenda_back'
         elif card_type == 'act':
             # NOTE: Act with image back are special cased.
-            if card['code'] in ['03322a', '03323a', '04048', '04049', '04318'] and sheet == 1:
+            if card['code'] in ['03322a', '03323a', '04048', '04049', '04318'] and not is_front:
                 se_type = 'progress_image'
             else:
                 if is_front:
