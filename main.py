@@ -2,7 +2,7 @@
 # 03281 Open The Path Below and others, incorrect move offset of reversed agenda/act
 # 04318 Worlds Beyond, SE bug incorret text layout
 # 05171 Heretics' Graves and more, SE bug on '-' clue location
-# Parallel investigators, SE bug failing
+# Multi-class unique assets in edge of the earth, SE bug.
 # Promo cards, SE missing cycle icon
 # General problems on agenda/act/story formatting
 
@@ -1126,8 +1126,8 @@ def download_card(ahdb_id):
         for card in cards:
             ahdb[card['code']] = card
         # NOTE: Add parallel cards with all front back combinations.
-        for ahdb_id in ['90001', '90008', '90017', '90024', '90037']:
-            card = ahdb[ahdb_id]
+        for id in ['90001', '90008', '90017', '90024', '90037']:
+            card = ahdb[id]
             old_id = card['alternate_of_code']
             old_card = ahdb[old_id]
 
