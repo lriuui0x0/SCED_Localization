@@ -29,5 +29,7 @@ def transform_point(point):
 def transform_tracker(tracker):
     if tracker == 'Current Depth':
         return '当前深度'
+    elif tracker == 'Spent Keys':
+        return '花费的钥匙'
     return tracker
 

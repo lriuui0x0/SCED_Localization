@@ -1,12 +1,12 @@
-# TODO: Failing cards:
+# TODO:
 # 03281 Open The Path Below and others, incorrect move offset of reversed agenda/act
 # 04318 Worlds Beyond, SE bug incorret text layout
 # 05171 Heretics' Graves and more, SE bug on '-' clue location
-# 06078 The Infestation Begins..., SE crashes on special chaos back
-# 06347 Legs of Atlach-Nacha, SE missing enemy layout.
-# Multi-class unique assets in edge of the earth, SE bug
+# 06078 The Infestation Begins..., SE crashes on special chaos card
+# 06347 Legs of Atlach-Nacha, SE missing enemy layout
+# 07062a Finding Agent Harper, $Template parameter doesn't seem to refresh
 # Promo cards, SE missing cycle icon
-# General problems on agenda/act/story formatting
+# General problems on agenda/act/story formatting (07062a)
 # Return to scenario cards
 
 import argparse
@@ -662,9 +662,30 @@ def get_se_encounter_total(card):
 def get_se_encounter_number(card):
     return str(get_field(card, 'encounter_position', 0))
 
-def get_se_encounter_visibility(card):
-    encounter = get_field(card, 'encounter_code', None)
-    return '1' if encounter else '0'
+def get_se_encounter_front_visibility(card):
+    return '0' if card['code'] in ['06015a'] else '1'
+
+def get_se_encounter_back_visibility(card):
+    return '0' if card['code'] in [
+        '06015a',
+        '07048',
+        '07049',
+        '07050',
+        '07051',
+        '07052',
+        '07102',
+        '07103',
+        '07104',
+        '07174a',
+        '07174b',
+        '07247',
+        '07248',
+        '07249',
+        '07250',
+        '07251',
+        '07290',
+        '07319',
+    ] else '1'
 
 def get_se_doom(card):
     return str(get_field(card, 'doom', '-'))
@@ -849,7 +870,15 @@ def get_se_tracker(card):
     tracker = ''
     if card['code'] == '04277':
         tracker = 'Current Depth'
+    elif card['code'] == '07274':
+        tracker = 'Spent Keys'
     return transform_lang(tracker)
+
+def get_se_template(card):
+    # NOTE: Special cases for cards that use the chaos card template for story.
+    if card['code'] in ['07062a']:
+        return 'Chaos'
+    return 'Story'
 
 def get_se_deck_line(card, index):
     lines = get_field(card, 'back_text', '')
@@ -1112,8 +1141,8 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Encounter': get_se_encounter(card, image_sheet),
         '$EncounterNumber': get_se_encounter_number(card),
         '$EncounterTotal': get_se_encounter_total(card),
-        '$ShowEncounterIcon': get_se_encounter_visibility(card),
-        '$ShowEncounterIconBack': get_se_encounter_visibility(card),
+        '$ShowEncounterIcon': get_se_encounter_front_visibility(card),
+        '$ShowEncounterIconBack': get_se_encounter_back_visibility(card),
         '$Doom': get_se_doom(card),
         '$Clues': get_se_clue(card),
         '$Asterisk': get_se_comment(card),
@@ -1173,6 +1202,7 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$MergeTabletBack': get_se_back_chaos_merge(card, 2),
         '$ElderThingBack': get_se_back_chaos_rule(card, 3),
         '$TrackerBox': get_se_tracker(card),
+        '$Template': get_se_template(card),
     }
 
 def ensure_dir(dir):
@@ -1415,9 +1445,9 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         else:
             se_type = 'scenario_back'
     elif card_type == 'story':
-        # NOTE: Special case card backs.
+        # NOTE: Some scenario cards are recorded as story in ADB, handle them specially here.
         if card['code'] == '06078' and not is_front:
-            se_type = 'scenario_back'
+            se_type = 'scenario_front'
         else:
             se_type = 'story'
     else:
@@ -1518,6 +1548,7 @@ def translate_sced_card_object(object, metadata, card):
                 '05263',
                 '05264',
                 '05265',
+                '07252',
         ]:
             front_card, back_card = back_card, front_card
     else:

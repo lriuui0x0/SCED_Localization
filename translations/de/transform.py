@@ -9,5 +9,7 @@ def transform_point(point):
 def transform_tracker(tracker):
     if tracker == 'Current Depth':
         return 'Aktuelle Tiefe'
+    elif tracker == 'Spent Keys':
+        return "Ausgegebene Schlüssel"
     return tracker
 
