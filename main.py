@@ -2,9 +2,12 @@
 # 03281 Open The Path Below and others, incorrect move offset of reversed agenda/act
 # 04318 Worlds Beyond, SE bug incorret text layout
 # 05171 Heretics' Graves and more, SE bug on '-' clue location
-# Multi-class unique assets in edge of the earth, SE bug.
+# 06078 The Infestation Begins..., SE crashes on special chaos back
+# 06347 Legs of Atlach-Nacha, SE missing enemy layout.
+# Multi-class unique assets in edge of the earth, SE bug
 # Promo cards, SE missing cycle icon
 # General problems on agenda/act/story formatting
+# Return to scenario cards
 
 import argparse
 import csv
@@ -473,6 +476,26 @@ def get_se_encounter(card, sheet):
         'music_of_the_damned': 'MusicOfTheDamned',
         'secrets_of_the_universe': 'SecretsOfTheUniverse',
         'before_the_black_throne': 'BeforeTheBlackThrone',
+        'beyond_the_gates_of_sleep': 'BeyondTheGatesOfSleep',
+        'waking_nightmare': 'WakingNightmare',
+        'agents_of_atlach_nacha': 'AgentsOfAtlachNacha',
+        'agents_of_nyarlathotep': 'AgentsOfNyarlathotep',
+        'whispers_of_hypnos': 'WhispersOfHypnos',
+        'creatures_of_the_underworld': 'CreaturesOfTheUnderworld',
+        'dreamers_curse': 'DreamersCurse',
+        'dreamlands': 'Dreamlands',
+        'merging_realities': 'MergingRealities',
+        'spiders': 'Spiders',
+        'corsairs': 'Corsairs',
+        'zoogs': 'Zoogs',
+        'the_search_for_kadath': 'TheSearchForKadath',
+        'a_thousand_shapes_of_horror': 'AThousandShapesOfHorror',
+        'dark_side_of_the_moon': 'DarkSideOfTheMoon',
+        'point_of_no_return': 'PointOfNoReturn',
+        'terror_of_the_vale': 'TerrorOfTheVale',
+        'descent_into_the_pitch': 'DescentIntoThePitch',
+        'where_the_gods_dwell': 'WhereTheGodsDwell',
+        'weaver_of_the_cosmos': 'WeaverOfTheCosmos',
         None: '',
     }
     return encounter_map[encounter]
@@ -576,6 +599,26 @@ def get_se_encounter_total(card):
         'music_of_the_damned': 8,
         'secrets_of_the_universe': 8,
         'before_the_black_throne': 36,
+        'beyond_the_gates_of_sleep': 25,
+        'waking_nightmare': 25,
+        'agents_of_atlach_nacha': 4,
+        'agents_of_nyarlathotep': 4,
+        'whispers_of_hypnos': 3,
+        'creatures_of_the_underworld': 4,
+        'dreamers_curse': 6,
+        'dreamlands': 4,
+        'merging_realities': 6,
+        'spiders': 6,
+        'corsairs': 4,
+        'zoogs': 6,
+        'the_search_for_kadath': 43,
+        'a_thousand_shapes_of_horror': 34,
+        'dark_side_of_the_moon': 37,
+        'point_of_no_return': 28,
+        'terror_of_the_vale': 4,
+        'descent_into_the_pitch': 4,
+        'where_the_gods_dwell': 41,
+        'weaver_of_the_cosmos': 38,
         None: 0,
     }
     return str(encounter_map[encounter])
@@ -798,6 +841,7 @@ def get_se_deck_rule(card, index):
     return get_se_rule(rule)
 
 def get_se_flavor(flavor):
+    # NOTE: Some flavor text may contain markup.
     flavor = get_se_markup(flavor)
     return transform_lang(flavor)
 
@@ -1149,8 +1193,15 @@ def download_card(ahdb_id):
             pb_card['text'] = get_field(old_card, 'text', '')
             pb_card['flavor'] = get_field(old_card, 'flavor', '')
             ahdb[pbid] = pb_card
+
         # NOTE: Patching some notable errors from ADB.
         ahdb['01513']['subtype_code'] = 'weakness'
+
+        for id, card in ahdb.items():
+            if 'linked_card' in card:
+                # NOTE: Patching linked cards missing encounter set.
+                if get_field(card, 'encounter_code', None) != None and get_field(card['linked_card'], 'encounter_code', None) == None:
+                    card['linked_card']['encounter_code'] = card['encounter_code']
 
     return ahdb[ahdb_id]
 
@@ -1310,7 +1361,7 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
                 se_type = 'agenda_back'
     elif card_type == 'act':
         # NOTE: Act with image back are special cased.
-        if card['code'] in ['03322a', '03323a', '04048', '04049', '04318'] and not is_front:
+        if card['code'] in ['03322a', '03323a', '04048', '04049', '04318', '06292', '06337'] and not is_front:
             se_type = 'progress_image'
         else:
             if is_front:
@@ -1328,7 +1379,11 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         else:
             se_type = 'scenario_back'
     elif card_type == 'story':
-        se_type = 'story'
+        # NOTE: Special case card backs.
+        if card['code'] == '06078' and not is_front:
+            se_type = 'scenario_back'
+        else:
+            se_type = 'story'
     else:
         se_type = None
 
@@ -1431,27 +1486,36 @@ def translate_sced_card_object(object, metadata, card):
             front_card, back_card = back_card, front_card
     else:
         # NOTE: SCED thinks the front side of location is the unrevealed side, which is different from what SE expects. Reverse it here apart from single faced locations.
-        if card['type_code'] == 'location' and card['double_sided']:
+        # The same goes for some special cards.
+        if (card['type_code'] == 'location' and card['double_sided']) or card['code'] in ['06078', '06346']:
             front_is_front = False
             back_is_front = True
 
     front_url = deck['FaceURL']
-    translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, front_is_front, front_card, metadata)
+    translate_front = True
+    # NOTE: Do not translate front image for full portrait.
+    if card['code'] in ['06346']:
+        translate_front = False
+
+    if translate_front:
+        translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, front_is_front, front_card, metadata)
 
     back_url = deck['BackURL']
+    translate_back = True
     # NOTE: Test whether it's generic player or encounter card back urls.
     if 'EcbhVuh' in back_url or 'sRsWiSG' in back_url:
-        return
+        translate_back = False
     # NOTE: Special cases to handle generic player or encounter card back in deck images.
     if (deck_id, deck_x, deck_y) in [(2335, 9, 5)]:
-        return
+        translate_back = False
 
-    # NOTE: If back side has a separate entry, then it's treated as if it's the front side of the card.
-    if deck['UniqueBack']:
-        translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, back_is_front, back_card, metadata)
-    else:
-        # NOTE: Even if the back is non-unique, SCED may still use it for interesting cards, e.g. Sophie: It Was All My Fault.
-        translate_sced_card(back_url, 1, 1, 0, 0, back_is_front, back_card, metadata)
+    if translate_back:
+        # NOTE: If back side has a separate entry, then it's treated as if it's the front side of the card.
+        if deck['UniqueBack']:
+            translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, back_is_front, back_card, metadata)
+        else:
+            # NOTE: Even if the back is non-unique, SCED may still use it for interesting cards, e.g. Sophie: It Was All My Fault.
+            translate_sced_card(back_url, 1, 1, 0, 0, back_is_front, back_card, metadata)
 
 def translate_sced_token_object(object, metadata, card):
     image_url = object['CustomImage']['ImageURL']
