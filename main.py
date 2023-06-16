@@ -8,6 +8,7 @@
 # Promo cards, SE missing cycle icon
 # General problems on agenda/act/story formatting (07062a)
 # Return to scenario cards
+# War of the outer god card template
 
 import argparse
 import csv
