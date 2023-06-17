@@ -1,14 +1,10 @@
 # TODO:
-# 03281 Open The Path Below and others, incorrect move offset of reversed agenda/act
-# 04318 Worlds Beyond, SE bug incorret text layout
-# 05171 Heretics' Graves and more, SE bug on '-' clue location
-# 06078 The Infestation Begins..., SE crashes on special chaos card
-# 07062a Finding Agent Harper, $Template parameter doesn't seem to refresh
-# Promo cards, SE missing cycle icon
+# 06078 The Infestation Begins..., SE incorrect layout on special chaos card
 # General problems on agenda/act/story formatting (07062a)
 # 06347 Legs of Atlach-Nacha, SE missing enemy layout
 # War of the outer god card template
 # Return to scenario cards
+# Promo cards have no translation
 
 import argparse
 import csv
@@ -182,7 +178,7 @@ def get_se_health(card):
     if is_enemy or get_field(card, 'sanity', None) is not None:
         default_health = '-'
     health = get_field(card, 'health', default_health)
-    # NOTE: ADB uses -2 to indicate variable health. For enemy this is 'X', otherwise it's 'Star'.
+    # NOTE: ADB uses -2 to indicate variable health. For enemy this is 'X', otherwise SE expects it to be 'Star' for '*' assets.
     if health == -2:
         health = 'X' if is_enemy else 'Star'
     return str(health)
@@ -359,13 +355,13 @@ def get_se_pack(card):
         'bad': 'ParallelInvestigators',
         'btb': 'ParallelInvestigators',
         'rtr': 'ParallelInvestigators',
-        'hoth': '',
-        'tdor': '',
-        'iotv': '',
-        'tdg': '',
-        'tftbw': '',
-        'bob': '',
-        'dre': '',
+        'hoth': 'Promos',
+        'tdor': 'Promos',
+        'iotv': 'Promos',
+        'tdg': 'Promos',
+        'tftbw': 'Promos',
+        'bob': 'Promos',
+        'dre': 'Promos',
     }
     return pack_map[pack]
 
@@ -976,6 +972,12 @@ def get_se_back_flavor(card):
     flavor = get_field(card, 'back_flavor', '')
     return get_se_flavor(flavor)
 
+def get_se_back_header(card):
+    # NOTE: Back header is used by scenario card non-standard header, e.g. 06078.
+    header = get_field(card, 'back_text', '')
+    header = [line.strip() for line in header.split('\n')][0]
+    return get_se_header(header)
+
 def get_se_paragraph_line(card, text, flavor, index):
     # NOTE: The following algorithm is a best-effort guess on the formatting. We use simple layout in the case of there's explicit flavor text.
     # TODO: This is incorrect, the rule text might itself have formatting in it.
@@ -1237,6 +1239,7 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$HeaderCBack': get_se_back_paragraph_header(card, 2),
         '$AccentedStoryCBack': get_se_back_paragraph_flavor(card, 2),
         '$RulesCBack': get_se_back_paragraph_rule(card, 2),
+        '$HeaderBack': get_se_back_header(card),
         '$StoryBack': get_se_back_flavor(card),
         '$RulesBack': get_se_back_rule(card),
         '$LocationIcon': get_se_front_location(metadata),
@@ -1442,6 +1445,7 @@ se_types = [
     'location_back',
     'scenario_front',
     'scenario_back',
+    'scenario_header',
     'story',
 ]
 se_cards = dict(zip(se_types, [[] for _ in range(len(se_types))]))
@@ -1525,7 +1529,7 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
     elif card_type == 'story':
         # NOTE: Some scenario cards are recorded as story in ADB, handle them specially here.
         if card['code'] == '06078' and not is_front:
-            se_type = 'scenario_front'
+            se_type = 'scenario_header'
         else:
             se_type = 'story'
     else:
@@ -1560,6 +1564,7 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         'location_back': (0, 83),
         'scenario_front': (0, 0),
         'scenario_back': (0, 0),
+        'scenario_header': (0, 0),
         'story': (0, 0),
     }
     # NOTE: Handle the case where agenda and act direction reversed on cards.
