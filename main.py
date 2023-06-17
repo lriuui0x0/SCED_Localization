@@ -5,6 +5,7 @@
 # 06078 The Infestation Begins..., SE crashes on special chaos card
 # 06347 Legs of Atlach-Nacha, SE missing enemy layout
 # 07062a Finding Agent Harper, $Template parameter doesn't seem to refresh
+# 08660 The Miasma Beckons and others, SE missing seal tokens
 # Promo cards, SE missing cycle icon
 # General problems on agenda/act/story formatting (07062a)
 # Return to scenario cards
@@ -177,13 +178,14 @@ def get_se_slot(card, index):
 
 def get_se_health(card):
     # NOTE: For enemy or asset with sanity, missing health means '-', otherwise it's completely empty.
+    is_enemy = get_field(card, 'type_code', None) == 'enemy'
     default_health = 'None'
-    if get_field(card, 'type_code', None) == 'enemy' or get_field(card, 'sanity', None) is not None:
+    if is_enemy or get_field(card, 'sanity', None) is not None:
         default_health = '-'
     health = get_field(card, 'health', default_health)
-    # NOTE: ADB uses -2 to indicate variable health.
+    # NOTE: ADB uses -2 to indicate variable health. For enemy this is 'X', otherwise it's 'Star'.
     if health == -2:
-        health = 'Star'
+        health = 'X' if is_enemy else 'Star'
     return str(health)
 
 def get_se_sanity(card):
@@ -278,6 +280,7 @@ def get_se_copyright(card):
         'rcore': '2020',
         'rttcu': '2021',
         'eoep': '2021',
+        'eoec': '2021',
         'rod': '2020',
         'aon': '2020',
         'bad': '2020',
@@ -351,6 +354,7 @@ def get_se_pack(card):
         'rcore': 'CoreSet',
         'rttcu': 'ReturnToTheCircleUndone',
         'eoep': 'EdgeOfTheEarthInv',
+        'eoec': 'EdgeOfTheEarth',
         'rod': 'ParallelInvestigators',
         'aon': 'ParallelInvestigators',
         'bad': 'ParallelInvestigators',
@@ -834,15 +838,16 @@ def get_se_markup(rule):
         (r'\[bless\]', '<ble>'),
         (r'\[curse\]', '<cur>'),
         (r'\[per_investigator\]', '<per>'),
+        (r'\[frost\]', '<fro>'),
     ]
     for a, b in markup:
         rule = re.sub(a, b, rule, flags=re.I)
+    # NOTE: Format traits. We avoid the buggy behavior of </size> in SE instead we set font size by relative percentage, 0.9 * 0.33 * 3.37 = 1.00089.
+    rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t><size 33%> <size 337%>', rule)
     return rule
 
 def get_se_rule(rule):
     rule = get_se_markup(rule)
-    # NOTE: Format traits. We avoid the buggy behavior of </size> in SE instead we set font size by relative percentage, 0.9 * 0.33 * 3.37 = 1.00089.
-    rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t><size 33%> <size 337%>', rule)
     # NOTE: Get rid of the errata text, e.g. Wendy's Amulet.
     rule = re.sub(r'<i>\(Erratum[^<]*</i>', '', rule)
     # NOTE: Get rid of the FAQ text, e.g. Rex Murphy.
@@ -1053,22 +1058,30 @@ def get_se_back_paragraph_rule(card, index):
     _, _, rule = get_se_back_paragraph_line(card, index)
     return get_se_rule(rule)
 
-def get_se_point(card):
+def get_se_vengeance(card):
     vengeance = get_field(card, 'vengeance', None)
-    if type(vengeance) == int:
-        vengeance = f'Vengeance {vengeance}.'
-    else:
-        vengeance = ''
+    vengeance = f'Vengeance {vengeance}.' if type(vengeance) == int else ''
+    return transform_lang(vengeance)
+
+def get_se_victory(card):
     victory = get_field(card, 'victory', None)
-    if type(victory) == int:
-        victory = f'Victory {victory}.'
-    else:
-        victory = ''
-    # NOTE: Vengeance and victory order have different formatting on location and enemy cards.
+    victory = f'Victory {victory}.' if type(victory) == int else ''
+    return transform_lang(victory)
+
+def get_se_shelter(card):
+    shelter = get_field(card, 'shelter', None)
+    shelter = f'Shelter {shelter}.' if type(shelter) == int else ''
+    return transform_lang(shelter)
+
+def get_se_point(card):
+    vengeance = get_se_vengeance(card)
+    victory = get_se_victory(card)
+    # NOTE: Special points have different formatting on location and enemy cards.
     if card['type_code'] == 'location':
-        point = f'{vengeance}\n{victory}'.strip()
+        shelter = get_se_shelter(card)
+        point = f'{vengeance}\n{shelter}\n{victory}'.strip()
     else:
-        point = f'{victory} {vengeance}'.strip()
+        point = f'{victory}<size 50%> <size 200%>{vengeance}'.strip()
     return transform_lang(point)
 
 def get_se_location_icon(icon):
@@ -1312,11 +1325,20 @@ def download_card(ahdb_id):
         # NOTE: Patching some notable errors from ADB.
         ahdb['01513']['subtype_code'] = 'weakness'
 
+        # NOTE: Patching linked cards missing encounter set.
         for id, card in ahdb.items():
             if 'linked_card' in card:
-                # NOTE: Patching linked cards missing encounter set.
                 if get_field(card, 'encounter_code', None) != None and get_field(card['linked_card'], 'encounter_code', None) == None:
                     card['linked_card']['encounter_code'] = card['encounter_code']
+        
+        # NOTE: Patching shelter attribute as a separate field.
+        for id in ['08502', '08503', '08504', '08505', '08506', '08507', '08508', '08509', '08510', '08511', '08512', '08513', '08514']:
+            card = ahdb[id]
+            re_shelter = r'\s*<b>.*?(\d+)</b>[.。]\s*$'
+            match = re.search(re_shelter, card['text'])
+            shelter = int(match.group(1))
+            card['shelter'] = shelter
+            card['text'] = re.sub(re_shelter, '', card['text'])
 
     return ahdb[ahdb_id]
 
@@ -1410,7 +1432,8 @@ se_types = [
     'agenda_back',
     'act_front',
     'act_back',
-    'progress_image',
+    'progress_image_front',
+    'progress_image_back',
     'location_front',
     'location_back',
     'scenario_front',
@@ -1466,18 +1489,20 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         else:
             se_type = 'enemy_encounter'
     elif card_type == 'agenda':
-        # NOTE: Agenda with image back are special cased.
+        # NOTE: Agenda with image are special cased.
         if card['code'] in ['01145', '02314', '05199'] and not is_front:
-            se_type = 'progress_image'
+            se_type = 'progress_image_back'
         else:
             if is_front:
                 se_type = 'agenda_front'
             else:
                 se_type = 'agenda_back'
     elif card_type == 'act':
-        # NOTE: Act with image back are special cased.
-        if card['code'] in ['03322a', '03323a', '04048', '04049', '04318', '06292', '06337'] and not is_front:
-            se_type = 'progress_image'
+        # NOTE: Act with image are special cased.
+        if card['code'] in ['08681'] and is_front:
+            se_type = 'progress_image_front'
+        elif card['code'] in ['03322a', '03323a', '04048', '04049', '04318', '06292', '06337'] and not is_front:
+            se_type = 'progress_image_back'
         else:
             if is_front:
                 se_type = 'act_front'
@@ -1525,7 +1550,8 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         'agenda_back': (0, 0),
         'act_front': (-98, 0),
         'act_back': (0, 0),
-        'progress_image': (0, 0),
+        'progress_image_front': (0, 0),
+        'progress_image_back': (0, 0),
         'location_front': (0, 83),
         'location_back': (0, 83),
         'scenario_front': (0, 0),
