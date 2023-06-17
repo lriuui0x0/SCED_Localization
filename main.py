@@ -1,5 +1,4 @@
 # TODO:
-# 06078 The Infestation Begins..., SE incorrect layout on special chaos card
 # General problems on agenda/act/story formatting (07062a)
 # 06347 Legs of Atlach-Nacha, SE missing enemy layout
 # War of the outer god card template
@@ -973,9 +972,9 @@ def get_se_back_flavor(card):
     return get_se_flavor(flavor)
 
 def get_se_back_header(card):
-    # NOTE: Back header is used by scenario card non-standard header, e.g. 06078.
+    # NOTE: Back header is used by scenario card with a non-standard header. We intentionally add a space at the end to work around a formatting issue in SE.
     header = get_field(card, 'back_text', '')
-    header = [line.strip() for line in header.split('\n')][0]
+    header = [line.strip() for line in header.split('\n')][0] + ' '
     return get_se_header(header)
 
 def get_se_paragraph_line(card, text, flavor, index):
