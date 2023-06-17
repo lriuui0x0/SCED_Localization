@@ -3,13 +3,12 @@
 # 04318 Worlds Beyond, SE bug incorret text layout
 # 05171 Heretics' Graves and more, SE bug on '-' clue location
 # 06078 The Infestation Begins..., SE crashes on special chaos card
-# 06347 Legs of Atlach-Nacha, SE missing enemy layout
 # 07062a Finding Agent Harper, $Template parameter doesn't seem to refresh
-# 08660 The Miasma Beckons and others, SE missing seal tokens
 # Promo cards, SE missing cycle icon
 # General problems on agenda/act/story formatting (07062a)
-# Return to scenario cards
+# 06347 Legs of Atlach-Nacha, SE missing enemy layout
 # War of the outer god card template
+# Return to scenario cards
 
 import argparse
 import csv
@@ -839,6 +838,11 @@ def get_se_markup(rule):
         (r'\[curse\]', '<cur>'),
         (r'\[per_investigator\]', '<per>'),
         (r'\[frost\]', '<fro>'),
+        (r'\[seal_a\]', '<seal1>'),
+        (r'\[seal_b\]', '<seal2>'),
+        (r'\[seal_c\]', '<seal3>'),
+        (r'\[seal_d\]', '<seal4>'),
+        (r'\[seal_e\]', '<seal5>'),
     ]
     for a, b in markup:
         rule = re.sub(a, b, rule, flags=re.I)
