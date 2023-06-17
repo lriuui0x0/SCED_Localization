@@ -10,7 +10,7 @@ def transform_victory(victory):
     return victory.replace('Victory', 'Sieg')
 
 def transform_shelter(shelter):
-    return shelter.replace('Shelter', '')
+    return shelter.replace('Shelter', 'Schutz')
 
 def transform_tracker(tracker):
     if tracker == 'Current Depth':
