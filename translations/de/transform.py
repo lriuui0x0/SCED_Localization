@@ -16,6 +16,8 @@ def transform_tracker(tracker):
     if tracker == 'Current Depth':
         return 'Aktuelle Tiefe'
     elif tracker == 'Spent Keys':
-        return "Ausgegebene Schlüssel"
+        return 'Ausgegebene Schlüssel'
+    elif tracker == 'Strength of the Abyss':
+        return 'Stärke des Abgrundes'
     return tracker
 
