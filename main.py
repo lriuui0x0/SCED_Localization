@@ -1,9 +1,10 @@
 # TODO:
+# 86002 and more, variable doom agenda
 # General problems on agenda/act/story formatting (07062a)
-# 06347 Legs of Atlach-Nacha, SE missing enemy layout
-# War of the outer god card template
-# Return to scenario cards
-# Promo cards have no translation
+# 06347 Legs of Atlach-Nacha, SE missing enemy template
+# Return to scenario, missing swapping encounter set icons data
+# War of the outer god, SE missing card template
+# Promo cards, Labyrinths of Lunacy, 86024 no translation
 
 import argparse
 import csv
@@ -220,6 +221,7 @@ def get_se_copyright(card):
     pack = get_field(card, 'pack_code', None)
     year_map = {
         'core': '2016',
+        'rcore': '2020',
         'dwl': '2016',
         'tmm': '2016',
         'tece': '2016',
@@ -241,8 +243,6 @@ def get_se_copyright(card):
         'tcoa': '2017',
         'tdoy': '2017',
         'sha': '2017',
-        'rtnotz': '2017', 
-        'rtdwl': '2018',
         'tcu': '2018',
         'tsn': '2018',
         'wos': '2018',
@@ -250,7 +250,6 @@ def get_se_copyright(card):
         'uad': '2018',
         'icc': '2018',
         'bbt': '2018',
-        'rtptc': '2019',
         'tde': '2019',
         'sfk': '2019',
         'tsh': '2019',
@@ -258,7 +257,6 @@ def get_se_copyright(card):
         'pnr': '2019',
         'wgd': '2019',
         'woc': '2019',
-        'rttfa': '2020',
         'nat': '2019',
         'har': '2019',
         'win': '2019',
@@ -271,10 +269,20 @@ def get_se_copyright(card):
         'lif': '2020',
         'lod': '2020',
         'itm': '2020',
-        'rcore': '2020',
-        'rttcu': '2021',
         'eoep': '2021',
         'eoec': '2021',
+        'rtnotz': '2017', 
+        'rtdwl': '2018',
+        'rtptc': '2019',
+        'rttfa': '2020',
+        'rttcu': '2021',
+        'cotr': '2016',
+        'coh': '2016',
+        'lol': '2017',
+        'guardians': '2018',
+        'hotel': '2019',
+        'blob': '2019',
+        'wog': '2020',
         'rod': '2020',
         'aon': '2020',
         'bad': '2020',
@@ -294,6 +302,7 @@ def get_se_pack(card):
     pack = get_field(card, 'pack_code', None)
     pack_map = {
         'core': 'CoreSet',
+        'rcore': 'CoreSet',
         'dwl': 'TheDunwichLegacy',
         'tmm': 'TheDunwichLegacy',
         'tece': 'TheDunwichLegacy',
@@ -315,8 +324,6 @@ def get_se_pack(card):
         'tcoa': 'TheForgottenAge',
         'tdoy': 'TheForgottenAge',
         'sha': 'TheForgottenAge',
-        'rtnotz': 'ReturnToTheNightOfTheZealot', 
-        'rtdwl': 'ReturnToTheDunwichLegacy',
         'tcu': 'TheCircleUndone',
         'tsn': 'TheCircleUndone',
         'wos': 'TheCircleUndone',
@@ -324,7 +331,6 @@ def get_se_pack(card):
         'uad': 'TheCircleUndone',
         'icc': 'TheCircleUndone',
         'bbt': 'TheCircleUndone',
-        'rtptc': 'ReturnToThePathToCarcosa',
         'tde': 'TheDreamEaters',
         'sfk': 'TheDreamEaters',
         'tsh': 'TheDreamEaters',
@@ -332,12 +338,6 @@ def get_se_pack(card):
         'pnr': 'TheDreamEaters',
         'wgd': 'TheDreamEaters',
         'woc': 'TheDreamEaters',
-        'rttfa': 'ReturnToTheForgottenAge',
-        'nat': 'NathanielCho',
-        'har': 'HarveyWalters',
-        'win': 'WinifredHabbamock',
-        'jac': 'JacquelineFine',
-        'ste': 'StellaClark',
         'tic': 'TheInnsmouthConspiracy',
         'itd': 'TheInnsmouthConspiracy',
         'def': 'TheInnsmouthConspiracy',
@@ -345,10 +345,25 @@ def get_se_pack(card):
         'lif': 'TheInnsmouthConspiracy',
         'lod': 'TheInnsmouthConspiracy',
         'itm': 'TheInnsmouthConspiracy',
-        'rcore': 'CoreSet',
-        'rttcu': 'ReturnToTheCircleUndone',
         'eoep': 'EdgeOfTheEarthInv',
         'eoec': 'EdgeOfTheEarth',
+        'rtnotz': 'ReturnToTheNightOfTheZealot', 
+        'rtdwl': 'ReturnToTheDunwichLegacy',
+        'rtptc': 'ReturnToThePathToCarcosa',
+        'rttfa': 'ReturnToTheForgottenAge',
+        'rttcu': 'ReturnToTheCircleUndone',
+        'cotr': 'CurseOfTheRougarou',
+        'coh': 'CarnevaleOfHorrors',
+        'lol': 'LabyrinthsOfLunacy',
+        'guardians': 'GuardiansOfTheAbyss',
+        'hotel': 'MurderAtTheExcelsiorHotel',
+        'blob': 'TheBlobThatAteEverything',
+        'wog': 'WarOfTheOuterGods',
+        'nat': 'NathanielCho',
+        'har': 'HarveyWalters',
+        'win': 'WinifredHabbamock',
+        'jac': 'JacquelineFine',
+        'ste': 'StellaClark',
         'rod': 'ParallelInvestigators',
         'aon': 'ParallelInvestigators',
         'bad': 'ParallelInvestigators',
@@ -537,6 +552,96 @@ def get_se_encounter(card, sheet):
         'expedition_team': 'ExpeditionTeam',
         'tekelili': 'TekeliLi',
         'memorials_of_the_lost': 'MemorialsOfTheLost',
+        'return_to_the_gathering': 'ReturnToTheGathering',
+        'return_to_the_midnight_masks': 'ReturnToTheMidnightMasks',
+        'return_to_the_devourer_below': 'ReturnToTheDevourerBelow',
+        'ghouls_of_umôrdhoth': 'GhoulsOfUmordhoth',
+        'the_devourers_cult': 'TheDevourersCult',
+        'return_cult': 'ReturnToCultOfUmordhoth',
+        'return_to_extracurricular_activities': 'ReturnToExtracurricularActivities',
+        'return_to_the_house_always_wins': 'ReturnToTheHouseAlwaysWins',
+        'return_to_the_miskatonic_museum': 'ReturnToTheMiskatonicMuseum',
+        'return_to_the_essex_county_express': 'ReturnToTheEssexCountyExpress',
+        'return_to_blood_on_the_altar': 'ReturnToBloodOnTheAltar',
+        'return_to_undimensioned_and_unseen': 'ReturnToUndimensionedAndUnseen',
+        'return_to_where_doom_awaits': 'ReturnToWhereDoomAwaits',
+        'return_to_lost_in_time_and_space': 'ReturnToLostInTimeAndSpace',
+        'beyond_the_threshold': 'BeyondTheThreshold',
+        'resurgent_evils': 'ResurgentEvils',
+        'secret_doors': 'SecretDoors',
+        'creeping_cold': 'CreepingCold',
+        'erratic_fear': 'ErraticFear',
+        'yog_sothoths_emissaries': 'YogSothothsEmissaries',
+        'return_to_curtain_call': 'ReturnToCurtainCall',
+        'return_to_the_last_king': 'ReturnToTheLastKing',
+        'return_to_echoes_of_the_past': 'ReturnToEchoesOfThePast',
+        'return_to_the_unspeakable_oath': 'ReturnToTheUnspeakableOath',
+        'return_to_a_phantom_of_truth': 'ReturnToAPhantomOfTruth',
+        'return_to_the_pallid_mask': 'ReturnToThePallidMask',
+        'return_to_black_stars_rise': 'ReturnToBlackStarsRise',
+        'return_to_dim_carcosa': 'ReturnToDimCarcosa',
+        'delusory_evils': 'DelusoryEvils',
+        'decaying_reality': 'DecayingReality',
+        'hasturs_envoys': 'HastursEnvoys',
+        'maddening_delusions': 'MaddeningDelusions',
+        'neurotic_fear': 'NeuroticFear',
+        'return_to_the_untamed_wilds': 'ReturnToTheUntamedWilds',
+        'return_to_the_doom_of_eztli': 'ReturnToTheDoomOfEztli',
+        'return_to_threads_of_fate': 'ReturnToThreadsOfFate',
+        'return_to_the_boundary_beyond': 'ReturnToTheBoundaryBeyond',
+        'return_to_pillars_of_judgment': 'ReturnToPillarsOfJudgment',
+        'return_to_knyan': 'ReturnToKnYan',
+        'return_to_the_city_of_archives': 'ReturnToTheCityOfArchives',
+        'return_to_the_depths_of_yoth': 'ReturnToTheDepthsOfYoth',
+        'return_to_shattered_aeons': 'ReturnToShatteredAeons',
+        'return_to_turn_back_time': 'ReturnToTurnBackTime',
+        'return_to_the_rainforest': 'ReturnToTheRainforest',
+        'cult_of_pnakotus': 'CultOfPnakotus',
+        'doomed_expedition': 'DoomedExpedition',
+        'temporal_hunters': 'TemporalHunters',
+        'venomous_hate': 'VenomousHate',
+        'return_to_disappearance_at_the_twilight_estate': 'ReturnToDisappearanceAtTheTwilightEstate',
+        'return_to_the_witching_hour': 'ReturnToTheWitchingHour',
+        'return_to_at_deaths_doorstep': 'ReturnToAtDeathsDoorstep',
+        'return_to_the_secret_name': 'ReturnToTheSecretName',
+        'return_to_the_wages_of_sin': 'ReturnToTheWagesOfSin',
+        'return_to_for_the_greater_good': 'ReturnToForTheGreaterGood',
+        'return_to_union_and_disillusion': 'ReturnToUnionAndDisillusion',
+        'return_to_in_the_clutches_of_chaos': 'ReturnToInTheClutchesOfChaos',
+        'return_to_before_the_black_throne': 'ReturnToBeforeTheBlackThrone',
+        'hexcraft': 'Hexcraft',
+        'impending_evils': 'ImpendingEvils',
+        'unspeakable_fate': 'UnspeakableFate',
+        'unstable_realm': 'UnstableRealm',
+        'city_of_the_damned': 'CityOfTheDamned',
+        'chilling_mists': 'ChillingMists',
+        'bloodthirsty_spirits': 'BloodthirstySpirits',
+        'bayou': 'TheBayou',
+        'rougarou': 'CurseOfTheRougarouE',
+        'venice': 'CarnevaleOfHorrorsE',
+        'in_the_labyrinths_of_lunacy': 'LabyrinthsOfLunacyE',
+        'single_group': 'SingleGroup',
+        'epic_multiplayer': 'EpicMultiplayer',
+        'the_eternal_slumber': 'TheEternalSlumber',
+        'the_nights_usurper': 'TheNightsUsurper',
+        'brotherhood_of_the_beast': 'BrotherhoodOfTheBeast',
+        'sands_of_egypt': 'SandsOfEgypt',
+        'abyssal_tribute': 'AbyssalTribute',
+        'abyssal_gifts': 'AbyssalGifts',
+        'murder_at_the_excelsior_hotel': 'MurderAtTheExcelsiorHotelE',
+        'alien_interference': 'AlienInterference',
+        'excelsior_management': 'ExcelsiorManagement',
+        'dark_rituals': 'DarkRituals',
+        'vile_experiments': 'VileExperiments',
+        'sins_of_the_past': 'SinsOfThePast',
+        'blob': 'TheBlobThatAteEverythingE',
+        'blob_epic_multiplayer': 'EpicMultiplayer',
+        'blob_single_group': 'SingleGroup',
+        'migo_incursion': 'MiGoIncursion',
+        'war_of_the_outer_gods': 'WarOfTheOuterGodsE',
+        'death_of_stars': 'DeathOfStars',
+        'children_of_paradise': 'ChildrenOfParadise',
+        'swarm_of_assimilation': 'SwarmOfAssimilation',
         None: '',
     }
     return encounter_map[encounter]
@@ -702,6 +807,96 @@ def get_se_encounter_total(card):
         'expedition_team': 9,
         'tekelili': 16,
         'memorials_of_the_lost': 9,
+        'return_to_the_gathering': 16,
+        'return_to_the_midnight_masks': 8,
+        'return_to_the_devourer_below': 7,
+        'ghouls_of_umôrdhoth': 7,
+        'the_devourers_cult': 6,
+        'return_cult': 3,
+        'return_to_extracurricular_activities': 4,
+        'return_to_the_house_always_wins': 7,
+        'return_to_the_miskatonic_museum': 7,
+        'return_to_the_essex_county_express': 7,
+        'return_to_blood_on_the_altar': 10,
+        'return_to_undimensioned_and_unseen': 7,
+        'return_to_where_doom_awaits': 6,
+        'return_to_lost_in_time_and_space': 8,
+        'beyond_the_threshold': 6,
+        'resurgent_evils': 3,
+        'secret_doors': 2,
+        'creeping_cold': 4,
+        'erratic_fear': 7,
+        'yog_sothoths_emissaries': 4,
+        'return_to_curtain_call': 7,
+        'return_to_the_last_king': 9,
+        'return_to_echoes_of_the_past': 7,
+        'return_to_the_unspeakable_oath': 6,
+        'return_to_a_phantom_of_truth': 9,
+        'return_to_the_pallid_mask': 6,
+        'return_to_black_stars_rise': 5,
+        'return_to_dim_carcosa': 6,
+        'delusory_evils': 3,
+        'decaying_reality': 6,
+        'hasturs_envoys': 4,
+        'maddening_delusions': 6,
+        'neurotic_fear': 7,
+        'return_to_the_untamed_wilds': 1,
+        'return_to_the_doom_of_eztli': 11,
+        'return_to_threads_of_fate': 10,
+        'return_to_the_boundary_beyond': 7,
+        'return_to_pillars_of_judgment': 4,
+        'return_to_knyan': 5,
+        'return_to_the_city_of_archives': 7,
+        'return_to_the_depths_of_yoth': 2,
+        'return_to_shattered_aeons': 6,
+        'return_to_turn_back_time': 1,
+        'return_to_the_rainforest': 4,
+        'cult_of_pnakotus': 6,
+        'doomed_expedition': 5,
+        'temporal_hunters': 5,
+        'venomous_hate': 5,
+        'return_to_disappearance_at_the_twilight_estate': 1,
+        'return_to_the_witching_hour': 7,
+        'return_to_at_deaths_doorstep': 5,
+        'return_to_the_secret_name': 5,
+        'return_to_the_wages_of_sin': 9,
+        'return_to_for_the_greater_good': 4,
+        'return_to_union_and_disillusion': 4,
+        'return_to_in_the_clutches_of_chaos': 7,
+        'return_to_before_the_black_throne': 9,
+        'hexcraft': 7,
+        'impending_evils': 3,
+        'unspeakable_fate': 6,
+        'unstable_realm': 4,
+        'city_of_the_damned': 5,
+        'chilling_mists': 4,
+        'bloodthirsty_spirits': 4,
+        'bayou': 39,
+        'rougarou': 18,
+        'venice': 55,
+        'in_the_labyrinths_of_lunacy': 47,
+        'single_group': 13,
+        'epic_multiplayer': 20,
+        'the_eternal_slumber': 18,
+        'the_nights_usurper': 17,
+        'brotherhood_of_the_beast': 6,
+        'sands_of_egypt': 33,
+        'abyssal_tribute': 2,
+        'abyssal_gifts': 2,
+        'murder_at_the_excelsior_hotel': 53,
+        'alien_interference': 5,
+        'excelsior_management': 5,
+        'dark_rituals': 5,
+        'vile_experiments': 5,
+        'sins_of_the_past': 5,
+        'blob': 54,
+        'blob_epic_multiplayer': 3,
+        'blob_single_group': 3,
+        'migo_incursion': 18,
+        'war_of_the_outer_gods': 51,
+        'death_of_stars': 10,
+        'children_of_paradise': 10,
+        'swarm_of_assimilation': 10,
         None: 0,
     }
     return str(encounter_map[encounter])
@@ -735,7 +930,11 @@ def get_se_encounter_back_visibility(card):
     ] else '1'
 
 def get_se_doom(card):
-    return str(get_field(card, 'doom', '-'))
+    doom = get_field(card, 'doom', '-')
+    # NOTE: ADB uses -2 to indicate variable shroud.
+    if doom == -2:
+        doom = 'Star'
+    return str(doom)
 
 def get_se_comment(card):
     # NOTE: Special cases the cards with an asterisk comment on the doom or clue.
@@ -763,6 +962,8 @@ def get_se_progress_number(card):
 
 def get_se_progress_letter(card):
     # NOTE: Special case agenda and act letters.
+    if card['code'] in ['53029', '53030', '53031', '53032', '53033', '53034', '53035', '53036']:
+        return 'g'
     if card['code'] in ['04133a', '04134a', '04135', '04136', '04137a', '04138', '04139', '04140']:
         return 'e'
     if card['code'] in ['03278', '03279a', '03279b', '03280', '03282', '04125a', '04126a', '04127', '04128a', '04129', '04130a', '04131', '04132']:
@@ -856,7 +1057,7 @@ def get_se_rule(rule):
     # NOTE: Convert <p> tag to newline characters.
     rule = rule.replace('</p><p>', '\n').replace('<p>', '').replace('</p>', '')
     # NOTE: Format bullet icon at the start of the line.
-    rule = '\n'.join([re.sub(r'^\- ', '<bul> ', line.strip()) for line in rule.split('\n')])
+    rule = '\n'.join([re.sub(r'^[\-—] ', '<bul> ', line.strip()) for line in rule.split('\n')])
     # NOTE: We intentionally add a space at the end to hack around a problem with SE scenario card layout. If we don't add this space,
     # the text on scenario cards doesn't automatically break lines.
     rule = f'{rule} ' if rule.strip() else ''
@@ -925,11 +1126,22 @@ def get_se_tracker(card):
         tracker = 'Current Depth'
     elif card['code'] == '07274':
         tracker = 'Spent Keys'
+    elif card['code'] in ['83001', '83016']:
+        tracker = 'Strength of the Abyss'
     return transform_lang(tracker)
 
-def get_se_template(card):
-    # NOTE: Special cases for cards that use the chaos card template for story.
-    if card['code'] in ['07062a']:
+def is_return_to_scenario(card):
+    return card['pack_code'] in ['rtnotz', 'rtdwl', 'rtptc', 'rttfa', 'rttcu'] and card['type_code'] == 'scenario'
+
+def get_se_front_template(card):
+    # NOTE: Use scenario template of story card for return to scenarios. Also for some special cards.
+    if is_return_to_scenario(card) or card['code'] in ['07062a']:
+        return 'Chaos'
+    return 'Story'
+
+def get_se_back_template(card):
+    # NOTE: Use scenario template of story card for return to scenarios.
+    if is_return_to_scenario(card):
         return 'Chaos'
     return 'Story'
 
@@ -973,6 +1185,7 @@ def get_se_back_flavor(card):
 
 def get_se_back_header(card):
     # NOTE: Back header is used by scenario card with a non-standard header. We intentionally add a space at the end to work around a formatting issue in SE.
+    # If we don't add the extra space, SE doesn't perform line breaking.
     header = get_field(card, 'back_text', '')
     header = [line.strip() for line in header.split('\n')][0] + ' '
     return get_se_header(header)
@@ -1084,9 +1297,9 @@ def get_se_point(card):
     # NOTE: Special points have different formatting on location and enemy cards.
     if card['type_code'] == 'location':
         shelter = get_se_shelter(card)
-        point = f'{vengeance}\n{shelter}\n{victory}'.strip()
+        point = '\n'.join([point for point in [vengeance, shelter, victory] if point])
     else:
-        point = f'{victory}<size 50%> <size 200%>{vengeance}'.strip()
+        point = '<size 50%> <size 200%>'.join([point for point in [victory, vengeance] if point])
     return transform_lang(point)
 
 def get_se_location_icon(icon):
@@ -1270,7 +1483,8 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$MergeTabletBack': get_se_back_chaos_merge(card, 2),
         '$ElderThingBack': get_se_back_chaos_rule(card, 3),
         '$TrackerBox': get_se_tracker(card),
-        '$Template': get_se_template(card),
+        '$Template': get_se_front_template(card),
+        '$TemplateBack': get_se_back_template(card),
     }
 
 def ensure_dir(dir):
@@ -1330,12 +1544,17 @@ def download_card(ahdb_id):
 
         # NOTE: Patching some notable errors from ADB.
         ahdb['01513']['subtype_code'] = 'weakness'
+        ahdb['52015']['stage'] = 2
+        ahdb['52016']['stage'] = 2
+        ahdb['52017']['stage'] = 2
 
         # NOTE: Patching linked cards missing encounter set.
         for id, card in ahdb.items():
             if 'linked_card' in card:
                 if get_field(card, 'encounter_code', None) != None and get_field(card['linked_card'], 'encounter_code', None) == None:
                     card['linked_card']['encounter_code'] = card['encounter_code']
+                elif get_field(card, 'encounter_code', None) == None and get_field(card['linked_card'], 'encounter_code', None) != None:
+                    card['encounter_code'] = card['linked_card']['encounter_code']
         
         # NOTE: Patching shelter attribute as a separate field.
         for id in ['08502', '08503', '08504', '08505', '08506', '08507', '08508', '08509', '08510', '08511', '08512', '08513', '08514']:
@@ -1497,7 +1716,9 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
             se_type = 'enemy_encounter'
     elif card_type == 'agenda':
         # NOTE: Agenda with image are special cased.
-        if card['code'] in ['01145', '02314', '05199'] and not is_front:
+        if card['code'] in ['84043', '84044', '84045', '84046', '84047', '84048', '84049', '84050', '84051', '84052', '86034', '86040', '86046'] and is_front:
+            se_type = 'progress_image_front'
+        elif card['code'] in ['01145', '02314', '05199'] and not is_front:
             se_type = 'progress_image_back'
         else:
             if is_front:
@@ -1521,10 +1742,14 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         else:
             se_type = 'location_back'
     elif card_type == 'scenario':
-        if is_front:
-            se_type = 'scenario_front'
+        # NOTE: Return to scenario cards are using story with scenario template.
+        if is_return_to_scenario(card):
+            se_type = 'story'
         else:
-            se_type = 'scenario_back'
+            if is_front:
+                se_type = 'scenario_front'
+            else:
+                se_type = 'scenario_back'
     elif card_type == 'story':
         # NOTE: Some scenario cards are recorded as story in ADB, handle them specially here.
         if card['code'] == '06078' and not is_front:
@@ -1632,6 +1857,16 @@ def translate_sced_card_object(object, metadata, card):
                 '05264',
                 '05265',
                 '07252',
+                '51026b',
+                '82017',
+                '82018',
+                '82019',
+                '82020',
+                '83022b',
+                '83023b',
+                '83024b',
+                '83025b',
+                '83026b',
         ]:
             front_card, back_card = back_card, front_card
     else:
@@ -1655,8 +1890,44 @@ def translate_sced_card_object(object, metadata, card):
     # NOTE: Test whether it's generic player or encounter card back urls.
     if 'EcbhVuh' in back_url or 'sRsWiSG' in back_url:
         translate_back = False
-    # NOTE: Special cases to handle generic player or encounter card back in deck images.
-    if (deck_id, deck_x, deck_y) in [(2335, 9, 5)]:
+    # NOTE: Special cases to skip generic player or encounter card back in deck images.
+    if (deck_id, deck_x, deck_y) in [
+            (2335, 9, 5),
+            (2661, 2, 1),
+            (2661, 3, 1),
+            (2661, 4, 1),
+            (2661, 2, 2),
+            (2661, 3, 2),
+            (2661, 4, 2),
+            (2661, 5, 2),
+            (2661, 6, 2),
+            (2661, 7, 2),
+            (2661, 8, 2),
+            (2661, 9, 2),
+            (2661, 0, 3),
+            (2661, 1, 3),
+            (2661, 2, 3),
+            (2661, 3, 3),
+            (2661, 4, 3),
+            (2661, 5, 3),
+            (2661, 6, 3),
+            (2661, 7, 3),
+            (2661, 8, 3),
+            (2661, 9, 3),
+            (2661, 0, 4),
+            (2661, 1, 4),
+            (4547, 0, 4),
+            (4547, 1, 4),
+            (2662, 1, 1),
+            (2662, 2, 1),
+            (2662, 3, 1),
+            (2662, 4, 1),
+            (2662, 5, 1),
+            (2662, 6, 1),
+            (2662, 7, 1),
+            (5469, 6, 1),
+            (5469, 7, 1)
+    ]:
         translate_back = False
 
     if translate_back:

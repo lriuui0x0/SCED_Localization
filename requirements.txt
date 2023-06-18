@@ -1,5 +1,5 @@
 Pillow
-hanziconv
 polib
 dropbox
+opencc
 

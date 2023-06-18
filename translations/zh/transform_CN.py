@@ -1,9 +1,11 @@
 import re
-from hanziconv import HanziConv
+import opencc
+
+zh_cn_converter = opencc.OpenCC('t2s.json')
 
 def to_simplified(text):
     # NOTE: Replace the middle dot for asset names that the font doesn't recognize.
-    return HanziConv.toSimplified(text).replace('‧', '·')
+    return zh_cn_converter.convert(text).replace('‧', '·')
 
 def transform_name(name):
     return to_simplified(name)
@@ -37,5 +39,7 @@ def transform_tracker(tracker):
         return '当前深度'
     elif tracker == 'Spent Keys':
         return '花费的钥匙'
+    elif tracker == 'Strength of the Abyss':
+        return '深渊之力的强度'
     return tracker
 
