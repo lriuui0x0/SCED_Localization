@@ -1,54 +1,73 @@
+# TODO:
+# 86002 and more, variable doom agenda
+# General problems on agenda/act/story formatting (07062a)
+# 06347 Legs of Atlach-Nacha, SE missing enemy template
+# Return to scenario, missing swapping encounter set icons data
+# War of the outer god, SE missing card template
+# Promo cards, Labyrinths of Lunacy, 86024 no translation
+
 import argparse
-import re
 import csv
 import json
 import os
+import sys
 import shutil
 import subprocess
+import re
 import base64
-import urllib.request
 import requests
-from enum import Enum
+import inspect
+import importlib
+import urllib.request
+import time
+import dropbox
+import uuid
+import glob
+import copy
 from PIL import Image
-from hanziconv import HanziConv
 
-se_project = 'SE_Generator'
-steps = ['prepare', 'generate', 'pack', 'update']
-class langs(Enum):
-    spanish = 'es'
-    german = 'de'
-    italian = 'it'
-    french = 'fr'
-    korean = 'ko'
-    ukrainian = 'uk'
-    polish = 'pl'
-    russian = 'ru'
-    traditional_chinese = 'zh_TW'
-    simplified_chinese = 'zh_CN'
-
-    def __str__(self):
-        return self.value
+steps = ['translate', 'generate', 'pack', 'upload', 'update']
+langs = ['es', 'de', 'it', 'fr', 'ko', 'uk', 'pl', 'ru', 'zh_TW', 'zh_CN']
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--lang', default=langs.simplified_chinese, type=langs, choices=list(langs), help='The language to translate into')
+parser.add_argument('--lang', default='zh_CN', choices=langs, help='The language to translate into')
 parser.add_argument('--se-executable', default=r'C:\Program Files\StrangeEons\bin\eons.exe', help='The Strange Eons executable path')
-parser.add_argument('--cache-dir', default='cache', help='The directory to keep intermediate resources during processing')
-parser.add_argument('--deck-images-dir', default='decks', help='The directory to keep translated deck images')
 parser.add_argument('--filter', default='True', help='A Python expression filter for what cards to process')
+parser.add_argument('--cache-dir', default='cache', help='The directory to keep intermediate resources during processing')
+parser.add_argument('--decks-dir', default='decks', help='The directory to keep translated deck images')
+parser.add_argument('--mod-dir', default=None, help='The directory to the mod repository')
 parser.add_argument('--step', default=None, choices=steps, help='The particular automation step to run')
-parser.add_argument('--repo-primary', default=None, help='The primary repository path for the SCED mod')
-parser.add_argument('--repo-secondary', default=None, help='The secondary repository path for the SCED mod')
-parser.add_argument('--imgur-access-token', default=None, help='The imgur access token for uploading translated deck images')
+parser.add_argument('--dropbox-token', default=None, help='The dropbox token for uploading translated deck images')
 args = parser.parse_args()
 
-def imgur_auth():
-    return { 'Authorization': f'Bearer {args.imgur_access_token}' }
+def get_lang_code_region():
+    parts = args.lang.split('_')
+    if len(parts) > 1:
+        return parts[0], parts[1]
+    else:
+        return parts[0], ''
 
-# NOTE: Run a protected API test to detect expired access token early.
-if args.imgur_access_token is not None:
-    res = requests.get('https://api.imgur.com/3/account/me/settings', headers=imgur_auth()).json()
-    if not res['success']:
-        raise Exception('Invalid imgur access token.')
+def import_lang_module():
+    # NOTE: Import language dependent functions.
+    lang_code, region = get_lang_code_region()
+    lang_folder = f'translations/{lang_code}'
+    if lang_folder not in sys.path:
+        sys.path.insert(1, lang_folder)
+    module_name = 'transform'
+    if region:
+        module_name += f'_{region}'
+    try:
+        return importlib.import_module(module_name)
+    except:
+        return None
+
+def transform_lang(value):
+    # NOTE: Get the corresponding process function from stack frame. Therefore it's important to call this function from the correct 'get_se_xxx' function.
+    module = import_lang_module()
+    attr = inspect.stack()[1].function.replace('get_se_', '')
+    func_name = f'transform_{attr}'
+    func = getattr(module, func_name, None)
+    return func(value) if func else value
 
 # NOTE: ADB data may contain explicit null fields, that should be treated the same as missing.
 def get_field(card, key, default):
@@ -63,9 +82,9 @@ def get_se_subtype(card):
     subtype = get_field(card, 'subtype_code', None)
     return subtype_map[subtype]
 
-def get_se_faction(card, index):
-    # NOTE: Weakness assets in SE have are represented as faction types as well.
+def get_se_faction(card, index, sheet):
     if index == 0:
+        # NOTE: Weakness assets in SE have are represented as faction types as well.
         subtype = get_se_subtype(card)
         if subtype != 'None':
             return subtype
@@ -83,12 +102,26 @@ def get_se_faction(card, index):
         None: 'None'
     }
     faction = get_field(card, faction_field[index], None)
-    return faction_map[faction]
+    faction = faction_map[faction]
+
+    # NOTE: Handle parallel cards.
+    ahdb_id = card['code']
+    if ahdb_id.endswith('-p') or (ahdb_id.endswith('-pf') and sheet == 0) or (ahdb_id.endswith('-pb') and sheet == 1):
+        faction = f'Parallel{faction}'
+    return faction
 
 def get_se_cost(card):
-    return str(get_field(card, 'cost', '-'))
+    cost = get_field(card, 'cost', '-')
+    # NOTE: ADB uses -2 to indicate variable cost.
+    if cost == -2:
+        cost = 'X'
+    return str(cost)
 
 def get_se_xp(card):
+    rule = get_field(card, 'real_text', '')
+    # NOTE: Signature cards don't have xp indicator on cards.
+    if 'deck only.' in rule:
+        return 'None'
     return str(get_field(card, 'xp', 0))
 
 def get_se_willpower(card):
@@ -128,6 +161,7 @@ def get_se_slot(card, index):
         'Ally': 'Ally',
         'Body': 'Body',
         'Accessory': 'Accessory',
+        'Tarot': 'Tarot',
     }
     slots = get_field(card, 'real_slot', '')
     slots = [slot_map[slot.strip()] for slot in slots.split('.') if slot.strip()]
@@ -138,12 +172,27 @@ def get_se_slot(card, index):
     return slots[index]
 
 def get_se_health(card):
-    sanity = get_field(card, 'sanity', 'None')
-    return str(get_field(card, 'health', '-' if sanity != 'None' else 'None'))
+    # NOTE: For enemy or asset with sanity, missing health means '-', otherwise it's completely empty.
+    is_enemy = get_field(card, 'type_code', None) == 'enemy'
+    default_health = 'None'
+    if is_enemy or get_field(card, 'sanity', None) is not None:
+        default_health = '-'
+    health = get_field(card, 'health', default_health)
+    # NOTE: ADB uses -2 to indicate variable health. For enemy this is 'X', otherwise SE expects it to be 'Star' for '*' assets.
+    if health == -2:
+        health = 'X' if is_enemy else 'Star'
+    return str(health)
 
 def get_se_sanity(card):
-    health = get_field(card, 'health', 'None')
-    return str(get_field(card, 'sanity', '-' if health != 'None' else 'None'))
+    # NOTE: For asset with health, missing sanity means '-', otherwise it's completely empty.
+    default_sanity = 'None'
+    if get_field(card, 'health', None) is not None:
+        default_sanity = '-'
+    sanity = get_field(card, 'sanity', default_sanity)
+    # NOTE: ADB uses -2 to indicate variable sanity.
+    if sanity == -2:
+        sanity = 'Star'
+    return str(sanity)
 
 def get_se_enemy_damage(card):
     return str(get_field(card, 'enemy_damage', 0))
@@ -152,10 +201,18 @@ def get_se_enemy_horror(card):
     return str(get_field(card, 'enemy_horror', 0))
 
 def get_se_enemy_fight(card):
-    return str(get_field(card, 'enemy_fight', '-'))
+    fight = get_field(card, 'enemy_fight', '-')
+    # NOTE: ADB uses -2 to indicate variable fight.
+    if fight == -2:
+        fight = 'X'
+    return str(fight)
 
 def get_se_enemy_evade(card):
-    return str(get_field(card, 'enemy_evade', '-'))
+    evade = get_field(card, 'enemy_evade', '-')
+    # NOTE: ADB uses -2 to indicate variable evade.
+    if evade == -2:
+        evade = 'X'
+    return str(evade)
 
 def get_se_illustrator(card):
     return get_field(card, 'illustrator', '')
@@ -172,6 +229,72 @@ def get_se_copyright(card):
         'uau': '2016',
         'wda': '2016',
         'litas': '2016',
+        'ptc': '2017',
+        'eotp': '2017',
+        'tuo': '2017',
+        'apot': '2017',
+        'tpm': '2017',
+        'bsr': '2017',
+        'dca': '2017',
+        'tfa': '2017',
+        'tof': '2017',
+        'tbb': '2017',
+        'hote': '2017',
+        'tcoa': '2017',
+        'tdoy': '2017',
+        'sha': '2017',
+        'tcu': '2018',
+        'tsn': '2018',
+        'wos': '2018',
+        'fgg': '2018',
+        'uad': '2018',
+        'icc': '2018',
+        'bbt': '2018',
+        'tde': '2019',
+        'sfk': '2019',
+        'tsh': '2019',
+        'dsm': '2019',
+        'pnr': '2019',
+        'wgd': '2019',
+        'woc': '2019',
+        'nat': '2019',
+        'har': '2019',
+        'win': '2019',
+        'jac': '2019',
+        'ste': '2019',
+        'tic': '2020',
+        'itd': '2020',
+        'def': '2020',
+        'hhg': '2020',
+        'lif': '2020',
+        'lod': '2020',
+        'itm': '2020',
+        'eoep': '2021',
+        'eoec': '2021',
+        'rtnotz': '2017', 
+        'rtdwl': '2018',
+        'rtptc': '2019',
+        'rttfa': '2020',
+        'rttcu': '2021',
+        'cotr': '2016',
+        'coh': '2016',
+        'lol': '2017',
+        'guardians': '2018',
+        'hotel': '2019',
+        'blob': '2019',
+        'wog': '2020',
+        'rod': '2020',
+        'aon': '2020',
+        'bad': '2020',
+        'btb': '2021',
+        'rtr': '2021',
+        'hoth': '2017',
+        'tdor': '2017',
+        'iotv': '2017',
+        'tdg': '2017',
+        'tftbw': '2017',
+        'bob': '2020',
+        'dre': '2020',
     }
     return f'<cop> {year_map[pack]} FFG'
 
@@ -187,14 +310,89 @@ def get_se_pack(card):
         'uau': 'TheDunwichLegacy',
         'wda': 'TheDunwichLegacy',
         'litas': 'TheDunwichLegacy',
+        'ptc': 'ThePathToCarcosa',
+        'eotp': 'ThePathToCarcosa',
+        'tuo': 'ThePathToCarcosa',
+        'apot': 'ThePathToCarcosa',
+        'tpm': 'ThePathToCarcosa',
+        'bsr': 'ThePathToCarcosa',
+        'dca': 'ThePathToCarcosa',
+        'tfa': 'TheForgottenAge',
+        'tof': 'TheForgottenAge',
+        'tbb': 'TheForgottenAge',
+        'hote': 'TheForgottenAge',
+        'tcoa': 'TheForgottenAge',
+        'tdoy': 'TheForgottenAge',
+        'sha': 'TheForgottenAge',
+        'tcu': 'TheCircleUndone',
+        'tsn': 'TheCircleUndone',
+        'wos': 'TheCircleUndone',
+        'fgg': 'TheCircleUndone',
+        'uad': 'TheCircleUndone',
+        'icc': 'TheCircleUndone',
+        'bbt': 'TheCircleUndone',
+        'tde': 'TheDreamEaters',
+        'sfk': 'TheDreamEaters',
+        'tsh': 'TheDreamEaters',
+        'dsm': 'TheDreamEaters',
+        'pnr': 'TheDreamEaters',
+        'wgd': 'TheDreamEaters',
+        'woc': 'TheDreamEaters',
+        'tic': 'TheInnsmouthConspiracy',
+        'itd': 'TheInnsmouthConspiracy',
+        'def': 'TheInnsmouthConspiracy',
+        'hhg': 'TheInnsmouthConspiracy',
+        'lif': 'TheInnsmouthConspiracy',
+        'lod': 'TheInnsmouthConspiracy',
+        'itm': 'TheInnsmouthConspiracy',
+        'eoep': 'EdgeOfTheEarthInv',
+        'eoec': 'EdgeOfTheEarth',
+        'rtnotz': 'ReturnToTheNightOfTheZealot', 
+        'rtdwl': 'ReturnToTheDunwichLegacy',
+        'rtptc': 'ReturnToThePathToCarcosa',
+        'rttfa': 'ReturnToTheForgottenAge',
+        'rttcu': 'ReturnToTheCircleUndone',
+        'cotr': 'CurseOfTheRougarou',
+        'coh': 'CarnevaleOfHorrors',
+        'lol': 'LabyrinthsOfLunacy',
+        'guardians': 'GuardiansOfTheAbyss',
+        'hotel': 'MurderAtTheExcelsiorHotel',
+        'blob': 'TheBlobThatAteEverything',
+        'wog': 'WarOfTheOuterGods',
+        'nat': 'NathanielCho',
+        'har': 'HarveyWalters',
+        'win': 'WinifredHabbamock',
+        'jac': 'JacquelineFine',
+        'ste': 'StellaClark',
+        'rod': 'ParallelInvestigators',
+        'aon': 'ParallelInvestigators',
+        'bad': 'ParallelInvestigators',
+        'btb': 'ParallelInvestigators',
+        'rtr': 'ParallelInvestigators',
+        'hoth': 'Promos',
+        'tdor': 'Promos',
+        'iotv': 'Promos',
+        'tdg': 'Promos',
+        'tftbw': 'Promos',
+        'bob': 'Promos',
+        'dre': 'Promos',
     }
     return pack_map[pack]
 
 def get_se_pack_number(card):
     return str(get_field(card, 'position', 0))
 
-def get_se_encounter(card):
+def get_se_encounter(card, sheet):
     encounter = get_field(card, 'encounter_code', None)
+    # NOTE: Special cases for two sides of cards with different encounter sets.
+    if encounter == 'vortex' and card['code'] in ['03276a', '03279b'] and sheet == 0:
+        encounter = 'black_stars_rise'
+    elif encounter == 'vortex' and card['code'] in ['03297', '03298'] and sheet == 1:
+        encounter = 'black_stars_rise'
+    elif encounter == 'flood' and card['code'] in ['03276b', '03279a'] and sheet == 0:
+        encounter = 'black_stars_rise'
+    elif encounter == 'flood' and card['code'] in ['03296', '03299'] and sheet == 1:
+        encounter = 'black_stars_rise'
     encounter_map = {
         'torch': 'TheGathering',
         'arkham': 'TheMidnightMasks',
@@ -230,6 +428,220 @@ def get_se_encounter(card):
         'undimensioned_and_unseen': 'UndimensionedAndUnseen',
         'where_doom_awaits': 'WhereDoomAwaits',
         'lost_in_time_and_space': 'LostInTimeAndSpace',
+        'curtain_call': 'CurtainCall',
+        'the_last_king': 'TheLastKing',
+        'delusions': 'Delusions',
+        'byakhee': 'Byakhee',
+        'inhabitants_of_carcosa': 'InhabitantsOfCarcosa',
+        'evil_portents': 'EvilPortents',
+        'hauntings': 'Hauntings',
+        'hasturs_gift': 'HastursGift',
+        'cult_of_the_yellow_sign': 'CultOfTheYellowSign',
+        'decay': 'DecayAndFilth',
+        'stranger': 'TheStranger',
+        'echoes_of_the_past': 'EchoesOfThePast',
+        'the_unspeakable_oath': 'TheUnspeakableOath',
+        'a_phantom_of_truth': 'APhantomOfTruth',
+        'the_pallid_mask': 'ThePallidMask',
+        'black_stars_rise': 'BlackStarsRise',
+        'vortex': 'TheVortexAbove',
+        'flood': 'TheFloodBelow',
+        'dim_carcosa': 'DimCarcosa',
+        'wilds': 'TheUntamedWilds',
+        'eztli': 'TheDoomOfEztli',
+        'rainforest': 'Rainforest',
+        'serpents': 'Serpents',
+        'expedition': 'Expedition',
+        'agents_of_yig': 'AgentsOfYig',
+        'guardians_of_time': 'GuardiansOfTime',
+        'traps': 'DeadlyTraps',
+        'flux': 'TemporalFlux',
+        'ruins': 'ForgottenRuins',
+        'pnakotic_brotherhood': 'PnakoticBrotherhood',
+        'venom': 'YigsVenom',
+        'poison': 'Poison',
+        'threads_of_fate': 'ThreadsOfFate',
+        'the_boundary_beyond': 'TheBoundaryBeyond',
+        'heart_of_the_elders': 'HeartOfTheElders',
+        'pillars_of_judgment': 'PillarsOfJudgment',
+        'knyan': 'KnYan',
+        'the_city_of_archives': 'TheCityOfArchives',
+        'the_depths_of_yoth': 'TheDepthsOfYoth',
+        'shattered_aeons': 'ShatteredAeons',
+        'turn_back_time': 'TurnBackTime',
+        'disappearance_at_the_twilight_estate': 'DisappearanceAtTheTwilightEstate',
+        'the_witching_hour': 'TheWitchingHour',
+        'at_deaths_doorstep': 'AtDeathsDoorstep',
+        'the_watcher': 'TheWatcher',
+        'agents_of_azathoth': 'AgentsOfAzathoth',
+        'anettes_coven': 'AnettesCoven',
+        'witchcraft': 'Witchcraft',
+        'silver_twilight_lodge': 'SilverTwilightLodge',
+        'city_of_sins': 'CityOfSins',
+        'spectral_predators': 'SpectralPredators',
+        'trapped_spirits': 'TrappedSpirits',
+        'realm_of_death': 'RealmOfDeath',
+        'inexorable_fate': 'InexorableFate',
+        'the_secret_name': 'TheSecretName',
+        'the_wages_of_sin': 'TheWagesOfSin',
+        'for_the_greater_good': 'ForTheGreaterGood',
+        'union_and_disillusion': 'UnionAndDisillusion',
+        'in_the_clutches_of_chaos': 'InTheClutchesOfChaos',
+        'music_of_the_damned': 'MusicOfTheDamned',
+        'secrets_of_the_universe': 'SecretsOfTheUniverse',
+        'before_the_black_throne': 'BeforeTheBlackThrone',
+        'beyond_the_gates_of_sleep': 'BeyondTheGatesOfSleep',
+        'waking_nightmare': 'WakingNightmare',
+        'agents_of_atlach_nacha': 'AgentsOfAtlachNacha',
+        'agents_of_nyarlathotep': 'AgentsOfNyarlathotep',
+        'whispers_of_hypnos': 'WhispersOfHypnos',
+        'creatures_of_the_underworld': 'CreaturesOfTheUnderworld',
+        'dreamers_curse': 'DreamersCurse',
+        'dreamlands': 'Dreamlands',
+        'merging_realities': 'MergingRealities',
+        'spiders': 'Spiders',
+        'corsairs': 'Corsairs',
+        'zoogs': 'Zoogs',
+        'the_search_for_kadath': 'TheSearchForKadath',
+        'a_thousand_shapes_of_horror': 'AThousandShapesOfHorror',
+        'dark_side_of_the_moon': 'DarkSideOfTheMoon',
+        'point_of_no_return': 'PointOfNoReturn',
+        'terror_of_the_vale': 'TerrorOfTheVale',
+        'descent_into_the_pitch': 'DescentIntoThePitch',
+        'where_the_gods_dwell': 'WhereTheGodsDwell',
+        'weaver_of_the_cosmos': 'WeaverOfTheCosmos',
+        'the_pit_of_despair': 'ThePitOfDespair',
+        'the_vanishing_of_elina_harper': 'TheVanishingOfElinaHarper',
+        'agents_of_dagon': 'AgentsOfDagon',
+        'agents_of_hydra': 'AgentsOfHydra',
+        'creatures_of_the_deep': 'CreaturesOfTheDeep',
+        'rising_tide': 'RisingTide',
+        'fog_over_innsmouth': 'FogOverInnsmouth',
+        'shattered_memories': 'ShatteredMemories',
+        'malfunction': 'Malfunction',
+        'syzygy': 'Syzygy',
+        'flooded_caverns': 'FloodedCaverns',
+        'the_locals': 'TheLocals',
+        'in_too_deep': 'InTooDeep',
+        'devil_reef': 'DevilReef',
+        'horror_in_high_gear': 'HorrorInHighGear',
+        'a_light_in_the_fog': 'ALightInTheFog',
+        'the_lair_of_dagon': 'TheLairOfDagon',
+        'into_the_maelstrom': 'IntoTheMaelstrom',
+        'ice_and_death': 'IceAndDeath',
+        'the_crash': 'TheCrash',
+        'lost_in_the_night': 'LostInTheNight',
+        'seeping_nightmares': 'SeepingNightmares',
+        'fatal_mirage': 'FatalMirage',
+        'to_the_forbidden_peaks': 'ToTheForbiddenPeaks',
+        'city_of_the_elder_things': 'CityOfTheElderThings',
+        'the_heart_of_madness': 'TheHeartOfMadness',
+        'the_great_seal': 'TheGreatSeal',
+        'stirring_in_the_deep': 'StirringInTheDeep',
+        'agents_of_the_unknown': 'AgentsOfTheUnknown',
+        'creatures_in_the_ice': 'CreaturesInTheIce',
+        'deadly_weather': 'DeadlyWeather',
+        'elder_things': 'ElderThings',
+        'hazards_of_antarctica': 'HazardsOfAntarctica',
+        'left_behind': 'LeftBehind',
+        'nameless_horrors': 'NamelessHorrors',
+        'miasma': 'Miasma',
+        'penguins': 'Penguins',
+        'shoggoths': 'Shoggoths',
+        'silence_and_mystery': 'SilenceAndMystery',
+        'expedition_team': 'ExpeditionTeam',
+        'tekelili': 'TekeliLi',
+        'memorials_of_the_lost': 'MemorialsOfTheLost',
+        'return_to_the_gathering': 'ReturnToTheGathering',
+        'return_to_the_midnight_masks': 'ReturnToTheMidnightMasks',
+        'return_to_the_devourer_below': 'ReturnToTheDevourerBelow',
+        'ghouls_of_umôrdhoth': 'GhoulsOfUmordhoth',
+        'the_devourers_cult': 'TheDevourersCult',
+        'return_cult': 'ReturnToCultOfUmordhoth',
+        'return_to_extracurricular_activities': 'ReturnToExtracurricularActivities',
+        'return_to_the_house_always_wins': 'ReturnToTheHouseAlwaysWins',
+        'return_to_the_miskatonic_museum': 'ReturnToTheMiskatonicMuseum',
+        'return_to_the_essex_county_express': 'ReturnToTheEssexCountyExpress',
+        'return_to_blood_on_the_altar': 'ReturnToBloodOnTheAltar',
+        'return_to_undimensioned_and_unseen': 'ReturnToUndimensionedAndUnseen',
+        'return_to_where_doom_awaits': 'ReturnToWhereDoomAwaits',
+        'return_to_lost_in_time_and_space': 'ReturnToLostInTimeAndSpace',
+        'beyond_the_threshold': 'BeyondTheThreshold',
+        'resurgent_evils': 'ResurgentEvils',
+        'secret_doors': 'SecretDoors',
+        'creeping_cold': 'CreepingCold',
+        'erratic_fear': 'ErraticFear',
+        'yog_sothoths_emissaries': 'YogSothothsEmissaries',
+        'return_to_curtain_call': 'ReturnToCurtainCall',
+        'return_to_the_last_king': 'ReturnToTheLastKing',
+        'return_to_echoes_of_the_past': 'ReturnToEchoesOfThePast',
+        'return_to_the_unspeakable_oath': 'ReturnToTheUnspeakableOath',
+        'return_to_a_phantom_of_truth': 'ReturnToAPhantomOfTruth',
+        'return_to_the_pallid_mask': 'ReturnToThePallidMask',
+        'return_to_black_stars_rise': 'ReturnToBlackStarsRise',
+        'return_to_dim_carcosa': 'ReturnToDimCarcosa',
+        'delusory_evils': 'DelusoryEvils',
+        'decaying_reality': 'DecayingReality',
+        'hasturs_envoys': 'HastursEnvoys',
+        'maddening_delusions': 'MaddeningDelusions',
+        'neurotic_fear': 'NeuroticFear',
+        'return_to_the_untamed_wilds': 'ReturnToTheUntamedWilds',
+        'return_to_the_doom_of_eztli': 'ReturnToTheDoomOfEztli',
+        'return_to_threads_of_fate': 'ReturnToThreadsOfFate',
+        'return_to_the_boundary_beyond': 'ReturnToTheBoundaryBeyond',
+        'return_to_pillars_of_judgment': 'ReturnToPillarsOfJudgment',
+        'return_to_knyan': 'ReturnToKnYan',
+        'return_to_the_city_of_archives': 'ReturnToTheCityOfArchives',
+        'return_to_the_depths_of_yoth': 'ReturnToTheDepthsOfYoth',
+        'return_to_shattered_aeons': 'ReturnToShatteredAeons',
+        'return_to_turn_back_time': 'ReturnToTurnBackTime',
+        'return_to_the_rainforest': 'ReturnToTheRainforest',
+        'cult_of_pnakotus': 'CultOfPnakotus',
+        'doomed_expedition': 'DoomedExpedition',
+        'temporal_hunters': 'TemporalHunters',
+        'venomous_hate': 'VenomousHate',
+        'return_to_disappearance_at_the_twilight_estate': 'ReturnToDisappearanceAtTheTwilightEstate',
+        'return_to_the_witching_hour': 'ReturnToTheWitchingHour',
+        'return_to_at_deaths_doorstep': 'ReturnToAtDeathsDoorstep',
+        'return_to_the_secret_name': 'ReturnToTheSecretName',
+        'return_to_the_wages_of_sin': 'ReturnToTheWagesOfSin',
+        'return_to_for_the_greater_good': 'ReturnToForTheGreaterGood',
+        'return_to_union_and_disillusion': 'ReturnToUnionAndDisillusion',
+        'return_to_in_the_clutches_of_chaos': 'ReturnToInTheClutchesOfChaos',
+        'return_to_before_the_black_throne': 'ReturnToBeforeTheBlackThrone',
+        'hexcraft': 'Hexcraft',
+        'impending_evils': 'ImpendingEvils',
+        'unspeakable_fate': 'UnspeakableFate',
+        'unstable_realm': 'UnstableRealm',
+        'city_of_the_damned': 'CityOfTheDamned',
+        'chilling_mists': 'ChillingMists',
+        'bloodthirsty_spirits': 'BloodthirstySpirits',
+        'bayou': 'TheBayou',
+        'rougarou': 'CurseOfTheRougarouE',
+        'venice': 'CarnevaleOfHorrorsE',
+        'in_the_labyrinths_of_lunacy': 'LabyrinthsOfLunacyE',
+        'single_group': 'SingleGroup',
+        'epic_multiplayer': 'EpicMultiplayer',
+        'the_eternal_slumber': 'TheEternalSlumber',
+        'the_nights_usurper': 'TheNightsUsurper',
+        'brotherhood_of_the_beast': 'BrotherhoodOfTheBeast',
+        'sands_of_egypt': 'SandsOfEgypt',
+        'abyssal_tribute': 'AbyssalTribute',
+        'abyssal_gifts': 'AbyssalGifts',
+        'murder_at_the_excelsior_hotel': 'MurderAtTheExcelsiorHotelE',
+        'alien_interference': 'AlienInterference',
+        'excelsior_management': 'ExcelsiorManagement',
+        'dark_rituals': 'DarkRituals',
+        'vile_experiments': 'VileExperiments',
+        'sins_of_the_past': 'SinsOfThePast',
+        'blob': 'TheBlobThatAteEverythingE',
+        'blob_epic_multiplayer': 'EpicMultiplayer',
+        'blob_single_group': 'SingleGroup',
+        'migo_incursion': 'MiGoIncursion',
+        'war_of_the_outer_gods': 'WarOfTheOuterGodsE',
+        'death_of_stars': 'DeathOfStars',
+        'children_of_paradise': 'ChildrenOfParadise',
+        'swarm_of_assimilation': 'SwarmOfAssimilation',
         None: '',
     }
     return encounter_map[encounter]
@@ -271,6 +683,220 @@ def get_se_encounter_total(card):
         'undimensioned_and_unseen': 38,
         'where_doom_awaits': 32,
         'lost_in_time_and_space': 36,
+        'curtain_call': 20,
+        'the_last_king': 25,
+        'delusions': 6,
+        'byakhee': 4,
+        'inhabitants_of_carcosa': 3,
+        'evil_portents': 6,
+        'hauntings': 4,
+        'hasturs_gift': 6,
+        'cult_of_the_yellow_sign': 6,
+        'decay': 6,
+        'stranger': 3,
+        'echoes_of_the_past': 32,
+        'the_unspeakable_oath': 36,
+        'a_phantom_of_truth': 38,
+        'the_pallid_mask': 36,
+        'black_stars_rise': 38,
+        'vortex': 38,
+        'flood': 38,
+        'dim_carcosa': 36,
+        'wilds': 11,
+        'eztli': 15,
+        'rainforest': 11,
+        'serpents': 7,
+        'expedition': 5,
+        'agents_of_yig': 6,
+        'guardians_of_time': 4,
+        'traps': 5,
+        'flux': 5,
+        'ruins': 7,
+        'pnakotic_brotherhood': 6,
+        'venom': 5,
+        'poison': 6,
+        'threads_of_fate': 40,
+        'the_boundary_beyond': 36,
+        'heart_of_the_elders': 8,
+        'pillars_of_judgment': 13,
+        'knyan': 13,
+        'the_city_of_archives': 44,
+        'the_depths_of_yoth': 36,
+        'shattered_aeons': 36,
+        'turn_back_time': 4,
+        'disappearance_at_the_twilight_estate': 7,
+        'the_witching_hour': 15,
+        'at_deaths_doorstep': 21,
+        'the_watcher': 3,
+        'agents_of_azathoth': 4,
+        'anettes_coven': 4,
+        'witchcraft': 7,
+        'silver_twilight_lodge': 6,
+        'city_of_sins': 5,
+        'spectral_predators': 5,
+        'trapped_spirits': 4,
+        'realm_of_death': 4,
+        'inexorable_fate': 6,
+        'the_secret_name': 38,
+        'the_wages_of_sin': 40,
+        'for_the_greater_good': 38,
+        'union_and_disillusion': 42,
+        'in_the_clutches_of_chaos': 22,
+        'music_of_the_damned': 8,
+        'secrets_of_the_universe': 8,
+        'before_the_black_throne': 36,
+        'beyond_the_gates_of_sleep': 25,
+        'waking_nightmare': 25,
+        'agents_of_atlach_nacha': 4,
+        'agents_of_nyarlathotep': 4,
+        'whispers_of_hypnos': 3,
+        'creatures_of_the_underworld': 4,
+        'dreamers_curse': 6,
+        'dreamlands': 4,
+        'merging_realities': 6,
+        'spiders': 6,
+        'corsairs': 4,
+        'zoogs': 6,
+        'the_search_for_kadath': 43,
+        'a_thousand_shapes_of_horror': 34,
+        'dark_side_of_the_moon': 37,
+        'point_of_no_return': 28,
+        'terror_of_the_vale': 4,
+        'descent_into_the_pitch': 4,
+        'where_the_gods_dwell': 41,
+        'weaver_of_the_cosmos': 38,
+        'the_pit_of_despair': 18,
+        'the_vanishing_of_elina_harper': 28,
+        'agents_of_dagon': 4,
+        'agents_of_hydra': 4,
+        'creatures_of_the_deep': 6,
+        'rising_tide': 6,
+        'fog_over_innsmouth': 3,
+        'shattered_memories': 6,
+        'malfunction': 2,
+        'syzygy': 4,
+        'flooded_caverns': 6,
+        'the_locals': 6,
+        'in_too_deep': 35,
+        'devil_reef': 38,
+        'horror_in_high_gear': 42,
+        'a_light_in_the_fog': 40,
+        'the_lair_of_dagon': 36,
+        'into_the_maelstrom': 42,
+        'ice_and_death': 21,
+        'the_crash': 5,
+        'lost_in_the_night': 21,
+        'seeping_nightmares': 9,
+        'fatal_mirage': 53,
+        'to_the_forbidden_peaks': 34,
+        'city_of_the_elder_things': 47,
+        'the_heart_of_madness': 18,
+        'the_great_seal': 14,
+        'stirring_in_the_deep': 31,
+        'agents_of_the_unknown': 4,
+        'creatures_in_the_ice': 7,
+        'deadly_weather': 6,
+        'elder_things': 6,
+        'hazards_of_antarctica': 5,
+        'left_behind': 6,
+        'nameless_horrors': 6,
+        'miasma': 4,
+        'penguins': 4,
+        'shoggoths': 3,
+        'silence_and_mystery': 5,
+        'expedition_team': 9,
+        'tekelili': 16,
+        'memorials_of_the_lost': 9,
+        'return_to_the_gathering': 16,
+        'return_to_the_midnight_masks': 8,
+        'return_to_the_devourer_below': 7,
+        'ghouls_of_umôrdhoth': 7,
+        'the_devourers_cult': 6,
+        'return_cult': 3,
+        'return_to_extracurricular_activities': 4,
+        'return_to_the_house_always_wins': 7,
+        'return_to_the_miskatonic_museum': 7,
+        'return_to_the_essex_county_express': 7,
+        'return_to_blood_on_the_altar': 10,
+        'return_to_undimensioned_and_unseen': 7,
+        'return_to_where_doom_awaits': 6,
+        'return_to_lost_in_time_and_space': 8,
+        'beyond_the_threshold': 6,
+        'resurgent_evils': 3,
+        'secret_doors': 2,
+        'creeping_cold': 4,
+        'erratic_fear': 7,
+        'yog_sothoths_emissaries': 4,
+        'return_to_curtain_call': 7,
+        'return_to_the_last_king': 9,
+        'return_to_echoes_of_the_past': 7,
+        'return_to_the_unspeakable_oath': 6,
+        'return_to_a_phantom_of_truth': 9,
+        'return_to_the_pallid_mask': 6,
+        'return_to_black_stars_rise': 5,
+        'return_to_dim_carcosa': 6,
+        'delusory_evils': 3,
+        'decaying_reality': 6,
+        'hasturs_envoys': 4,
+        'maddening_delusions': 6,
+        'neurotic_fear': 7,
+        'return_to_the_untamed_wilds': 1,
+        'return_to_the_doom_of_eztli': 11,
+        'return_to_threads_of_fate': 10,
+        'return_to_the_boundary_beyond': 7,
+        'return_to_pillars_of_judgment': 4,
+        'return_to_knyan': 5,
+        'return_to_the_city_of_archives': 7,
+        'return_to_the_depths_of_yoth': 2,
+        'return_to_shattered_aeons': 6,
+        'return_to_turn_back_time': 1,
+        'return_to_the_rainforest': 4,
+        'cult_of_pnakotus': 6,
+        'doomed_expedition': 5,
+        'temporal_hunters': 5,
+        'venomous_hate': 5,
+        'return_to_disappearance_at_the_twilight_estate': 1,
+        'return_to_the_witching_hour': 7,
+        'return_to_at_deaths_doorstep': 5,
+        'return_to_the_secret_name': 5,
+        'return_to_the_wages_of_sin': 9,
+        'return_to_for_the_greater_good': 4,
+        'return_to_union_and_disillusion': 4,
+        'return_to_in_the_clutches_of_chaos': 7,
+        'return_to_before_the_black_throne': 9,
+        'hexcraft': 7,
+        'impending_evils': 3,
+        'unspeakable_fate': 6,
+        'unstable_realm': 4,
+        'city_of_the_damned': 5,
+        'chilling_mists': 4,
+        'bloodthirsty_spirits': 4,
+        'bayou': 39,
+        'rougarou': 18,
+        'venice': 55,
+        'in_the_labyrinths_of_lunacy': 47,
+        'single_group': 13,
+        'epic_multiplayer': 20,
+        'the_eternal_slumber': 18,
+        'the_nights_usurper': 17,
+        'brotherhood_of_the_beast': 6,
+        'sands_of_egypt': 33,
+        'abyssal_tribute': 2,
+        'abyssal_gifts': 2,
+        'murder_at_the_excelsior_hotel': 53,
+        'alien_interference': 5,
+        'excelsior_management': 5,
+        'dark_rituals': 5,
+        'vile_experiments': 5,
+        'sins_of_the_past': 5,
+        'blob': 54,
+        'blob_epic_multiplayer': 3,
+        'blob_single_group': 3,
+        'migo_incursion': 18,
+        'war_of_the_outer_gods': 51,
+        'death_of_stars': 10,
+        'children_of_paradise': 10,
+        'swarm_of_assimilation': 10,
         None: 0,
     }
     return str(encounter_map[encounter])
@@ -278,14 +904,51 @@ def get_se_encounter_total(card):
 def get_se_encounter_number(card):
     return str(get_field(card, 'encounter_position', 0))
 
+def get_se_encounter_front_visibility(card):
+    return '0' if card['code'] in ['06015a'] else '1'
+
+def get_se_encounter_back_visibility(card):
+    return '0' if card['code'] in [
+        '06015a',
+        '07048',
+        '07049',
+        '07050',
+        '07051',
+        '07052',
+        '07102',
+        '07103',
+        '07104',
+        '07174a',
+        '07174b',
+        '07247',
+        '07248',
+        '07249',
+        '07250',
+        '07251',
+        '07290',
+        '07319',
+    ] else '1'
+
 def get_se_doom(card):
-    return str(get_field(card, 'doom', '-'))
+    doom = get_field(card, 'doom', '-')
+    # NOTE: ADB uses -2 to indicate variable shroud.
+    if doom == -2:
+        doom = 'Star'
+    return str(doom)
+
+def get_se_comment(card):
+    # NOTE: Special cases the cards with an asterisk comment on the doom or clue.
+    return '1' if card['code'] in ['04212'] else '0'
 
 def get_se_clue(card):
     return str(get_field(card, 'clues', '-'))
 
 def get_se_shroud(card):
-    return str(get_field(card, 'shroud', 0))
+    shroud = get_field(card, 'shroud', 0)
+    # NOTE: ADB uses -2 to indicate variable shroud.
+    if shroud == -2:
+        shroud = 'X'
+    return str(shroud)
 
 def get_se_per_investigator(card):
     # NOTE: Location and act cards default to use per-investigator clue count, unless clue count is 0 or 'clues_fixed' is specified.
@@ -294,49 +957,56 @@ def get_se_per_investigator(card):
     else:
         return '1' if get_field(card, 'health_per_investigator', False) else '0'
 
-def get_se_stage_number(card):
+def get_se_progress_number(card):
     return str(get_field(card, 'stage', 0))
 
-def get_se_stage_letter(card):
-    # TODO: Add special cases for stage letter.
+def get_se_progress_letter(card):
+    # NOTE: Special case agenda and act letters.
+    if card['code'] in ['53029', '53030', '53031', '53032', '53033', '53034', '53035', '53036']:
+        return 'g'
+    if card['code'] in ['04133a', '04134a', '04135', '04136', '04137a', '04138', '04139', '04140']:
+        return 'e'
+    if card['code'] in ['03278', '03279a', '03279b', '03280', '03282', '04125a', '04126a', '04127', '04128a', '04129', '04130a', '04131', '04132']:
+        return 'c'
     return 'a'
+
+def is_progress_reversed(card):
+    return card['code'] in ['03278', '03279a', '03279b', '03280', '03281']
+
+def get_se_progress_direction(card):
+    # NOTE: Special case agenda and act direction.
+    if is_progress_reversed(card):
+        return 'Reversed'
+    return 'Standard'
 
 def get_se_unique(card):
     # NOTE: ADB doesn't specify 'is_unique' property for investigator cards but they are always unique.
     return '1' if get_field(card, 'is_unique', False) or card['type_code'] == 'investigator' else '0'
 
+def get_se_name(name):
+    return transform_lang(name)
+
 def get_se_front_name(card):
     name = get_field(card, 'name', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(name)
-    else:
-        return name
+    return get_se_name(name)
 
 def get_se_back_name(card):
     # NOTE: ADB doesn't have back names for scenario and investigator cards but SE have them. We need to use the front names instead to avoid getting blank on the back.
     if get_field(card, 'type_code', None) in ['scenario', 'investigator']:
-        title = get_field(card, 'name', '')
+        name = get_field(card, 'name', '')
     else:
-        title = get_field(card, 'back_name', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(title)
-    else:
-        return title
+        name = get_field(card, 'back_name', '')
+    return get_se_name(name)
 
 def get_se_subname(card):
-    title = get_field(card, 'subname', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(title)
-    else:
-        return title
+    subname = get_field(card, 'subname', '')
+    return get_se_name(subname)
 
 def get_se_traits(card):
     traits = get_field(card, 'traits', '')
     traits = [f'{trait.strip()}.' for trait in traits.split('.') if trait.strip()]
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified('<size 50%> </size>'.join(traits))
-    else:
-        return ' '.join(traits)
+    traits = ' '.join(traits)
+    return transform_lang(traits)
 
 def get_se_markup(rule):
     markup = [
@@ -363,30 +1033,35 @@ def get_se_markup(rule):
         (r'\[bless\]', '<ble>'),
         (r'\[curse\]', '<cur>'),
         (r'\[per_investigator\]', '<per>'),
+        (r'\[frost\]', '<fro>'),
+        (r'\[seal_a\]', '<seal1>'),
+        (r'\[seal_b\]', '<seal2>'),
+        (r'\[seal_c\]', '<seal3>'),
+        (r'\[seal_d\]', '<seal4>'),
+        (r'\[seal_e\]', '<seal5>'),
     ]
     for a, b in markup:
         rule = re.sub(a, b, rule, flags=re.I)
+    # NOTE: Format traits. We avoid the buggy behavior of </size> in SE instead we set font size by relative percentage, 0.9 * 0.33 * 3.37 = 1.00089.
+    rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t><size 33%> <size 337%>', rule)
     return rule
 
 def get_se_rule(rule):
     rule = get_se_markup(rule)
-    # NOTE: Format traits.
-    rule = re.sub(r'\[\[([^\]]*)\]\]', r'<size 90%><t>\1</t></size><size 30%> </size>', rule)
     # NOTE: Get rid of the errata text, e.g. Wendy's Amulet.
     rule = re.sub(r'<i>\(Erratum[^<]*</i>', '', rule)
     # NOTE: Get rid of the FAQ text, e.g. Rex Murphy.
     rule = re.sub(r'<i>\(FAQ[^<]*</i>', '', rule)
     # NOTE: Format bold action keywords.
-    rule = re.sub(r'<b>([^<]*)</b>', r'<hdr><size 95%>\1</size></hdr>', rule)
+    rule = re.sub(r'<b>([^<]*)</b>', r'<size 95%><hdr>\1</hdr><size 105%>', rule)
+    # NOTE: Convert <p> tag to newline characters.
+    rule = rule.replace('</p><p>', '\n').replace('<p>', '').replace('</p>', '')
     # NOTE: Format bullet icon at the start of the line.
-    rule = '\n'.join([re.sub(r'^\- ', '<bul> ', line.strip()) for line in rule.split('\n')])
+    rule = '\n'.join([re.sub(r'^[\-—] ', '<bul> ', line.strip()) for line in rule.split('\n')])
     # NOTE: We intentionally add a space at the end to hack around a problem with SE scenario card layout. If we don't add this space,
     # the text on scenario cards doesn't automatically break lines.
     rule = f'{rule} ' if rule.strip() else ''
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(rule)
-    else:
-        return rule
+    return transform_lang(rule)
 
 def get_se_front_rule(card):
     rule = get_field(card, 'text', '')
@@ -396,25 +1071,79 @@ def get_se_back_rule(card):
     rule = get_field(card, 'back_text', '')
     return get_se_rule(rule)
 
-def get_se_chaos(lines, index):
-    lines = [line.strip() for line in lines.split('\n')]
-    lines = lines[1:]
-    token = ['[skull]', '[cultist]', '[tablet]', '[elder_thing]'][index]
-    for line in lines:
-        line = line.replace('：', ':').replace(':', '')
-        if line.startswith(token):
-            return line.replace(token, '').strip()
-    return ''
+def get_se_chaos(rule, index):
+    rule = [line.strip() for line in rule.split('\n')]
+    rule = rule[1:]
+    tokens = ['[skull]', '[cultist]', '[tablet]', '[elder_thing]']
+    merge_tokens = ['Skull', 'Cultist', 'Tablet', 'ElderThing']
+    token = tokens[index]
+    for line in rule:
+        if token in line:
+            # NOTE: Find the greatest token this token is combined with.
+            max_index = index
+            for merge_token in tokens:
+                if merge_token in line:
+                    merge_index = tokens.index(merge_token)
+                    max_index = max(max_index, merge_index)
+
+            # NOTE: Remove tokens from the beginning of the line.
+            line = re.sub(r'[:：]', '', line)
+            for merge_token in tokens:
+                line = line.replace(merge_token, '')
+            line = line.strip()
+
+            merge = merge_tokens[max_index] if max_index > index else 'None'
+            return line, merge
+    return '', 'None'
 
 def get_se_front_chaos(card, index):
-    lines = get_field(card, 'text', '')
-    rule = get_se_chaos(lines, index)
-    return get_se_rule(rule)
+    rule = get_field(card, 'text', '')
+    return get_se_chaos(rule, index)
 
 def get_se_back_chaos(card, index):
-    lines = get_field(card, 'back_text', '')
-    rule = get_se_chaos(lines, index)
+    rule = get_field(card, 'back_text', '')
+    return get_se_chaos(rule, index)
+
+def get_se_front_chaos_rule(card, index):
+    rule, _ = get_se_front_chaos(card, index)
     return get_se_rule(rule)
+
+def get_se_front_chaos_merge(card, index):
+    _, merge = get_se_front_chaos(card, index)
+    return merge
+
+def get_se_back_chaos_rule(card, index):
+    rule, _ = get_se_back_chaos(card, index)
+    return get_se_rule(rule)
+
+def get_se_back_chaos_merge(card, index):
+    _, merge = get_se_back_chaos(card, index)
+    return merge
+
+def get_se_tracker(card):
+    tracker = ''
+    if card['code'] == '04277':
+        tracker = 'Current Depth'
+    elif card['code'] == '07274':
+        tracker = 'Spent Keys'
+    elif card['code'] in ['83001', '83016']:
+        tracker = 'Strength of the Abyss'
+    return transform_lang(tracker)
+
+def is_return_to_scenario(card):
+    return card['pack_code'] in ['rtnotz', 'rtdwl', 'rtptc', 'rttfa', 'rttcu'] and card['type_code'] == 'scenario'
+
+def get_se_front_template(card):
+    # NOTE: Use scenario template of story card for return to scenarios. Also for some special cards.
+    if is_return_to_scenario(card) or card['code'] in ['07062a']:
+        return 'Chaos'
+    return 'Story'
+
+def get_se_back_template(card):
+    # NOTE: Use scenario template of story card for return to scenarios.
+    if is_return_to_scenario(card):
+        return 'Chaos'
+    return 'Story'
 
 def get_se_deck_line(card, index):
     lines = get_field(card, 'back_text', '')
@@ -427,107 +1156,151 @@ def get_se_deck_line(card, index):
         line = [line[0], ':'.join(line[1:])]
     return line
 
+def get_se_header(header):
+    # NOTE: Some header text at the back of agenda/act may have markup text in it.
+    header = get_se_markup(header)
+    return transform_lang(header)
+
 def get_se_deck_header(card, index):
     header, _ = get_se_deck_line(card, index)
-    header = f'<size 95%>{header}</size>'
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(header)
-    else:
-        return header
+    header = f'<size 95%>{header}<size 105%>'
+    return get_se_header(header)
 
 def get_se_deck_rule(card, index):
     _, rule = get_se_deck_line(card, index)
     return get_se_rule(rule)
 
+def get_se_flavor(flavor):
+    # NOTE: Some flavor text may contain markup.
+    flavor = get_se_markup(flavor)
+    return transform_lang(flavor)
+
 def get_se_front_flavor(card):
     flavor = get_field(card, 'flavor', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(flavor)
-    else:
-        return flavor
+    return get_se_flavor(flavor)
 
 def get_se_back_flavor(card):
     flavor = get_field(card, 'back_flavor', '')
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(flavor)
-    else:
-        return flavor
+    return get_se_flavor(flavor)
 
-def get_se_progress_line(card, index):
+def get_se_back_header(card):
+    # NOTE: Back header is used by scenario card with a non-standard header. We intentionally add a space at the end to work around a formatting issue in SE.
+    # If we don't add the extra space, SE doesn't perform line breaking.
+    header = get_field(card, 'back_text', '')
+    header = [line.strip() for line in header.split('\n')][0] + ' '
+    return get_se_header(header)
+
+def get_se_paragraph_line(card, text, flavor, index):
+    # NOTE: The following algorithm is a best-effort guess on the formatting. We use simple layout in the case of there's explicit flavor text.
+    # TODO: This is incorrect, the rule text might itself have formatting in it.
+    if flavor:
+        if index == 0:
+            return '', flavor.strip(), text.strip()
+        else:
+            return '', '', ''
+
+    # TODO: This algorithm is problematic, try to make use of the following tags.
+    # NOTE: Deleting the tags that are not useful for the parsing.
+    text = text.replace('<blockquote>', '').replace('</blockquote>', '').replace('<hr>', '')
+
+    # NOTE: Determine header by bold text ending with a colon, either inside the bold tag or outside.
+    re_header = r'<b>[^<]+([:：]</b>|</b>[:：])'
+    headers = [match.group(0).replace('<b>', '').replace('</b>', '').strip() for match in re.finditer(re_header, text)]
+
+    # NOTE: Use headers to find the number of paragraphs.
+    rules = [text.strip()]
+    rule_index = 0
+    for header in headers:
+        rule = rules[rule_index]
+        match = re.search(re_header, rule)
+        rule_before = rule[0:match.start()]
+        rule_after = rule[match.end():]
+        rules = rules[0:rule_index] + [rule_before.strip()] + [rule_after.strip()] + rules[rule_index+1:]
+        rule_index += 1
+
+    # NOTE: At this point the number of rules is one greater than the number of headers, adjust them to the same number.
+    if rules[0]:
+        headers = [''] + headers
+    else:
+        rules = rules[1:]
+
+    # NOTE: Find flavors by italic text from the beginning.
+    re_flavor = r'<i>([^<]+)</i>'
+    flavors = []
+    for rule_index in range(len(rules)):
+        rule = rules[rule_index]
+        match = re.match(re_flavor, rule)
+        if match:
+            flavor = match.group(1).strip()
+            rules[rule_index] = re.sub(re_flavor, '', rule).strip()
+            flavors.append(flavor)
+        else:
+            flavors.append('')
+
+    if index < len(headers):
+        return headers[index], flavors[index], rules[index]
+    else:
+        return '', '', ''
+
+def get_se_front_paragraph_line(card, index):
+    text = get_field(card, 'text', '')
+    flavor = get_field(card, 'flavor', '')
+    return get_se_paragraph_line(card, text, flavor, index)
+
+def get_se_front_paragraph_header(card, index):
+    header, _, _ = get_se_front_paragraph_line(card, index)
+    return get_se_header(header)
+
+def get_se_front_paragraph_flavor(card, index):
+    _, flavor, _ = get_se_front_paragraph_line(card, index)
+    return get_se_flavor(flavor)
+
+def get_se_front_paragraph_rule(card, index):
+    _, _, rule = get_se_front_paragraph_line(card, index)
+    return get_se_rule(rule)
+
+def get_se_back_paragraph_line(card, index):
     text = get_field(card, 'back_text', '')
     flavor = get_field(card, 'back_flavor', '')
-    # NOTE: For simple layout, ADB data will split out the flavor part as a separate field in 'back_flavor'.
-    if flavor:
-        lines = [(1, flavor.strip()), (2, text.strip())]
-    else:
-        # NOTE: Deleting the tags that are not useful for the parsing.
-        text = text.replace('<blockquote>', '').replace('</blockquote>', '').replace('<hr>', '')
+    return get_se_paragraph_line(card, text, flavor, index)
 
-        # NOTE: Keep splitting header and flavor out of rule text until no more splitting. Encode header as 0, flavor as 1, and rule as 2.
-        lines = [(2, text)]
-        while True:
-            splitted = False
-            for i in range(len(lines)):
-                type, text = lines[i]
-                if type == 2:
-                    re_header = r'(.*)<b>([^<]+[:：])</b>(.*)'
-                    header = re.search(re_header, text, flags=re.S)
-                    if header:
-                        lines = lines[0:i] + [(2, header.group(1))] + [(0, header.group(2))] + [(2, header.group(3))] + lines[i+1:]
-                        splitted = True
-                        break
-                    re_flavor = r'(.*)<i>([^<]+)</i>(.*)'
-                    flavor = re.search(re_flavor, text, flags=re.S)
-                    if flavor:
-                        lines = lines[0:i] + [(2, flavor.group(1))] + [(1, flavor.group(2))] + [(2, flavor.group(3))] + lines[i+1:]
-                        splitted = True
-                        break
-            if not splitted:
-                break
-        lines = [(type, text.strip()) for type, text in lines if text.strip()]
+def get_se_back_paragraph_header(card, index):
+    header, _, _ = get_se_back_paragraph_line(card, index)
+    return get_se_header(header)
 
-    # NOTE: Arrange text in the standard form (header, flavor, rule, header, flavor, rule, header, flavor, rule). Fill text at the corresponding location based on its type.
-    filled_index = -1
-    filled_lines = ['', '', '', '', '', '', '', '', '']
-    for type, text in lines:
-        if type == 0:
-            text = get_se_markup(text)
-        elif type == 2:
-            text = get_se_rule(text)
-        for i in range(filled_index + 1, len(filled_lines)):
-            if i % 3 == type:
-                filled_lines[i] = text
-                filled_index = i
-                break
+def get_se_back_paragraph_flavor(card, index):
+    _, flavor, _ = get_se_back_paragraph_line(card, index)
+    return get_se_flavor(flavor)
 
-    return filled_lines[index * 3:(index + 1) * 3]
+def get_se_back_paragraph_rule(card, index):
+    _, _, rule = get_se_back_paragraph_line(card, index)
+    return get_se_rule(rule)
 
-def get_se_progress_header(card, index):
-    header, _, _ = get_se_progress_line(card, index)
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(header)
-    else:
-        return header
-
-def get_se_progress_flavor(card, index):
-    _, flavor, _ = get_se_progress_line(card, index)
-    if args.lang == langs.simplified_chinese:
-        return HanziConv.toSimplified(flavor)
-    else:
-        return flavor
-
-def get_se_progress_rule(card, index):
-    _, _, rule = get_se_progress_line(card, index)
-    return rule
+def get_se_vengeance(card):
+    vengeance = get_field(card, 'vengeance', None)
+    vengeance = f'Vengeance {vengeance}.' if type(vengeance) == int else ''
+    return transform_lang(vengeance)
 
 def get_se_victory(card):
     victory = get_field(card, 'victory', None)
-    if type(victory) != int:
-        return ''
-    if args.lang == langs.simplified_chinese:
-        return f'胜利<size 50%> </size>{victory}。'
+    victory = f'Victory {victory}.' if type(victory) == int else ''
+    return transform_lang(victory)
+
+def get_se_shelter(card):
+    shelter = get_field(card, 'shelter', None)
+    shelter = f'Shelter {shelter}.' if type(shelter) == int else ''
+    return transform_lang(shelter)
+
+def get_se_point(card):
+    vengeance = get_se_vengeance(card)
+    victory = get_se_victory(card)
+    # NOTE: Special points have different formatting on location and enemy cards.
+    if card['type_code'] == 'location':
+        shelter = get_se_shelter(card)
+        point = '\n'.join([point for point in [vengeance, shelter, victory] if point])
     else:
-        return f'Victory {victory}.'
+        point = '<size 50%> <size 200%>'.join([point for point in [victory, vengeance] if point])
+    return transform_lang(point)
 
 def get_se_location_icon(icon):
     icon_map = {
@@ -541,6 +1314,11 @@ def get_se_location_icon(icon):
         'Tee': 'T',
         'Hourglass': 'Hourglass',
         'SlantedEquals': 'DoubleSlash',
+        'Apostrophe': 'Quote',
+        'Clover': 'Clover',
+        'Star': 'Star',
+        'Heart': 'Heart',
+        'Spade': 'Spade',
     }
     # NOTE: SCED metadata on location may include special location types for game logic, they are not printed on cards.
     return icon_map.get(icon, 'None')
@@ -589,9 +1367,9 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$TitleBack': get_se_back_name(card),
         '$Subtype': get_se_subtype(card),
         '$Unique': get_se_unique(card),
-        '$CardClass': get_se_faction(card, 0),
-        '$CardClass2': get_se_faction(card, 1),
-        '$CardClass3': get_se_faction(card, 2),
+        '$CardClass': get_se_faction(card, 0, image_sheet),
+        '$CardClass2': get_se_faction(card, 1, image_sheet),
+        '$CardClass3': get_se_faction(card, 2, image_sheet),
         '$ResourceCost': get_se_cost(card),
         '$Level': get_se_xp(card),
         '$Willpower': get_se_willpower(card),
@@ -634,56 +1412,79 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Text7Back': get_se_deck_rule(card, 6),
         '$Text8NameBack': get_se_deck_header(card, 7),
         '$Text8Back': get_se_deck_rule(card, 7),
-        '$Victory': get_se_victory(card),
+        '$Victory': get_se_point(card),
         '$Artist': get_se_illustrator(card),
         '$ArtistBack': get_se_illustrator(card),
         '$Copyright': get_se_copyright(card),
         '$Collection': get_se_pack(card),
         '$CollectionNumber': get_se_pack_number(card),
-        '$Encounter': get_se_encounter(card),
+        '$Encounter': get_se_encounter(card, image_sheet),
         '$EncounterNumber': get_se_encounter_number(card),
         '$EncounterTotal': get_se_encounter_total(card),
+        '$ShowEncounterIcon': get_se_encounter_front_visibility(card),
+        '$ShowEncounterIconBack': get_se_encounter_back_visibility(card),
         '$Doom': get_se_doom(card),
         '$Clues': get_se_clue(card),
+        '$Asterisk': get_se_comment(card),
         '$Shroud': get_se_shroud(card),
         '$PerInvestigator': get_se_per_investigator(card),
-        '$ScenarioIndex': get_se_stage_number(card),
-        '$ScenarioDeckID': get_se_stage_letter(card),
+        '$ScenarioIndex': get_se_progress_number(card),
+        '$ScenarioDeckID': get_se_progress_letter(card),
+        '$Orientation': get_se_progress_direction(card),
         '$AgendaStory': get_se_front_flavor(card),
         '$ActStory': get_se_front_flavor(card),
-        '$HeaderABack': get_se_progress_header(card, 0),
-        '$AccentedStoryABack': get_se_progress_flavor(card, 0),
-        '$RulesABack': get_se_progress_rule(card, 0),
-        '$HeaderBBack': get_se_progress_header(card, 1),
-        '$AccentedStoryBBack': get_se_progress_flavor(card, 1),
-        '$RulesBBack': get_se_progress_rule(card, 1),
-        '$HeaderCBack': get_se_progress_header(card, 2),
-        '$AccentedStoryCBack': get_se_progress_flavor(card, 2),
-        '$RulesCBack': get_se_progress_rule(card, 2),
+        '$HeaderA': get_se_front_paragraph_header(card, 0),
+        '$AccentedStoryA': get_se_front_paragraph_flavor(card, 0),
+        '$RulesA': get_se_front_paragraph_rule(card, 0),
+        '$HeaderB': get_se_front_paragraph_header(card, 1),
+        '$AccentedStoryB': get_se_front_paragraph_flavor(card, 1),
+        '$RulesB': get_se_front_paragraph_rule(card, 1),
+        '$HeaderC': get_se_front_paragraph_header(card, 2),
+        '$AccentedStoryC': get_se_front_paragraph_flavor(card, 2),
+        '$RulesC': get_se_front_paragraph_rule(card, 2),
+        '$HeaderABack': get_se_back_paragraph_header(card, 0),
+        '$AccentedStoryABack': get_se_back_paragraph_flavor(card, 0),
+        '$RulesABack': get_se_back_paragraph_rule(card, 0),
+        '$HeaderBBack': get_se_back_paragraph_header(card, 1),
+        '$AccentedStoryBBack': get_se_back_paragraph_flavor(card, 1),
+        '$RulesBBack': get_se_back_paragraph_rule(card, 1),
+        '$HeaderCBack': get_se_back_paragraph_header(card, 2),
+        '$AccentedStoryCBack': get_se_back_paragraph_flavor(card, 2),
+        '$RulesCBack': get_se_back_paragraph_rule(card, 2),
+        '$HeaderBack': get_se_back_header(card),
         '$StoryBack': get_se_back_flavor(card),
         '$RulesBack': get_se_back_rule(card),
-        '$LocationIconBack': get_se_front_location(metadata),
-        '$Connection1IconBack': get_se_front_connection(metadata, 0),
-        '$Connection2IconBack': get_se_front_connection(metadata, 1),
-        '$Connection3IconBack': get_se_front_connection(metadata, 2),
-        '$Connection4IconBack': get_se_front_connection(metadata, 3),
-        '$Connection5IconBack': get_se_front_connection(metadata, 4),
-        '$Connection6IconBack': get_se_front_connection(metadata, 5),
-        '$LocationIcon': get_se_back_location(metadata),
-        '$Connection1Icon': get_se_back_connection(metadata, 0),
-        '$Connection2Icon': get_se_back_connection(metadata, 1),
-        '$Connection3Icon': get_se_back_connection(metadata, 2),
-        '$Connection4Icon': get_se_back_connection(metadata, 3),
-        '$Connection5Icon': get_se_back_connection(metadata, 4),
-        '$Connection6Icon': get_se_back_connection(metadata, 5),
-        '$Skull': get_se_front_chaos(card, 0),
-        '$Cultist': get_se_front_chaos(card, 1),
-        '$Tablet': get_se_front_chaos(card, 2),
-        '$ElderThing': get_se_front_chaos(card, 3),
-        '$SkullBack': get_se_back_chaos(card, 0),
-        '$CultistBack': get_se_back_chaos(card, 1),
-        '$TabletBack': get_se_back_chaos(card, 2),
-        '$ElderThingBack': get_se_back_chaos(card, 3),
+        '$LocationIcon': get_se_front_location(metadata),
+        '$Connection1Icon': get_se_front_connection(metadata, 0),
+        '$Connection2Icon': get_se_front_connection(metadata, 1),
+        '$Connection3Icon': get_se_front_connection(metadata, 2),
+        '$Connection4Icon': get_se_front_connection(metadata, 3),
+        '$Connection5Icon': get_se_front_connection(metadata, 4),
+        '$Connection6Icon': get_se_front_connection(metadata, 5),
+        '$LocationIconBack': get_se_back_location(metadata),
+        '$Connection1IconBack': get_se_back_connection(metadata, 0),
+        '$Connection2IconBack': get_se_back_connection(metadata, 1),
+        '$Connection3IconBack': get_se_back_connection(metadata, 2),
+        '$Connection4IconBack': get_se_back_connection(metadata, 3),
+        '$Connection5IconBack': get_se_back_connection(metadata, 4),
+        '$Connection6IconBack': get_se_back_connection(metadata, 5),
+        '$Skull': get_se_front_chaos_rule(card, 0),
+        '$MergeSkull': get_se_front_chaos_merge(card, 0),
+        '$Cultist': get_se_front_chaos_rule(card, 1),
+        '$MergeCultist': get_se_front_chaos_merge(card, 1),
+        '$Tablet': get_se_front_chaos_rule(card, 2),
+        '$MergeTablet': get_se_front_chaos_merge(card, 2),
+        '$ElderThing': get_se_front_chaos_rule(card, 3),
+        '$SkullBack': get_se_back_chaos_rule(card, 0),
+        '$MergeSkullBack': get_se_back_chaos_merge(card, 0),
+        '$CultistBack': get_se_back_chaos_rule(card, 1),
+        '$MergeCultistBack': get_se_back_chaos_merge(card, 1),
+        '$TabletBack': get_se_back_chaos_rule(card, 2),
+        '$MergeTabletBack': get_se_back_chaos_merge(card, 2),
+        '$ElderThingBack': get_se_back_chaos_rule(card, 3),
+        '$TrackerBox': get_se_tracker(card),
+        '$Template': get_se_front_template(card),
+        '$TemplateBack': get_se_back_template(card),
     }
 
 def ensure_dir(dir):
@@ -695,52 +1496,136 @@ def recreate_dir(dir):
 
 ahdb = {}
 def download_card(ahdb_id):
-    ensure_dir(args.cache_dir)
-    lang_code = args.lang.value.split('_')[0]
-    filename = f'{args.cache_dir}/ahdb-{lang_code}.json'
-
+    ahdb_folder = f'{args.cache_dir}/ahdb'
+    ensure_dir(ahdb_folder)
+    lang_code, _ = get_lang_code_region()
+    filename = f'{ahdb_folder}/{lang_code}.json'
     if not os.path.isfile(filename):
         print(f'Downloading ArkhamDB data...')
-        urllib.request.urlretrieve(f'https://{lang_code}.arkhamdb.com/api/public/cards/?encounter=1', filename)
-
+        res = requests.get(f'https://{lang_code}.arkhamdb.com/api/public/cards/?encounter=1').json()
+        with open(filename, 'w', encoding='utf-8') as file:
+            json_str = json.dumps(res, indent=2, ensure_ascii=False)
+            file.write(json_str)
     if not len(ahdb):
         print(f'Processing ArkhamDB data...')
+
         cards = []
         with open(filename, 'r', encoding='utf-8') as file:
             cards.extend(json.loads(file.read()))
-        with open(f'translations/{lang_code}.json', 'r', encoding='utf-8') as file:
+        # NOTE: Add taboo cards with -t suffix.
+        with open(f'translations/{lang_code}/taboo.json', 'r', encoding='utf-8') as file:
             cards.extend(json.loads(file.read()))
         for card in cards:
             ahdb[card['code']] = card
+        # NOTE: Add parallel cards with all front back combinations.
+        for id in ['90001', '90008', '90017', '90024', '90037']:
+            card = ahdb[id]
+            old_id = card['alternate_of_code']
+            old_card = ahdb[old_id]
+
+            pid = f'{old_id}-p'
+            pp_card = copy.deepcopy(card)
+            pp_card['code'] = pid
+            ahdb[pid] = pp_card
+
+            pfid = f'{old_id}-pf'
+            pf_card = copy.deepcopy(card)
+            pf_card['code'] = pfid
+            pf_card['back_text'] = get_field(old_card, 'back_text', '')
+            pf_card['back_flavor'] = get_field(old_card, 'back_flavor', '')
+            ahdb[pfid] = pf_card
+
+            pbid = f'{old_id}-pb'
+            pb_card = copy.deepcopy(card)
+            pb_card['code'] = pbid
+            pb_card['text'] = get_field(old_card, 'text', '')
+            pb_card['flavor'] = get_field(old_card, 'flavor', '')
+            ahdb[pbid] = pb_card
+
+        # NOTE: Patching some notable errors from ADB.
+        ahdb['01513']['subtype_code'] = 'weakness'
+        ahdb['52015']['stage'] = 2
+        ahdb['52016']['stage'] = 2
+        ahdb['52017']['stage'] = 2
+
+        # NOTE: Patching linked cards missing encounter set.
+        for id, card in ahdb.items():
+            if 'linked_card' in card:
+                if get_field(card, 'encounter_code', None) != None and get_field(card['linked_card'], 'encounter_code', None) == None:
+                    card['linked_card']['encounter_code'] = card['encounter_code']
+                elif get_field(card, 'encounter_code', None) == None and get_field(card['linked_card'], 'encounter_code', None) != None:
+                    card['encounter_code'] = card['linked_card']['encounter_code']
+        
+        # NOTE: Patching shelter attribute as a separate field.
+        for id in ['08502', '08503', '08504', '08505', '08506', '08507', '08508', '08509', '08510', '08511', '08512', '08513', '08514']:
+            card = ahdb[id]
+            re_shelter = r'\s*<b>.*?(\d+)</b>[.。]\s*$'
+            match = re.search(re_shelter, card['text'])
+            shelter = int(match.group(1))
+            card['shelter'] = shelter
+            card['text'] = re.sub(re_shelter, '', card['text'])
 
     return ahdb[ahdb_id]
 
-# NOTE: Use base32 to encode URL so we don't generate characters like '/' or '-' hence can be used as filenames.
-def encode_url(url):
-    return base64.b32encode(url.encode('ascii')).decode('ascii')
+url_map = None
+def load_url_map():
+    global url_map
+    ensure_dir(args.cache_dir)
+    filename = f'{args.cache_dir}/urls.json'
+    if not os.path.isfile(filename):
+        with open(filename, 'w', encoding='utf-8') as file:
+            json_str = json.dumps({}, indent=2, ensure_ascii=False)
+            file.write(json_str)
+    if url_map is None:
+        with open(filename, 'r', encoding='utf-8') as file:
+            url_map = json.loads(file.read())
+    return url_map
 
-def decode_url(url_id):
-    return base64.b32decode(url_id.encode('ascii')).decode('ascii')
+def save_url_map():
+    global url_map
+    ensure_dir(args.cache_dir)
+    filename = f'{args.cache_dir}/urls.json'
+    if url_map is not None:
+        with open(filename, 'w', encoding='utf-8') as file:
+            json_str = json.dumps(url_map, indent=2, ensure_ascii=False)
+            file.write(json_str)
 
-def encode_result_id(url, deck_w, deck_h, deck_x, deck_y, rotate, sheet):
-    return f'{encode_url(url)}-{deck_w}-{deck_h}-{deck_x}-{deck_y}-{1 if rotate else 0}-{sheet}'
+def get_url_id(url):
+    global url_map
+    url_map = load_url_map()
+    if url in url_map:
+        return url_map[url]
+    url_map[url] = str(uuid.uuid4()).replace('-', '')
+    save_url_map()
+    return url_map[url]
+
+def add_url_id(url, url_id):
+    global url_map
+    url_map = load_url_map()
+    url_map[url] = url_id
+    save_url_map()
+
+def encode_result_id(url_id, deck_w, deck_h, deck_x, deck_y, rotate, sheet):
+    return f'{url_id}-{deck_w}-{deck_h}-{deck_x}-{deck_y}-{1 if rotate else 0}-{sheet}'
 
 def decode_result_id(result_id):
     parts = result_id.split('-')
-    return decode_url(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]), int(parts[4]), bool(int(parts[5])), int(parts[6])
+    return parts[0], int(parts[1]), int(parts[2]), int(parts[3]), int(parts[4]), bool(int(parts[5])), int(parts[6])
 
 def download_deck_image(url):
-    ensure_dir(args.cache_dir)
-    url_id = encode_url(url)
-    filename = f'{args.cache_dir}/{url_id}.jpg'
+    decks_folder = f'{args.cache_dir}/decks'
+    ensure_dir(decks_folder)
+    url_id = get_url_id(url)
+    filename = f'{decks_folder}/{url_id}.jpg'
     if not os.path.isfile(filename):
         print(f'Downloading {url_id}.jpg...')
         urllib.request.urlretrieve(url, filename)
     return filename
 
 def crop_card_image(result_id, deck_image_filename):
-    ensure_dir(args.cache_dir)
-    filename = f'{args.cache_dir}/{result_id}.png'
+    cards_folder = f'{args.cache_dir}/cards'
+    ensure_dir(cards_folder)
+    filename = f'{cards_folder}/{result_id}.png'
     if not os.path.isfile(filename):
         print(f'Cropping {result_id}.png...')
         _, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
@@ -762,150 +1647,307 @@ se_types = [
     'skill',
     'investigator_front',
     'investigator_back',
+    'investigator_encounter_front',
+    'investigator_encounter_back',
     'treachery_weakness',
     'treachery_encounter',
     'enemy_weakness',
     'enemy_encounter',
     'agenda_front',
     'agenda_back',
-    'agenda_image',
     'act_front',
     'act_back',
+    'progress_image_front',
+    'progress_image_back',
     'location_front',
     'location_back',
     'scenario_front',
     'scenario_back',
+    'scenario_header',
+    'story',
 ]
 se_cards = dict(zip(se_types, [[] for _ in range(len(se_types))]))
 result_set = set()
 
-def get_deck(object):
-    deck_id = int(list(object['CustomDeck'].keys())[0])
-    deck = list(object['CustomDeck'].values())[0]
-    return deck_id, deck
+def get_decks(object):
+    decks = []
+    for deck_id, deck in object['CustomDeck'].items():
+        decks.append((int(deck_id), deck))
+    return decks
 
-def translate_sced_card_object(object, metadata, card, _1, _2):
-    deck_id, deck = get_deck(object)
+def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, metadata):
+    card_type = card['type_code']
+    rotate = card_type in ['investigator', 'agenda', 'act']
+    sheet = 0 if is_front else 1
+    result_id = encode_result_id(get_url_id(url), deck_w, deck_h, deck_x, deck_y, rotate, sheet)
+    if result_id in result_set:
+        return
+    print(f'Translating {result_id}...')
+
+    if card_type == 'asset':
+        if get_field(card, 'encounter_code', None):
+            se_type = 'asset_encounter'
+        else:
+            se_type = 'asset'
+    elif card_type == 'event':
+        se_type = 'event'
+    elif card_type == 'skill':
+        se_type = 'skill'
+    elif card_type == 'investigator':
+        if get_field(card, 'encounter_code', None) is not None:
+            if is_front:
+                se_type = 'investigator_encounter_front'
+            else:
+                se_type = 'investigator_encounter_back'
+        else:
+            if is_front:
+                se_type = 'investigator_front'
+            else:
+                se_type = 'investigator_back'
+    elif card_type == 'treachery':
+        if get_field(card, 'subtype_code', None) in ['basicweakness', 'weakness']:
+            se_type = 'treachery_weakness'
+        else:
+            se_type = 'treachery_encounter'
+    elif card_type == 'enemy':
+        if get_field(card, 'subtype_code', None) in ['basicweakness', 'weakness']:
+            se_type = 'enemy_weakness'
+        else:
+            se_type = 'enemy_encounter'
+    elif card_type == 'agenda':
+        # NOTE: Agenda with image are special cased.
+        if card['code'] in ['84043', '84044', '84045', '84046', '84047', '84048', '84049', '84050', '84051', '84052', '86034', '86040', '86046'] and is_front:
+            se_type = 'progress_image_front'
+        elif card['code'] in ['01145', '02314', '05199'] and not is_front:
+            se_type = 'progress_image_back'
+        else:
+            if is_front:
+                se_type = 'agenda_front'
+            else:
+                se_type = 'agenda_back'
+    elif card_type == 'act':
+        # NOTE: Act with image are special cased.
+        if card['code'] in ['08681'] and is_front:
+            se_type = 'progress_image_front'
+        elif card['code'] in ['03322a', '03323a', '04048', '04049', '04318', '06292', '06337'] and not is_front:
+            se_type = 'progress_image_back'
+        else:
+            if is_front:
+                se_type = 'act_front'
+            else:
+                se_type = 'act_back'
+    elif card_type == 'location':
+        if is_front:
+            se_type = 'location_front'
+        else:
+            se_type = 'location_back'
+    elif card_type == 'scenario':
+        # NOTE: Return to scenario cards are using story with scenario template.
+        if is_return_to_scenario(card):
+            se_type = 'story'
+        else:
+            if is_front:
+                se_type = 'scenario_front'
+            else:
+                se_type = 'scenario_back'
+    elif card_type == 'story':
+        # NOTE: Some scenario cards are recorded as story in ADB, handle them specially here.
+        if card['code'] == '06078' and not is_front:
+            se_type = 'scenario_header'
+        else:
+            se_type = 'story'
+    else:
+        se_type = None
+
+    deck_image_filename = download_deck_image(url)
+    image_filename = crop_card_image(result_id, deck_image_filename)
+    image = Image.open(image_filename)
+    template_width = 375
+    template_height = 525
+    image_scale = template_width / (image.height if rotate else image.width)
+    move_map = {
+        'asset': (0, 93),
+        'asset_encounter': (0, 93),
+        'event': (0, 118),
+        'skill': (0, 75),
+        'investigator_front': (247, -48),
+        'investigator_back': (168, 86),
+        'investigator_encounter_front': (247, -48),
+        'investigator_encounter_back': (168, 86),
+        'treachery_weakness': (0, 114),
+        'treachery_encounter': (0, 114),
+        'enemy_weakness': (0, -122),
+        'enemy_encounter': (0, -122),
+        'agenda_front': (110, 0),
+        'agenda_back': (0, 0),
+        'act_front': (-98, 0),
+        'act_back': (0, 0),
+        'progress_image_front': (0, 0),
+        'progress_image_back': (0, 0),
+        'location_front': (0, 83),
+        'location_back': (0, 83),
+        'scenario_front': (0, 0),
+        'scenario_back': (0, 0),
+        'scenario_header': (0, 0),
+        'story': (0, 0),
+    }
+    # NOTE: Handle the case where agenda and act direction reversed on cards.
+    if se_type in ['agenda_front', 'act_front'] and is_progress_reversed(card):
+        if se_type == 'agenda_front':
+            move_map_se_type = 'act_front'
+        else:
+            move_map_se_type = 'agenda_front'
+    else:
+        move_map_se_type = se_type
+    image_move_x, image_move_y = move_map[move_map_se_type]
+    image_filename = os.path.abspath(image_filename)
+    se_cards[se_type].append(get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y))
+    result_set.add(result_id)
+
+def translate_sced_card_object(object, metadata, card):
+    deck_id, deck = get_decks(object)[0]
     deck_w = deck['NumWidth']
     deck_h = deck['NumHeight']
     deck_xy = object['CardID'] % 100
     deck_x = deck_xy % deck_w
     deck_y = deck_xy // deck_w
 
-    def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card):
-        card_type = card['type_code']
-        rotate = card_type in ['investigator', 'agenda', 'act']
-        sheet = 0 if is_front else 1
-        # NOTE: SCED and SE consider the front and back for location cards differently. Reverse here and encode the sheet number in the 'result_id' so that
-        # front are generated for front, back for back for the location cards. Some location cards only have single face, so they need to be special cased.
-        if card_type == 'location' and card['code'] not in ['02214', '02324', '02325', '02326', '02327', '02328']:
-            sheet = 1 - sheet
-        result_id = encode_result_id(url, deck_w, deck_h, deck_x, deck_y, rotate, sheet)
-        if result_id in result_set:
-            return
-        print(f'Translating {result_id}...')
-
-        if card_type == 'asset':
-            if get_field(card, 'encounter_code', None):
-                se_type = 'asset_encounter'
-            else:
-                se_type = 'asset'
-        elif card_type == 'event':
-            se_type = 'event'
-        elif card_type == 'skill':
-            se_type = 'skill'
-        elif card_type == 'investigator':
-            if is_front:
-                se_type = 'investigator_front'
-            else:
-                se_type = 'investigator_back'
-        elif card_type == 'treachery':
-            if get_field(card, 'subtype_code', None) in ['basicweakness', 'weakness']:
-                se_type = 'treachery_weakness'
-            else:
-                se_type = 'treachery_encounter'
-        elif card_type == 'enemy':
-            if get_field(card, 'subtype_code', None) in ['basicweakness', 'weakness']:
-                se_type = 'enemy_weakness'
-            else:
-                se_type = 'enemy_encounter'
-        elif card_type == 'agenda':
-            # NOTE: Agenda with image back are special cased.
-            if card['code'] in ['01145', '02314'] and not is_front:
-                se_type = 'agenda_image'
-            else:
-                if is_front:
-                    se_type = 'agenda_front'
-                else:
-                    se_type = 'agenda_back'
-        elif card_type == 'act':
-            if is_front:
-                se_type = 'act_front'
-            else:
-                se_type = 'act_back'
-        elif card_type == 'location':
-            if is_front:
-                se_type = 'location_front'
-            else:
-                se_type = 'location_back'
-        elif card_type == 'scenario':
-            if is_front:
-                se_type = 'scenario_front'
-            else:
-                se_type = 'scenario_back'
-        else:
-            se_type = None
-
-        deck_image_filename = download_deck_image(url)
-        image_filename = crop_card_image(result_id, deck_image_filename)
-        image = Image.open(image_filename)
-        template_width = 375
-        template_height = 525
-        image_scale = template_width / (image.height if rotate else image.width)
-        move_mapping = {
-            'asset': (0, 93),
-            'asset_encounter': (0, 93),
-            'event': (0, 118),
-            'skill': (0, 75),
-            'investigator_front': (247, -48),
-            'investigator_back': (168, 86),
-            'treachery_weakness': (0, 114),
-            'treachery_encounter': (0, 114),
-            'enemy_weakness': (0, -125),
-            'enemy_encounter': (0, -122),
-            'agenda_front': (110, 0),
-            'agenda_back': (0, 0),
-            'agenda_image': (0, 0),
-            'act_front': (-98, 0),
-            'act_back': (0, 0),
-            'location_front': (0, 83),
-            'location_back': (0, 81),
-            'scenario_front': (0, 0),
-            'scenario_back': (0, 0),
-        }
-        image_move_x, image_move_y = move_mapping[se_type]
-        image_filename = os.path.abspath(image_filename)
-        se_cards[se_type].append(get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y))
-        result_set.add(result_id)
+    front_card = card
+    back_card = card
+    # NOTE: The first front means the front side in SCED using front url, the second front means whether it's the logical front side for the card type.
+    front_is_front = True
+    back_is_front = False
+    # NOTE: Some cards on ADB have separate entries for front and back, where the front one is the main card data. Always ensure the card id in SCED is the front one,
+    # and get the correct back card data through the 'linked_card' property.
+    if 'linked_card' in card:
+        back_card = card['linked_card']
+        back_is_front = True
+        # NOTE: In certain cases the face order in SCED is opposite to that on ArkhamDB.
+        if card['code'] in [
+                '03182b',
+                '03221b',
+                '03325b',
+                '03326b',
+                '03326d',
+                '03327b',
+                '03327d',
+                '03327f',
+                '03328b',
+                '03328d',
+                '03328f',
+                '03329b',
+                '03329d',
+                '03330b',
+                '03331b',
+                '05085b',
+                '05166',
+                '05167',
+                '05168',
+                '05169',
+                '05170',
+                '05171',
+                '05172',
+                '05173',
+                '05174',
+                '05175',
+                '05176',
+                '05217',
+                '05262',
+                '05263',
+                '05264',
+                '05265',
+                '07252',
+                '51026b',
+                '82017',
+                '82018',
+                '82019',
+                '82020',
+                '83022b',
+                '83023b',
+                '83024b',
+                '83025b',
+                '83026b',
+        ]:
+            front_card, back_card = back_card, front_card
+    else:
+        # NOTE: SCED thinks the front side of location is the unrevealed side, which is different from what SE expects. Reverse it here apart from single faced locations.
+        # The same goes for some special cards.
+        if (card['type_code'] == 'location' and card['double_sided']) or card['code'] in ['06078', '06346']:
+            front_is_front = False
+            back_is_front = True
 
     front_url = deck['FaceURL']
-    translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, True, card)
+    translate_front = True
+    # NOTE: Do not translate front image for full portrait.
+    if card['code'] in ['06346']:
+        translate_front = False
+
+    if translate_front:
+        translate_sced_card(front_url, deck_w, deck_h, deck_x, deck_y, front_is_front, front_card, metadata)
 
     back_url = deck['BackURL']
-    # NOTE: Test whether it's generic player or encounter card backs.
+    translate_back = True
+    # NOTE: Test whether it's generic player or encounter card back urls.
     if 'EcbhVuh' in back_url or 'sRsWiSG' in back_url:
-        return
+        translate_back = False
+    # NOTE: Special cases to skip generic player or encounter card back in deck images.
+    if (deck_id, deck_x, deck_y) in [
+            (2335, 9, 5),
+            (2661, 2, 1),
+            (2661, 3, 1),
+            (2661, 4, 1),
+            (2661, 2, 2),
+            (2661, 3, 2),
+            (2661, 4, 2),
+            (2661, 5, 2),
+            (2661, 6, 2),
+            (2661, 7, 2),
+            (2661, 8, 2),
+            (2661, 9, 2),
+            (2661, 0, 3),
+            (2661, 1, 3),
+            (2661, 2, 3),
+            (2661, 3, 3),
+            (2661, 4, 3),
+            (2661, 5, 3),
+            (2661, 6, 3),
+            (2661, 7, 3),
+            (2661, 8, 3),
+            (2661, 9, 3),
+            (2661, 0, 4),
+            (2661, 1, 4),
+            (4547, 0, 4),
+            (4547, 1, 4),
+            (2662, 1, 1),
+            (2662, 2, 1),
+            (2662, 3, 1),
+            (2662, 4, 1),
+            (2662, 5, 1),
+            (2662, 6, 1),
+            (2662, 7, 1),
+            (5469, 6, 1),
+            (5469, 7, 1)
+    ]:
+        translate_back = False
 
-    # NOTE: Some cards on ADB have separate entries for front and back. Get the correct card data through the 'linked_card' property.
-    is_front = False
-    if 'linked_card' in card:
-        card = card['linked_card']
-        is_front = True
-    if deck['UniqueBack']:
-        translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, is_front, card)
-    else:
-        # NOTE: Even if the back is non-unique, SCED may still use it for interesting cards, e.g. Sophie: It Was All My Fault.
-        translate_sced_card(back_url, 1, 1, 0, 0, is_front, card)
+    if translate_back:
+        # NOTE: If back side has a separate entry, then it's treated as if it's the front side of the card.
+        if deck['UniqueBack']:
+            translate_sced_card(back_url, deck_w, deck_h, deck_x, deck_y, back_is_front, back_card, metadata)
+        else:
+            # NOTE: Even if the back is non-unique, SCED may still use it for interesting cards, e.g. Sophie: It Was All My Fault.
+            translate_sced_card(back_url, 1, 1, 0, 0, back_is_front, back_card, metadata)
+
+def translate_sced_token_object(object, metadata, card):
+    image_url = object['CustomImage']['ImageURL']
+    is_front = object['Description'].endswith('Easy/Standard')
+    translate_sced_card(image_url, 1, 1, 0, 0, is_front, card, metadata)
+
+def translate_sced_object(object, metadata, card, _1, _2):
+    if object['Name'] == 'Card':
+        translate_sced_card_object(object, metadata, card)
+    elif object['Name'] == 'Custom_Token':
+        translate_sced_token_object(object, metadata, card)
 
 def download_repo(repo_folder, repo):
     if repo_folder is not None:
@@ -918,12 +1960,12 @@ def download_repo(repo_folder, repo):
         subprocess.run(['git', 'clone', '--quiet', f'https://github.com/{repo}.git', repo_folder])
     return repo_folder
 
-# TODO: Remove this check, for minicards, parallels
-def is_id_translatable(ahdb_id):
-    return '-' not in ahdb_id or ahdb_id.endswith('-t')
+def is_translatable(ahdb_id):
+    # NOTE: Skip minicards.
+    return '-m' not in ahdb_id
 
 def process_player_cards(callback):
-    repo_folder = download_repo(args.repo_primary, 'argonui/SCED')
+    repo_folder = download_repo(args.mod_dir, 'argonui/SCED')
     player_folder = f'{repo_folder}/objects/AllPlayerCards.15bb07'
     for filename in os.listdir(player_folder):
         if filename.endswith('.gmnotes'):
@@ -931,7 +1973,7 @@ def process_player_cards(callback):
             with open(metadata_filename, 'r', encoding='utf-8') as metadata_file:
                 metadata = json.loads(metadata_file.read())
                 ahdb_id = metadata['id']
-                if is_id_translatable(ahdb_id):
+                if is_translatable(ahdb_id):
                     card = download_card(ahdb_id)
                     if eval(args.filter):
                         object_filename = metadata_filename.replace('.gmnotes', '.json')
@@ -940,8 +1982,8 @@ def process_player_cards(callback):
                         callback(object, metadata, card, object_filename, object)
 
 def process_encounter_cards(callback, **kwargs):
-    process_decks = kwargs.get('process_decks', False)
-    repo_folder = download_repo(args.repo_secondary, 'Chr1Z93/loadable-objects')
+    include_decks = kwargs.get('include_decks', False)
+    repo_folder = download_repo(args.mod_dir, 'Chr1Z93/loadable-objects')
     folders = ['campaigns', 'scenarios']
     # NOTE: These campaigns don't have data on ADB yet.
     skip_files = [
@@ -959,11 +2001,14 @@ def process_encounter_cards(callback, **kwargs):
             with open(campaign_filename, 'r', encoding='utf-8') as object_file:
                 def find_encounter_objects(object):
                     if type(object) == dict:
-                        if process_decks and object.get('Name', None) == 'Deck':
+                        if include_decks and object.get('Name', None) == 'Deck':
                             results = find_encounter_objects(object['ContainedObjects'])
                             results.append(object)
                             return results
                         elif object.get('Name', None) == 'Card' and object.get('GMNotes', '').startswith('{'):
+                            return [object]
+                        # NOTE: Some scenario cards have tracker box on them and are custom token object instead.
+                        elif object.get('Name', None) == 'Custom_Token' and object.get('Nickname', None) == 'Scenario' and object.get('GMNotes', '').startswith('{'):
                             return [object]
                         elif 'ContainedObjects' in object:
                             return find_encounter_objects(object['ContainedObjects'])
@@ -984,14 +2029,13 @@ def process_encounter_cards(callback, **kwargs):
                     else:
                         metadata = json.loads(object['GMNotes'])
                         ahdb_id = metadata['id']
-                        if is_id_translatable(ahdb_id):
+                        if is_translatable(ahdb_id):
                             card = download_card(ahdb_id)
                             if eval(args.filter):
                                 callback(object, metadata, card, campaign_filename, campaign)
 
-
 def write_csv():
-    data_dir = f'{se_project}/data'
+    data_dir = 'SE_Generator/data'
     recreate_dir(data_dir)
     for se_type in se_types:
         print(f'Writing {se_type}.csv...')
@@ -1005,127 +2049,149 @@ def write_csv():
                 for component in components:
                     writer.writerow(component)
 
-def run_se():
-    se_script = f'{se_project}/make.js'
+def generate_images():
+    se_script = 'SE_Generator/make.js'
     print(f'Running {se_script}...')
-    subprocess.run([args.se_executable, '--glang', args.lang.value, '--run', se_script])
+    subprocess.run([args.se_executable, '--glang', args.lang, '--run', se_script])
 
 def pack_images():
     deck_images = {}
-    image_dir = f'{se_project}/build/images'
-    for filename in os.listdir(image_dir):
-        print(f'Packing {filename}...')
-        result_id = filename.split('.')[0]
-        url, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
-        deck_image_filename = download_deck_image(url)
-        deck_url_id = encode_url(url)
-        if deck_url_id not in deck_images:
-            deck_images[deck_url_id] = Image.open(deck_image_filename)
-        deck_image = deck_images[deck_url_id]
-        card_image_filename = f'{image_dir}/{filename}'
-        card_image = Image.open(card_image_filename)
-        if rotate:
-            card_image = card_image.transpose(method=Image.Transpose.ROTATE_270)
-        width = deck_image.width // deck_w
-        height = deck_image.height // deck_h
-        left = deck_x * width
-        top = deck_y * height
-        card_image = card_image.resize((width, height))
-        deck_image.paste(card_image, box=(left, top))
+    url_map = load_url_map()
+    for image_dir in glob.glob('SE_Generator/images*'):
+        for filename in os.listdir(image_dir):
+            print(f'Packing {filename}...')
+            result_id = filename.split('.')[0]
+            deck_url_id, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
+            deck_url = None
+            for url, url_id in url_map.items():
+                # NOTE: Use the original English url on steam as the base deck image.
+                if url_id == deck_url_id and 'steamusercontent.com' in url:
+                    deck_url = url
+            if not deck_url:
+                raise Exception(f'Cannot find deck id {deck_url_id} in the url map.')
+            deck_image_filename = download_deck_image(deck_url)
+            if deck_url_id not in deck_images:
+                deck_images[deck_url_id] = Image.open(deck_image_filename)
+            deck_image = deck_images[deck_url_id]
+            card_image_filename = f'{image_dir}/{filename}'
+            card_image = Image.open(card_image_filename)
+            if rotate:
+                card_image = card_image.transpose(method=Image.Transpose.ROTATE_270)
+            width = deck_image.width // deck_w
+            height = deck_image.height // deck_h
+            left = deck_x * width
+            top = deck_y * height
+            card_image = card_image.resize((width, height))
+            deck_image.paste(card_image, box=(left, top))
 
-    recreate_dir(args.deck_images_dir)
+    decks_dir = f'{args.decks_dir}/{args.lang}'
+    recreate_dir(decks_dir)
     for deck_url_id, deck_image in deck_images.items():
         print(f'Writing {deck_url_id}.jpg...')
         deck_image = deck_image.convert('RGB')
-        deck_image.save(f'{args.deck_images_dir}/{deck_url_id}.jpg')
+        deck_image.save(f'{decks_dir}/{deck_url_id}.jpg', progressive=True, optimize=True)
 
-deck_urls = {}
-def upload_deck_images():
-    # NOTE: Create an localized album if not already exists.
-    res = requests.get('https://api.imgur.com/3/account/me/settings', headers=imgur_auth()).json()
-    username = res['data']['account_url']
-    res = requests.get(f'https://api.imgur.com/3/account/{username}/albums', headers=imgur_auth()).json()
-    album_title = f'SCED localization deck images {args.lang}'
-    album_id = None
-    for album in res['data']:
-        if album['title'] == album_title:
-            album_id = album['id']
-            break
-    if album_id is None:
-        print('Creating album...')
-        res = requests.post(f'https://api.imgur.com/3/album', headers=imgur_auth(), data={
-            'title': album_title,
-            # NOTE: Use a fixed image here to avoid imgur throwing HTTP 417 code when it cannot generate the cover for the album.
-            'cover': 'czPnwbw',
-        }).json()
-        album_id = res['data']['id']
+def get_uploaded_folder():
+    dbx = dropbox.Dropbox(args.dropbox_token)
+    # NOTE: Create a folder if not already exists.
+    folder = f'/SCED_Localization_Deck_Images_{args.lang}'
+    try:
+        dbx.files_create_folder(folder)
+    except:
+        pass
+    return folder
 
-    res = requests.get('https://api.imgur.com/3/account/me/images', headers=imgur_auth()).json()
-    old_images = res['data']
+def get_uploaded_image_url(image):
+    dbx = dropbox.Dropbox(args.dropbox_token)
+    # NOTE: Dropbox will reuse the old sharing link if there's already one exist.
+    url = dbx.sharing_create_shared_link(image.path_display, short_url=True).url
+    # NOTE: Get direct download link from the dropbox sharing link.
+    url = url.replace('?dl=0', '').replace('www.dropbox.com', 'dl.dropboxusercontent.com')
+    return url
 
-    for filename in os.listdir(args.deck_images_dir):
-        deck_url_id = filename.split('.')[0]
-        for image in old_images:
-            image_url_id = encode_url(image['link'])
-            # NOTE: Delete old deck image with the same url to avoid uploading the same deck image twice.
-            if image_url_id == deck_url_id:
-                print(f'Deleting old {filename}...')
-                requests.delete(f'https://api.imgur.com/3/image/{image["id"]}', headers=imgur_auth())
-                break
-
+def upload_images():
+    dbx = dropbox.Dropbox(args.dropbox_token)
+    folder = get_uploaded_folder()
+    decks_dir = f'{args.decks_dir}/{args.lang}'
+    for filename in os.listdir(decks_dir):
         print(f'Uploading {filename}...')
-        with open(f'{args.deck_images_dir}/{filename}', 'rb') as file:
-            deck_image_data = base64.b64encode(file.read())
-            res = requests.post(f'https://api.imgur.com/3/upload', headers=imgur_auth(), data={
-                'image': deck_image_data,
-                'type': 'base64',
-                'title': f'SCED localization deck image',
-                'description': '',
-                'album': album_id,
-            }).json()
-            deck_urls[deck_url_id] = res['data']['link']
+        with open(f'{decks_dir}/{filename}', 'rb') as file:
+            deck_image_data = file.read()
+            deck_filename = f'{folder}/{filename}'
+            # NOTE: Setting overwrite to true so that the old deck image is replaced, and the sharing link still maintains.
+            image = dbx.files_upload(deck_image_data, deck_filename, mode=dropbox.files.WriteMode.overwrite)
+            url = get_uploaded_image_url(image)
+            url_id = filename.split('.')[0]
+            add_url_id(url, url_id)
 
-def write_sced_card_object(object, metadata, card, filename, root):
-    deck_id, deck = get_deck(object)
+uploaded_images = {}
+def load_uploaded_images():
+    if not uploaded_images:
+        dbx = dropbox.Dropbox(args.dropbox_token)
+        folder = get_uploaded_folder()
+        for image in dbx.files_list_folder(folder).entries:
+            print(f'Getting image data for {image.path_display}...')
+            url_id = image.path_display.split('/')[-1].split('.')[0]
+            uploaded_images[url_id] = get_uploaded_image_url(image)
+    return uploaded_images
+
+updated_files = {}
+def update_sced_card_object(object, metadata, card, filename, root):
+    url_map = load_url_map()
+    url_id_map = load_uploaded_images()
+    updated_files[filename] = root
     if card:
         name = get_se_front_name(card)
         xp = get_se_xp(card)
-        if xp != '0':
+        if xp not in ['0', 'None']:
             name += f' ({xp})'
+        if card['code'].endswith('-t'):
+            module = import_lang_module()
+            taboo_func = getattr(module, 'transform_taboo', None)
+            name += f' ({taboo_func() if taboo_func else "Taboo"})'
         # NOTE: The scenario card names are saved in the 'Description' field in SCED used for the scenario splash screen.
         if object['Nickname'] == 'Scenario':
             object['Description'] = name
         else:
             object['Nickname'] = name
-        print(f'Writing {name}...')
-    else:
-        print(f'Writing deck {deck_id}...')
+            # NOTE: Remove any markup formatting in the tooltip traits text.
+            object['Description'] = re.sub(r'<[^>]*>', '', get_se_traits(card))
+        print(f'Updating {name}...')
 
-    for url_key in ('FaceURL', 'BackURL'):
-        url_id = encode_url(deck[url_key])
-        # NOTE: The SCED deck objects may not be translated before.
-        if url_id in deck_urls:
-            deck[url_key] = deck_urls[url_id]
+    for _, deck in get_decks(object):
+        for url_key in ('FaceURL', 'BackURL'):
+            # NOTE: Only update if we have seen this URL and assigned an id to it before.
+            if deck[url_key] in url_map:
+                deck_url_id = url_map[deck[url_key]]
+                # NOTE: Only update if we have uploaded the deck image and has a sharing URL before.
+                if deck_url_id in url_id_map:
+                    deck[url_key] = url_id_map[deck_url_id]
 
-    with open(filename, 'w', encoding='utf-8') as file:
-        json_str = json.dumps(root, indent=2, ensure_ascii=False)
-        # NOTE: Reverse the lower case scientific notation 'e' to upper case, in order to be consistent with those generated by TTS.
-        json_str = re.sub(r'(\d+)e-(\d\d)', r'\1E-\2', json_str)
-        file.write(json_str)
+def update_sced_files():
+    for filename, root in updated_files.items():
+        with open(filename, 'w', encoding='utf-8') as file:
+            print(f'Writing {filename}...')
+            json_str = json.dumps(root, indent=2, ensure_ascii=False)
+            # NOTE: Reverse the lower case scientific notation 'e' to upper case, in order to be consistent with those generated by TTS.
+            json_str = re.sub(r'(\d+)e-(\d\d)', r'\1E-\2', json_str)
+            file.write(json_str)
 
 if args.step in [None, steps[0]]:
-    process_player_cards(translate_sced_card_object)
-    process_encounter_cards(translate_sced_card_object)
+    process_player_cards(translate_sced_object)
+    process_encounter_cards(translate_sced_object)
     write_csv()
 
 if args.step in [None, steps[1]]:
-    run_se()
+    generate_images()
 
 if args.step in [None, steps[2]]:
     pack_images()
 
 if args.step in [None, steps[3]]:
-    upload_deck_images()
-    process_player_cards(write_sced_card_object)
-    process_encounter_cards(write_sced_card_object, process_decks=True)
+    upload_images()
+
+if args.step in [None, steps[4]]:
+    process_player_cards(update_sced_card_object)
+    process_encounter_cards(update_sced_card_object, include_decks=True)
+    update_sced_files()
 

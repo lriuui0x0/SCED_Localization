@@ -1,5 +1,6 @@
 useLibrary('threads');
 importClass(java.io.File);
+importClass(java.util.UUID);
 importClass(arkham.project.ProjectUtilities);
 importClass(arkham.sheet.RenderTarget);
 importClass(ca.cgjennings.apps.arkham.project.Project);
@@ -9,7 +10,7 @@ importClass(ca.cgjennings.imageio.SimpleImageWriter);
 const PROJECT_FOLDER = 'SE_Generator';
 const TEMPLATE_FOLDER = 'template';
 const DATA_FOLDER = 'data';
-const BUILD_FOLDER = 'build';
+const CARD_FOLDER = 'cards';
 const IMAGE_FOLDER = 'images';
 
 let headless = Eons.getScriptRunner() !== null;
@@ -41,9 +42,9 @@ function process(progress) {
         }
     }
 
-    let buildFolder = new File(project.getFile(), BUILD_FOLDER);
-    ProjectUtilities.deleteAll(buildFolder);
-    buildFolder.mkdirs();
+    let cardFolder = new File(project.getFile(), CARD_FOLDER);
+    ProjectUtilities.deleteAll(cardFolder);
+    cardFolder.mkdirs();
     syncProject();
 
     let factory = new CsvFactory();
@@ -52,7 +53,7 @@ function process(progress) {
     factory.setExtraSpaceIgnored(false);
     factory.setIgnoreUnknownKeys(true);
     factory.setTemplateClearedForEachRow(true);
-    factory.setOutputFolder(buildFolder);
+    factory.setOutputFolder(cardFolder);
 
     for (let i = 0; !progress.cancelled && i < types.length; i++) {
         let templateFile = new File(project.getFile(), TEMPLATE_FOLDER + '/' + types[i] + '.eon');
@@ -64,12 +65,14 @@ function process(progress) {
         syncProject();
     }
 
-    let cardFiles = buildFolder.listFiles();
-    let imageFolder = new File(project.getFile(), BUILD_FOLDER + '/' + IMAGE_FOLDER);
-    if (!progress.cancelled) {
-        imageFolder.mkdirs();
-        syncProject();
+    let cardFiles = cardFolder.listFiles();
+    let imageFolder = new File(project.getFile(), IMAGE_FOLDER);
+    if (imageFolder.exists()) {
+        imageFolder.renameTo(new File(project.getFile(), IMAGE_FOLDER + '-' + UUID.randomUUID().toString()))
+        imageFolder = new File(project.getFile(), IMAGE_FOLDER);
     }
+    imageFolder.mkdirs();
+    syncProject();
 
     for (let i = 0; !progress.cancelled && i < cardFiles.length; i++) {
         let cardFile = cardFiles[i];

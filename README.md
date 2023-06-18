@@ -24,63 +24,65 @@ The script is `main.py` in the root directory. You can run `python main.py --hel
 
     This is the path to the Strange Eons command line program. The default Windows installation gives the path `C:\Program Files\StrangeEons\bin\eons.exe`.
 
+- `--filter`
+
+    This is a Python expression string used to filter what cards will be translated. You can assume a variable named `card` will be available to use whose value is the data on ArkahmDB. For example `card['pack_code'] in ['core', 'rcore']` will filter for only cards in the Core and Revised Core Set.
+
 - `--cache-dir`
 
     This is a directory to keep the intermediate resources during processing. Explained in more details below.
 
-- `--deck-images-dir`
+- `--decks-dir`
 
     This is a directory to keep the translated and packed deck images. These images will be uploaded and their URLs will be referenced directly from the mod.
 
-- `--filter`
+- `--mod-dir`
 
-    This is a Python expression string used to filter what cards will be translated. You can assume a variable named `card` will be available to use whose value is the data on ArkahmDB. For example `card['pack_code'] in ['core', 'rcore']` will filter for only cards in the Core and Revised Core Set.
+    This is the directory to the local mod repository. If you don't provide it, the script will clone the [Chr1Z93/loadable-objects](https://github.com/Chr1Z93/loadable-objects) repo into the cache directory.
 
 - `--step`
 
     The particular step to run this automation script. Explained in more details below.
 
-- `--repo-primary` and `--repo-secondary`
+- `--dropbox-token`
 
-    These two paths point to the local mod repositories. If you don't provide them, the script will clone the [argonui/SCED](https://github.com/argonui/SCED) and [Chr1Z93/loadable-objects](https://github.com/Chr1Z93/loadable-objects) repsitories into the cache directory.
+    The Dropbox access token for uploading deck images. Explained in more details below.
 
-- `--imgur-access-token`
+The script runs in the following steps. Each step only requires persisted data generated from the previous steps, so if you kill the script half way, you should be able to continue from the last unfinished steps.
 
-    The imgur access token for uploading deck images. Explained in more details below.
+1. *Translate* the card objects in the mod repositories. The translation data will be saved in the `SE_Generator/data` directory as CSV files.
 
-The main script runs in the following steps. Each step only requires on-disk data generated from the previous steps, so if you kill the script half way, you should be able to continue from the last unfinished steps.
+2. *Generate* the Strange Eons script to generate a list of individual translated card images, saved in the `SE_Generator/images` directory.
 
-1. Process the card objects in the mod repositories and prepare the translation data. The translation data will be saved in the `SE_Generator/data` directory as CSV files.
+3. *Pack* the individual translated images into deck images and save them into the deck image directory.
 
-2. Run the Strange Eons script to generate a list of individual translated card images, saved in the `SE_Generator/build/images` directory.
+4. *Upload* all the translated deck images to the image host.
 
-3. Pack the individual translated images into deck images and save them into the deck image directory.
-
-4. Upload all the translated deck images to the image host and update the objects in the mod repositoires.
+5. *Update* the objects in the mod repositoires.
 
 Upon finishing the above steps, the mod repositories in the cache directory will have unstaged changes ready for you to commit. If you use your own fork, you also need to manually update the [repository URL](https://github.com/argonui/SCED/blob/545181308bdb9266e0ac16005f1d51ecbde043fb/src/core/Global.ttslua#L45) in the mod.
 
 ### Cache directory
 
-The cache directory is supposed to keep the list of intermediate resources required for processing. This includes the mod repositories, the ArkhamDB translation data, the original deck images, the cropped individual images, and maybe more.
+The cache directory keeps the list of intermediate resources required for processing. This includes the mod repositories, the ArkhamDB translation data, the original deck images, the cropped individual images, and more.
 
-In most cases, this directory can be deleted without affecting the output of the script. If the script cannot find something it requires, it will simply download the resources again and save them in the cache directory.
+Most of files in this directory can be deleted without affecting the functionality of the script, since the script will simply download the resources again and save them in the cache directory. However, one important file is `urls.json`, which keeps track of all the URLs it has seen and assigns a uuid for each unique deck image. If this file is deleted, the script will forget all the URLs it has seen before and will not recognize previously generated deck ids.
 
 ### Intermediate filenames
 
-During processing, the script will generate a series of files with strange long filenames. Those filenames encode the necessary information for the following steps to process them. This includes the original deck image URL, the slot within the deck image, whether the image has been rotated, and maybe more.
+During processing, the script will generate a series of files with strange filenames. Those filenames encode the necessary information for the following steps to process them. This includes the deck image URL id, the slot within the deck image, whether the image has been rotated, and more.
 
 ### SE_Generator project
 
-The `SE_Generator` directory is a self-contained Strange Eons project. This means you can open this project in the Strange Eons UI and inspect its contents, as well as running its automation script. Please note it seems that the Strange Eons UI cannot run at the same time as its command line.
+The `SE_Generator` directory is a self-contained Strange Eons project. This means you can open this project in the Strange Eons UI and inspect its content, as well as running its automation script. Please note it seems that the Strange Eons UI cannot run at the same time as its command line.
 
 ### Translation directory
 
 Some cards don't have direct entries on ArkhamDB, e.g. taboo cards, so we include their translation data in the `translations` folder. Each card will be assigned a special id. For taboo cards, the id will be the card id of the non-taboo version suffixed with `-t`.
 
-### Imgur access token
+If you want to perform any language dependent transformation on generated text, you can add a `transform.py` file (with region code suffix) and declare the corresponding [transformation functions](https://github.com/lriuui0x0/SCED_Localization/blob/master/translations/zh/transform_CN.py). You will likely need to declare an entry for `transform_victory` at least because ArkhamDB translation data doesn't translate the word "Victory".
 
-To get an access token for imgur, you need to first [create an application](https://api.imgur.com/oauth2/addclient) (make sure selecting the no callback option), then use the client id to visit `https://api.imgur.com/oauth2/authorize?client_id=<client id>&response_type=token` and get the access token from the redirected URL.
+### Dropbox access token
 
-The access token may become expired after certain time and the script will fail at the beginning. In that case, you can simply generate a new access token to avoid the token refreshing procedure.
+To get an access token for Dropbox, you need to first [create an application](https://www.dropbox.com/developers/apps), then make sure you tick everything in the permissions tab. Generate an access token on the settings tab.
 
