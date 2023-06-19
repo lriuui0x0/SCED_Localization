@@ -28,6 +28,10 @@ The script is `main.py` in the root directory. You can run `python main.py --hel
 
     This is a Python expression string used to filter what cards will be translated. You can assume a variable named `card` will be available to use whose value is the data on ArkahmDB. For example `card['pack_code'] in ['core', 'rcore']` will filter for only cards in the Core and Revised Core Set.
 
+- `--repo-dir`
+
+    This is a directory to keep the intermediate repositories during processing. See the `--ahdb-dir`, `--mod-dir-primary` and `--mod-dir-secondary` below.
+
 - `--cache-dir`
 
     This is a directory to keep the intermediate resources during processing. Explained in more details below.
@@ -38,11 +42,11 @@ The script is `main.py` in the root directory. You can run `python main.py --hel
 
 - `--ahdb-dir`
 
-    This is the directory to the ArkhamDB json data repository. If you don't provide it, the script will clone the [Kamalisk/arkhamdb-json-data](https://github.com/Kamalisk/arkhamdb-json-data) repo into the cache directory. We use repository data instead of API to be more flexible on local changes.
+    This is the directory to the ArkhamDB json data repository. If you don't provide it, the script will clone the [Kamalisk/arkhamdb-json-data](https://github.com/Kamalisk/arkhamdb-json-data) repository into the repo directory. We use repository data instead of API to be more flexible on local changes.
 
 - `--mod-dir-primary`, `--mod-dir-secondary`
 
-    These are the directories to the local mod repositories. If you don't provide it, the script will clone the [argonui/SCED](https://github.com/argonui/SCED) and [Chr1Z93/loadable-objects](https://github.com/Chr1Z93/loadable-objects) repo into the cache directory.
+    These are the directories to the local mod repositories. If you don't provide it, the script will clone the [argonui/SCED](https://github.com/argonui/SCED) and [Chr1Z93/loadable-objects](https://github.com/Chr1Z93/loadable-objects) repository into the repo directory.
 
 - `--step`
 
@@ -68,7 +72,7 @@ Upon finishing the above steps, the mod repositories in the cache directory will
 
 ### Cache directory
 
-The cache directory keeps the list of intermediate resources required for processing. This includes the mod repositories, the ArkhamDB translation data, the original deck images, the cropped individual images, and more.
+The cache directory keeps the list of intermediate resources required for processing. This includes the processed ArkhamDB translation data, the original deck images, the cropped individual images, and more.
 
 Most of files in this directory can be deleted without affecting the functionality of the script, since the script will simply download the resources again and save them in the cache directory. However, one important file is `urls.json`, which keeps track of all the URLs it has seen and assigns a uuid for each unique deck image. If this file is deleted, the script will forget all the URLs it has seen before and will not recognize previously generated deck ids.
 

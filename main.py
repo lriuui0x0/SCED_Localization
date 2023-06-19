@@ -36,11 +36,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--lang', default='zh_CN', choices=langs, help='The language to translate into')
 parser.add_argument('--se-executable', default=r'C:\Program Files\StrangeEons\bin\eons.exe', help='The Strange Eons executable path')
 parser.add_argument('--filter', default='True', help='A Python expression filter for what cards to process')
+parser.add_argument('--repo-dir', default='repos', help='The directory to keep intermediate repositories during processing')
 parser.add_argument('--cache-dir', default='cache', help='The directory to keep intermediate resources during processing')
 parser.add_argument('--decks-dir', default='decks', help='The directory to keep translated deck images')
-parser.add_argument('--ahdb-dir', default=None, help='The directory to the ArkhamDB json data repository')
-parser.add_argument('--mod-dir-primary', default=None, help='The directory to the primary mod repository')
-parser.add_argument('--mod-dir-secondary', default=None, help='The directory to the secondary mod repository')
+parser.add_argument('--ahdb-dir', default='repos/arkhamdb-json-data', help='The directory to the ArkhamDB json data repository')
+parser.add_argument('--mod-dir-primary', default='repos/SCED', help='The directory to the primary mod repository')
+parser.add_argument('--mod-dir-secondary', default='repos/loadable-objects', help='The directory to the secondary mod repository')
 parser.add_argument('--step', default=None, choices=steps, help='The particular automation step to run')
 parser.add_argument('--dropbox-token', default=None, help='The dropbox token for uploading translated deck images')
 args = parser.parse_args()
@@ -1587,14 +1588,13 @@ def recreate_dir(dir):
     os.makedirs(dir)
 
 def download_repo(repo_folder, repo):
-    if repo_folder is not None:
+    if os.path.isdir(repo_folder):
         return repo_folder
-    ensure_dir(args.cache_dir)
+    print(f'Cloning {repo}...')
+    ensure_dir(args.repo_dir)
     repo_name = repo.split('/')[-1]
-    repo_folder = f'{args.cache_dir}/{repo_name}'
-    if not os.path.isdir(repo_folder):
-        print(f'Cloning {repo}...')
-        subprocess.run(['git', 'clone', '--quiet', f'https://github.com/{repo}.git', repo_folder])
+    repo_folder = f'{args.repo_dir}/{repo_name}'
+    subprocess.run(['git', 'clone', '--quiet', f'https://github.com/{repo}.git', repo_folder])
     return repo_folder
 
 ahdb = {}
