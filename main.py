@@ -1202,7 +1202,10 @@ def get_se_paragraph_line(card, text, flavor, index):
 
     # NOTE: Header is determined by 'b' tag ending with a colon.
     def is_header(elem):
-        return elem.name == 'b' and elem.get_text().strip()[-1] in (':', '：')
+        if elem.name == 'b':
+            header_text = elem.get_text().strip()
+            return header_text and header_text[-1] in (':', '：')
+        return False
 
     # NOTE: Flavor is determined by 'blockquote' or 'i' tag.
     def is_flavor(elem):
