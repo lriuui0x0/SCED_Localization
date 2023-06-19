@@ -92,5 +92,5 @@ If you want to perform any language dependent transformation on generated text, 
 
 ### Dropbox access token
 
-To get an access token for Dropbox, you need to first [create an application](https://www.dropbox.com/developers/apps), then make sure you tick everything in the permissions tab. Generate an access token on the settings tab.
+To get an access token for Dropbox, you need to first [create an application](https://www.dropbox.com/developers/apps), then make sure you tick every individual scope permission in the permissions tab. Generate an access token on the settings tab.
 

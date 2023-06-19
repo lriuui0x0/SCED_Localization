@@ -104,7 +104,7 @@ def get_se_faction(card, index, sheet):
         'survivor': 'Survivor',
         'neutral': 'Neutral',
         # NOTE: This is not a real SE faction type, but ADB use 'mythos' for encounter cards so add it here to avoid errors.
-l       'mythos': 'Mythos',
+        'mythos': 'Mythos',
         None: 'None'
     }
     faction = get_field(card, faction_field[index], None)
