@@ -60,7 +60,7 @@ The script runs in the following steps. Each step only requires persisted data g
 
 1. *Translate* the card objects in the mod repositories. The translation data will be saved in the `SE_Generator/data` directory as CSV files.
 
-2. *Generate* the Strange Eons script to generate a list of individual translated card images, saved in the `SE_Generator/images` directory.
+2. *Generate* the Strange Eons script to generate a list of individual translated card images, saved in the `SE_Generator/images` directory. This step will not overwrite preiviously generated images.
 
 3. *Pack* the individual translated images into deck images and save them into the deck image directory.
 
