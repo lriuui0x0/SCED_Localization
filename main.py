@@ -1,9 +1,9 @@
 # TODO:
 # 06347 Legs of Atlach-Nacha, SE missing enemy template
 # 85037 Subject 8L-08, SE missing enemy template
-# War of the outer god, SE missing card template
-# Return to scenario, missing swapping encounter set icons data
-# Promo cards, Labyrinths of Lunacy no translation
+# WOG, SE missing colored card template
+# Return to scenarios, missing swapping encounter set icons data
+# Promos, LOL, TSK, MTT, FOF, no translation
 
 import argparse
 import csv
