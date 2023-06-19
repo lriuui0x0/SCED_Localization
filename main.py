@@ -2256,21 +2256,9 @@ def upload_images():
             url_id = filename.split('.')[0]
             add_url_id(url_id, url)
 
-uploaded_images = {}
-def load_uploaded_images():
-    if not uploaded_images:
-        dbx = dropbox.Dropbox(args.dropbox_token)
-        folder = get_uploaded_folder()
-        for image in dbx.files_list_folder(folder).entries:
-            print(f'Getting image data for {image.path_display}...')
-            url_id = image.path_display.split('/')[-1].split('.')[0]
-            uploaded_images[url_id] = get_uploaded_image_url(image)
-    return uploaded_images
-
 updated_files = {}
 def update_sced_card_object(object, metadata, card, filename, root):
-    _, old_url_id_map = load_url_map()
-    new_url_id_map = load_uploaded_images()
+    url_map, url_id_map = load_url_map()
     updated_files[filename] = root
     if card:
         name = get_se_front_name(card)
@@ -2293,11 +2281,11 @@ def update_sced_card_object(object, metadata, card, filename, root):
     for _, deck in get_decks(object):
         for url_key in ('FaceURL', 'BackURL'):
             # NOTE: Only update if we have seen this URL and assigned an id to it before.
-            if deck[url_key] in old_url_id_map:
-                deck_url_id = old_url_id_map[deck[url_key]]
-                # NOTE: Only update if we have uploaded the deck image and has a sharing URL before.
-                if deck_url_id in new_url_id_map:
-                    deck[url_key] = new_url_id_map[deck_url_id]
+            if deck[url_key] in url_id_map:
+                deck_url_id = url_id_map[deck[url_key]]
+                # NOTE: Only update if we have uploaded the deck image and has a sharing URL for the language before.
+                if args.lang in url_map[deck_url_id]:
+                    deck[url_key] = url_map[deck_url_id][args.lang]
 
 def update_sced_files():
     for filename, root in updated_files.items():
