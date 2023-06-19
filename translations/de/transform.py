@@ -1,5 +1,3 @@
-import re
-
 def transform_taboo():
     return 'Tabu'
 
@@ -11,6 +9,9 @@ def transform_victory(victory):
 
 def transform_shelter(shelter):
     return shelter.replace('Shelter', 'Schutz')
+
+def transform_blob(blob):
+    return blob.replace('Blob', 'Blob')
 
 def transform_tracker(tracker):
     if tracker == 'Current Depth':

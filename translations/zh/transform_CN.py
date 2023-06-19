@@ -1,26 +1,41 @@
-import re
 import opencc
 
 zh_cn_converter = opencc.OpenCC('t2s.json')
 
-def to_simplified(text):
+def fix_char(text):
     # NOTE: Replace the middle dot for names otherwise the font doesn't recognize.
-    return zh_cn_converter.convert(text).replace('‧', '·')
+    return text.replace('‧', '·')
+
+def fix_quote(text):
+    # NOTE: Replace straight quotes with matching curly quotes.
+    chars = list(text)
+    left = True
+    for i, char in enumerate(chars):
+        if char == '"':
+            chars[i] = '“' if left else '”'
+            left = not left
+    return ''.join(chars)
+
+def fix_simplified(text):
+    return zh_cn_converter.convert(text)
+
+def fix_common_text(text):
+    return fix_simplified(fix_quote(fix_char(text)))
 
 def transform_name(name):
-    return to_simplified(name)
+    return fix_common_text(fix_char(name))
 
 def transform_rule(rule):
-    return to_simplified(rule)
+    return fix_common_text(fix_char(rule))
 
 def transform_flavor(flavor):
-    return to_simplified(flavor)
+    return fix_common_text(fix_char(flavor))
 
 def transform_header(header):
-    return to_simplified(header)
+    return fix_common_text(fix_char(header))
 
 def transform_traits(traits):
-    return to_simplified('<size 50%> <size 200%>'.join(traits.split(' ')))
+    return fix_simplified('<size 50%> <size 200%>'.join(traits.split(' ')))
 
 def transform_taboo():
     return '限卡'

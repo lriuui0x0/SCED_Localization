@@ -3,7 +3,7 @@
 # 85037 Subject 8L-08, SE missing enemy template
 # War of the outer god, SE missing card template
 # Return to scenario, missing swapping encounter set icons data
-# Promo cards, Labyrinths of Lunacy, 86024 no translation
+# Promo cards, Labyrinths of Lunacy no translation
 
 import argparse
 import csv
@@ -103,7 +103,7 @@ def get_se_faction(card, index, sheet):
         'survivor': 'Survivor',
         'neutral': 'Neutral',
         # NOTE: This is not a real SE faction type, but ADB use 'mythos' for encounter cards so add it here to avoid errors.
-        'mythos': 'Mythos',
+l       'mythos': 'Mythos',
         None: 'None'
     }
     faction = get_field(card, faction_field[index], None)
@@ -219,10 +219,35 @@ def get_se_enemy_evade(card):
         evade = 'X'
     return str(evade)
 
-def get_se_illustrator(card):
+def is_se_agenda_image_front(card):
+    return card['code'] in ['84043', '84044', '84045', '84046', '84047', '84048', '84049', '84050', '84051', '84052', '86034', '86040', '86046']
+
+def is_se_agenda_image_back(card):
+    return card['code'] in ['01145', '02314', '05199']
+
+def is_se_act_image_front(card):
+    return card['code'] in ['08681']
+
+def is_se_act_image_back(card):
+    return card['code'] in ['03322a', '03323a', '04048', '04049', '04318', '06292', '06337']
+
+def is_se_bottom_line_transparent(card, sheet):
+    if card['type_code'] == 'enemy':
+        return True
+    if sheet == 0 and (is_se_agenda_image_front(card) or is_se_act_image_front(card)):
+        return True
+    if sheet == 1 and (is_se_agenda_image_back(card) or is_se_act_image_back(card)):
+        return True
+    return False
+
+def get_se_illustrator(card, sheet):
+    if is_se_bottom_line_transparent(card, sheet):
+        return ''
     return get_field(card, 'illustrator', '')
 
-def get_se_copyright(card):
+def get_se_copyright(card, sheet):
+    if is_se_bottom_line_transparent(card, sheet):
+        return ''
     pack = card['pack_code']
     year_map = {
         'core': '2016',
@@ -303,7 +328,9 @@ def get_se_copyright(card):
     }
     return f'<cop> {year_map[pack]} FFG'
 
-def get_se_pack(card):
+def get_se_pack(card, sheet):
+    if is_se_bottom_line_transparent(card, sheet):
+        return ''
     pack = card['pack_code']
     pack_map = {
         'core': 'CoreSet',
@@ -384,7 +411,9 @@ def get_se_pack(card):
     }
     return pack_map[pack]
 
-def get_se_pack_number(card):
+def get_se_pack_number(card, sheet):
+    if is_se_bottom_line_transparent(card, sheet):
+        return ''
     return str(get_field(card, 'position', 0))
 
 def get_se_encounter(card, sheet):
@@ -651,7 +680,9 @@ def get_se_encounter(card, sheet):
     }
     return encounter_map[encounter]
 
-def get_se_encounter_total(card):
+def get_se_encounter_total(card, sheet):
+    if is_se_bottom_line_transparent(card, sheet):
+        return ''
     encounter = get_field(card, 'encounter_code', None)
     encounter_map = {
         'torch': 16,
@@ -906,7 +937,9 @@ def get_se_encounter_total(card):
     }
     return str(encounter_map[encounter])
 
-def get_se_encounter_number(card):
+def get_se_encounter_number(card, sheet):
+    if is_se_bottom_line_transparent(card, sheet):
+        return ''
     return str(get_field(card, 'encounter_position', 0))
 
 def get_se_encounter_front_visibility(card):
@@ -975,12 +1008,12 @@ def get_se_progress_letter(card):
         return 'c'
     return 'a'
 
-def is_progress_reversed(card):
+def is_se_progress_reversed(card):
     return card['code'] in ['03278', '03279a', '03279b', '03280', '03281']
 
 def get_se_progress_direction(card):
     # NOTE: Special case agenda and act direction.
-    if is_progress_reversed(card):
+    if is_se_progress_reversed(card):
         return 'Reversed'
     return 'Standard'
 
@@ -1472,14 +1505,14 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$Text8NameBack': get_se_deck_header(card, 7),
         '$Text8Back': get_se_deck_rule(card, 7),
         '$Victory': get_se_point(card),
-        '$Artist': get_se_illustrator(card),
-        '$ArtistBack': get_se_illustrator(card),
-        '$Copyright': get_se_copyright(card),
-        '$Collection': get_se_pack(card),
-        '$CollectionNumber': get_se_pack_number(card),
+        '$Artist': get_se_illustrator(card, image_sheet),
+        '$ArtistBack': get_se_illustrator(card, image_sheet),
+        '$Copyright': get_se_copyright(card, image_sheet),
+        '$Collection': get_se_pack(card, image_sheet),
+        '$CollectionNumber': get_se_pack_number(card, image_sheet),
         '$Encounter': get_se_encounter(card, image_sheet),
-        '$EncounterNumber': get_se_encounter_number(card),
-        '$EncounterTotal': get_se_encounter_total(card),
+        '$EncounterNumber': get_se_encounter_number(card, image_sheet),
+        '$EncounterTotal': get_se_encounter_total(card, image_sheet),
         '$ShowEncounterIcon': get_se_encounter_front_visibility(card),
         '$ShowEncounterIconBack': get_se_encounter_back_visibility(card),
         '$Doom': get_se_doom(card),
@@ -1661,12 +1694,6 @@ def download_card(ahdb_id):
             pb_card['flavor'] = get_field(old_card, 'flavor', '')
             ahdb[pbid] = pb_card
 
-        # NOTE: Patching some notable errors from ADB.
-        ahdb['01513']['subtype_code'] = 'weakness'
-        ahdb['52015']['stage'] = 2
-        ahdb['52016']['stage'] = 2
-        ahdb['52017']['stage'] = 2
-
         # NOTE: Patching special point attributes as separate fields.
         points = {
             'shelter': ['08502', '08503', '08504', '08505', '08506', '08507', '08508', '08509', '08510', '08511', '08512', '08513', '08514'],
@@ -1695,10 +1722,15 @@ def load_url_map():
     if url_map is None:
         with open(filename, 'r', encoding='utf-8') as file:
             url_map = json.loads(file.read())
-    return url_map
+
+    url_id_map = {}
+    for url_id, url_set in url_map.items():
+        for url in url_set.values():
+            url_id_map[url] = url_id
+
+    return url_map, url_id_map
 
 def save_url_map():
-    global url_map
     ensure_dir(args.cache_dir)
     filename = f'{args.cache_dir}/urls.json'
     if url_map is not None:
@@ -1707,18 +1739,18 @@ def save_url_map():
             file.write(json_str)
 
 def get_url_id(url):
-    global url_map
-    url_map = load_url_map()
-    if url in url_map:
-        return url_map[url]
-    url_map[url] = str(uuid.uuid4()).replace('-', '')
+    url_map, url_id_map = load_url_map()
+    if url in url_id_map:
+        return url_id_map[url]
+    url_id = str(uuid.uuid4()).replace('-', '')
+    # NOTE: The first time we try to get an url which doesn't exist usually means it's the first time we try to download the deck image, so it's the English version.
+    url_map[url_id] = {'en': url}
     save_url_map()
-    return url_map[url]
+    return url_id
 
-def add_url_id(url, url_id):
-    global url_map
-    url_map = load_url_map()
-    url_map[url] = url_id
+def add_url_id(url_id, url):
+    url_map, _ = load_url_map()
+    url_map[url_id][args.lang] = url
     save_url_map()
 
 def encode_result_id(url_id, deck_w, deck_h, deck_x, deck_y, rotate, sheet):
@@ -1832,9 +1864,9 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
             se_type = 'enemy_encounter'
     elif card_type == 'agenda':
         # NOTE: Agenda with image are special cased.
-        if card['code'] in ['84043', '84044', '84045', '84046', '84047', '84048', '84049', '84050', '84051', '84052', '86034', '86040', '86046'] and is_front:
+        if is_front and is_se_agenda_image_front(card):
             se_type = 'image_front'
-        elif card['code'] in ['01145', '02314', '05199'] and not is_front:
+        elif not is_front and is_se_agenda_image_back(card):
             se_type = 'image_back'
         else:
             if is_front:
@@ -1843,9 +1875,9 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
                 se_type = 'agenda_back'
     elif card_type == 'act':
         # NOTE: Act with image are special cased.
-        if card['code'] in ['08681'] and is_front:
+        if is_front and is_se_act_image_front(card):
             se_type = 'image_front'
-        elif card['code'] in ['03322a', '03323a', '04048', '04049', '04318', '06292', '06337'] and not is_front:
+        elif not is_front and is_se_act_image_back(card):
             se_type = 'image_back'
         else:
             if is_front:
@@ -1908,7 +1940,7 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         'story': (0, 0),
     }
     # NOTE: Handle the case where agenda and act direction reversed on cards.
-    if se_type in ['agenda_front', 'act_front'] and is_progress_reversed(card):
+    if se_type in ['agenda_front', 'act_front'] and is_se_progress_reversed(card):
         if se_type == 'agenda_front':
             move_map_se_type = 'act_front'
         else:
@@ -2161,20 +2193,14 @@ def generate_images():
 
 def pack_images():
     deck_images = {}
-    url_map = load_url_map()
+    url_map, _ = load_url_map()
     for image_dir in glob.glob('SE_Generator/images*'):
         for filename in os.listdir(image_dir):
             print(f'Packing {filename}...')
             result_id = filename.split('.')[0]
             deck_url_id, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
-            deck_url = None
-            for url, url_id in url_map.items():
-                # NOTE: Use the first url as the base deck image, which most likely is the English version.
-                if url_id == deck_url_id:
-                    deck_url = url
-                    break
-            if not deck_url:
-                raise Exception(f'Cannot find deck id {deck_url_id} in the url map.')
+            # NOTE: We use the English version of the url as the base image to pack, which we assume to exist.
+            deck_url = url_map[deck_url_id]['en']
             deck_image_filename = download_deck_image(deck_url)
             if deck_url_id not in deck_images:
                 deck_images[deck_url_id] = Image.open(deck_image_filename)
@@ -2228,7 +2254,7 @@ def upload_images():
             image = dbx.files_upload(deck_image_data, deck_filename, mode=dropbox.files.WriteMode.overwrite)
             url = get_uploaded_image_url(image)
             url_id = filename.split('.')[0]
-            add_url_id(url, url_id)
+            add_url_id(url_id, url)
 
 uploaded_images = {}
 def load_uploaded_images():
@@ -2243,8 +2269,8 @@ def load_uploaded_images():
 
 updated_files = {}
 def update_sced_card_object(object, metadata, card, filename, root):
-    url_map = load_url_map()
-    url_id_map = load_uploaded_images()
+    _, old_url_id_map = load_url_map()
+    new_url_id_map = load_uploaded_images()
     updated_files[filename] = root
     if card:
         name = get_se_front_name(card)
@@ -2267,11 +2293,11 @@ def update_sced_card_object(object, metadata, card, filename, root):
     for _, deck in get_decks(object):
         for url_key in ('FaceURL', 'BackURL'):
             # NOTE: Only update if we have seen this URL and assigned an id to it before.
-            if deck[url_key] in url_map:
-                deck_url_id = url_map[deck[url_key]]
+            if deck[url_key] in old_url_id_map:
+                deck_url_id = old_url_id_map[deck[url_key]]
                 # NOTE: Only update if we have uploaded the deck image and has a sharing URL before.
-                if deck_url_id in url_id_map:
-                    deck[url_key] = url_id_map[deck_url_id]
+                if deck_url_id in new_url_id_map:
+                    deck[url_key] = new_url_id_map[deck_url_id]
 
 def update_sced_files():
     for filename, root in updated_files.items():
