@@ -36,9 +36,13 @@ The script is `main.py` in the root directory. You can run `python main.py --hel
 
     This is a directory to keep the translated and packed deck images. These images will be uploaded and their URLs will be referenced directly from the mod.
 
-- `--mod-dir`
+- `--ahdb-dir`
 
-    This is the directory to the local mod repository. If you don't provide it, the script will clone the [Chr1Z93/loadable-objects](https://github.com/Chr1Z93/loadable-objects) repo into the cache directory.
+    This is the directory to the ArkhamDB json data repository. If you don't provide it, the script will clone the [Kamalisk/arkhamdb-json-data](https://github.com/Kamalisk/arkhamdb-json-data) repo into the cache directory. We use repository data instead of API to be more flexible on local changes.
+
+- `--mod-dir-primary`, `--mod-dir-secondary`
+
+    These are the directories to the local mod repositories. If you don't provide it, the script will clone the [argonui/SCED](https://github.com/argonui/SCED) and [Chr1Z93/loadable-objects](https://github.com/Chr1Z93/loadable-objects) repo into the cache directory.
 
 - `--step`
 

@@ -1,9 +1,8 @@
 # TODO:
-# 86002 and more, variable doom agenda
 # General problems on agenda/act/story formatting (07062a)
 # 06347 Legs of Atlach-Nacha, SE missing enemy template
-# Return to scenario, missing swapping encounter set icons data
 # War of the outer god, SE missing card template
+# Return to scenario, missing swapping encounter set icons data
 # Promo cards, Labyrinths of Lunacy, 86024 no translation
 
 import argparse
@@ -24,6 +23,7 @@ import dropbox
 import uuid
 import glob
 import copy
+from bs4 import BeautifulSoup
 from PIL import Image
 
 steps = ['translate', 'generate', 'pack', 'upload', 'update']
@@ -35,7 +35,9 @@ parser.add_argument('--se-executable', default=r'C:\Program Files\StrangeEons\bi
 parser.add_argument('--filter', default='True', help='A Python expression filter for what cards to process')
 parser.add_argument('--cache-dir', default='cache', help='The directory to keep intermediate resources during processing')
 parser.add_argument('--decks-dir', default='decks', help='The directory to keep translated deck images')
-parser.add_argument('--mod-dir', default=None, help='The directory to the mod repository')
+parser.add_argument('--ahdb-dir', default=None, help='The directory to the ArkhamDB json data repository')
+parser.add_argument('--mod-dir-primary', default=None, help='The directory to the primary mod repository')
+parser.add_argument('--mod-dir-secondary', default=None, help='The directory to the secondary mod repository')
 parser.add_argument('--step', default=None, choices=steps, help='The particular automation step to run')
 parser.add_argument('--dropbox-token', default=None, help='The dropbox token for uploading translated deck images')
 args = parser.parse_args()
@@ -1191,54 +1193,67 @@ def get_se_back_header(card):
     return get_se_header(header)
 
 def get_se_paragraph_line(card, text, flavor, index):
-    # NOTE: The following algorithm is a best-effort guess on the formatting. We use simple layout in the case of there's explicit flavor text.
-    # TODO: This is incorrect, the rule text might itself have formatting in it.
+    # NOTE: If there's explicit flavor text, add it before the main text to handle them together.
     if flavor:
-        if index == 0:
-            return '', flavor.strip(), text.strip()
-        else:
-            return '', '', ''
+        text = f'<blockquote><i>{flavor}</i></blockquote>{text}'
 
-    # TODO: This algorithm is problematic, try to make use of the following tags.
-    # NOTE: Deleting the tags that are not useful for the parsing.
-    text = text.replace('<blockquote>', '').replace('</blockquote>', '').replace('<hr>', '')
+    # NOTE: Use <hr> to explicitly determine paragraphs.
+    paragraphs = [paragraph.strip() for paragraph in text.split('<hr>')]
 
-    # NOTE: Determine header by bold text ending with a colon, either inside the bold tag or outside.
-    re_header = r'<b>[^<]+([:：]</b>|</b>[:：])'
-    headers = [match.group(0).replace('<b>', '').replace('</b>', '').strip() for match in re.finditer(re_header, text)]
+    # NOTE: Header is determined by 'b' tag ending with a colon.
+    def is_header(elem):
+        return elem.name == 'b' and elem.get_text().strip()[-1] in (':', '：')
 
-    # NOTE: Use headers to find the number of paragraphs.
-    rules = [text.strip()]
-    rule_index = 0
-    for header in headers:
-        rule = rules[rule_index]
-        match = re.search(re_header, rule)
-        rule_before = rule[0:match.start()]
-        rule_after = rule[match.end():]
-        rules = rules[0:rule_index] + [rule_before.strip()] + [rule_after.strip()] + rules[rule_index+1:]
-        rule_index += 1
+    # NOTE: Flavor is determined by 'blockquote' or 'i' tag.
+    def is_flavor(elem):
+        return elem.name in ['blockquote', 'i']
 
-    # NOTE: At this point the number of rules is one greater than the number of headers, adjust them to the same number.
-    if rules[0]:
-        headers = [''] + headers
-    else:
-        rules = rules[1:]
+    # NOTE: Split paragraphs further before each header.
+    new_paragraphs = []
+    for paragraph in paragraphs:
+        soup = BeautifulSoup(paragraph, 'html.parser')
 
-    # NOTE: Find flavors by italic text from the beginning.
-    re_flavor = r'<i>([^<]+)</i>'
-    flavors = []
-    for rule_index in range(len(rules)):
-        rule = rules[rule_index]
-        match = re.match(re_flavor, rule)
-        if match:
-            flavor = match.group(1).strip()
-            rules[rule_index] = re.sub(re_flavor, '', rule).strip()
-            flavors.append(flavor)
-        else:
-            flavors.append('')
+        splits = [0]
+        for i, elem in enumerate(soup.contents):
+            if is_header(elem):
+                splits.append(i)
+        splits.append(None)
 
-    if index < len(headers):
-        return headers[index], flavors[index], rules[index]
+        for i in range(len(splits) - 1):
+            new_paragraph = ''.join(str(elem) for elem in soup.contents[splits[i]:splits[i+1]]).strip()
+            if new_paragraph:
+                new_paragraphs.append(new_paragraph)
+    paragraphs = new_paragraphs
+
+    # NOTE: Extract out the header and flavor text from each paragraph.
+    parsed_paragraphs = []
+    for paragraph in paragraphs:
+        soup = BeautifulSoup(paragraph, 'html.parser')
+
+        # NOTE: Remove empty children, for example the newline after the header.
+        for child in soup.contents:
+            if not str(child).strip():
+                child.extract()
+
+        # NOTE: Extract out the header text as the first bold tag ending with a colon.
+        header = ''
+        header_elem = soup.contents[0]
+        if is_header(header_elem):
+            header = str(header_elem).replace('<b>', '').replace('</b>', '').strip()
+            header_elem.extract()
+
+        # NOTE: Parse the remaining text, extract out the flavor text as the first blockquote or italic tag.
+        flavor = ''
+        flavor_elem = soup.contents[0]
+        if is_flavor(flavor_elem):
+            flavor = str(flavor_elem).replace('<blockquote>', '').replace('</blockquote>', '').replace('<i>', '').replace('</i>', '').strip()
+            flavor_elem.extract()
+
+        rule = str(soup).strip()
+        parsed_paragraphs.append((header, flavor, rule))
+
+    if index < len(parsed_paragraphs):
+        return parsed_paragraphs[index]
     else:
         return '', '', ''
 
@@ -1494,18 +1509,68 @@ def recreate_dir(dir):
     shutil.rmtree(dir, ignore_errors=True)
     os.makedirs(dir)
 
+def download_repo(repo_folder, repo):
+    if repo_folder is not None:
+        return repo_folder
+    ensure_dir(args.cache_dir)
+    repo_name = repo.split('/')[-1]
+    repo_folder = f'{args.cache_dir}/{repo_name}'
+    if not os.path.isdir(repo_folder):
+        print(f'Cloning {repo}...')
+        subprocess.run(['git', 'clone', '--quiet', f'https://github.com/{repo}.git', repo_folder])
+    return repo_folder
+
 ahdb = {}
 def download_card(ahdb_id):
     ahdb_folder = f'{args.cache_dir}/ahdb'
     ensure_dir(ahdb_folder)
     lang_code, _ = get_lang_code_region()
     filename = f'{ahdb_folder}/{lang_code}.json'
+
     if not os.path.isfile(filename):
         print(f'Downloading ArkhamDB data...')
-        res = requests.get(f'https://{lang_code}.arkhamdb.com/api/public/cards/?encounter=1').json()
+
+        def load_folder(folder):
+            all_cards = {}
+            for data_filename in glob.glob(f'{folder}/**/*.json'):
+                with open(data_filename, 'r', encoding='utf-8') as file:
+                    cards = json.loads(file.read())
+                    for card in cards:
+                        if 'code' in card:
+                            all_cards[card['code']] = card
+            return all_cards
+
+        def merge(a, b):
+            for key, value in b.items():
+                a[key] = value
+
+        repo_folder = download_repo(args.ahdb_dir, 'Kamalisk/arkhamdb-json-data')
+        english = load_folder(f'{repo_folder}/pack')
+        translation = load_folder(f'{repo_folder}/translations/{lang_code}/pack')
+
+        # NOTE: Patch translation data to match the API result.
+        for id, card in english.items():
+            if id in translation:
+                translation_card = translation[id]
+                merge(card, translation_card)
+        translation = english
+
+        # NOTE: Patch 'back_link' property to match the API result.
+        for id, card in translation.items():
+            if get_field(card, 'back_link', None):
+                card['linked_card'] = copy.deepcopy(translation[card['back_link']])
+
+        # NOTE: Patch 'duplicate_of' property to match the API result.
+        for id, card in translation.items():
+            if get_field(card, 'duplicate_of', None):
+                new_card = copy.deepcopy(translation[card['duplicate_of']])
+                merge(new_card, card)
+                translation[id] = new_card
+
         with open(filename, 'w', encoding='utf-8') as file:
-            json_str = json.dumps(res, indent=2, ensure_ascii=False)
+            json_str = json.dumps(list(translation.values()), indent=2, ensure_ascii=False)
             file.write(json_str)
+
     if not len(ahdb):
         print(f'Processing ArkhamDB data...')
 
@@ -1520,7 +1585,7 @@ def download_card(ahdb_id):
         # NOTE: Add parallel cards with all front back combinations.
         for id in ['90001', '90008', '90017', '90024', '90037']:
             card = ahdb[id]
-            old_id = card['alternate_of_code']
+            old_id = card['alternate_of']
             old_card = ahdb[old_id]
 
             pid = f'{old_id}-p'
@@ -1657,8 +1722,8 @@ se_types = [
     'agenda_back',
     'act_front',
     'act_back',
-    'progress_image_front',
-    'progress_image_back',
+    'image_front',
+    'image_back',
     'location_front',
     'location_back',
     'scenario_front',
@@ -1717,9 +1782,9 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
     elif card_type == 'agenda':
         # NOTE: Agenda with image are special cased.
         if card['code'] in ['84043', '84044', '84045', '84046', '84047', '84048', '84049', '84050', '84051', '84052', '86034', '86040', '86046'] and is_front:
-            se_type = 'progress_image_front'
+            se_type = 'image_front'
         elif card['code'] in ['01145', '02314', '05199'] and not is_front:
-            se_type = 'progress_image_back'
+            se_type = 'image_back'
         else:
             if is_front:
                 se_type = 'agenda_front'
@@ -1728,9 +1793,9 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
     elif card_type == 'act':
         # NOTE: Act with image are special cased.
         if card['code'] in ['08681'] and is_front:
-            se_type = 'progress_image_front'
+            se_type = 'image_front'
         elif card['code'] in ['03322a', '03323a', '04048', '04049', '04318', '06292', '06337'] and not is_front:
-            se_type = 'progress_image_back'
+            se_type = 'image_back'
         else:
             if is_front:
                 se_type = 'act_front'
@@ -1782,8 +1847,8 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         'agenda_back': (0, 0),
         'act_front': (-98, 0),
         'act_back': (0, 0),
-        'progress_image_front': (0, 0),
-        'progress_image_back': (0, 0),
+        'image_front': (0, 0),
+        'image_back': (0, 0),
         'location_front': (0, 83),
         'location_back': (0, 83),
         'scenario_front': (0, 0),
@@ -1801,8 +1866,10 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         move_map_se_type = se_type
     image_move_x, image_move_y = move_map[move_map_se_type]
     image_filename = os.path.abspath(image_filename)
-    se_cards[se_type].append(get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y))
-    result_set.add(result_id)
+    # TODO: Remove this
+    if se_type in ['agenda_back', 'act_back', 'story']:
+        se_cards[se_type].append(get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y))
+        result_set.add(result_id)
 
 def translate_sced_card_object(object, metadata, card):
     deck_id, deck = get_decks(object)[0]
@@ -1872,7 +1939,7 @@ def translate_sced_card_object(object, metadata, card):
     else:
         # NOTE: SCED thinks the front side of location is the unrevealed side, which is different from what SE expects. Reverse it here apart from single faced locations.
         # The same goes for some special cards.
-        if (card['type_code'] == 'location' and card['double_sided']) or card['code'] in ['06078', '06346']:
+        if (card['type_code'] == 'location' and get_field(card, 'double_sided', False)) or card['code'] in ['06078', '06346']:
             front_is_front = False
             back_is_front = True
 
@@ -1949,23 +2016,12 @@ def translate_sced_object(object, metadata, card, _1, _2):
     elif object['Name'] == 'Custom_Token':
         translate_sced_token_object(object, metadata, card)
 
-def download_repo(repo_folder, repo):
-    if repo_folder is not None:
-        return repo_folder
-    ensure_dir(args.cache_dir)
-    repo_name = repo.split('/')[-1]
-    repo_folder = f'{args.cache_dir}/{repo_name}'
-    if not os.path.isdir(repo_folder):
-        print(f'Cloning {repo}...')
-        subprocess.run(['git', 'clone', '--quiet', f'https://github.com/{repo}.git', repo_folder])
-    return repo_folder
-
 def is_translatable(ahdb_id):
     # NOTE: Skip minicards.
     return '-m' not in ahdb_id
 
 def process_player_cards(callback):
-    repo_folder = download_repo(args.mod_dir, 'argonui/SCED')
+    repo_folder = download_repo(args.mod_dir_primary, 'argonui/SCED')
     player_folder = f'{repo_folder}/objects/AllPlayerCards.15bb07'
     for filename in os.listdir(player_folder):
         if filename.endswith('.gmnotes'):
@@ -1983,7 +2039,7 @@ def process_player_cards(callback):
 
 def process_encounter_cards(callback, **kwargs):
     include_decks = kwargs.get('include_decks', False)
-    repo_folder = download_repo(args.mod_dir, 'Chr1Z93/loadable-objects')
+    repo_folder = download_repo(args.mod_dir_secondary, 'Chr1Z93/loadable-objects')
     folders = ['campaigns', 'scenarios']
     # NOTE: These campaigns don't have data on ADB yet.
     skip_files = [
@@ -2064,9 +2120,10 @@ def pack_images():
             deck_url_id, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
             deck_url = None
             for url, url_id in url_map.items():
-                # NOTE: Use the original English url on steam as the base deck image.
-                if url_id == deck_url_id and 'steamusercontent.com' in url:
+                # NOTE: Use the first url as the base deck image, which most likely is the English version.
+                if url_id == deck_url_id:
                     deck_url = url
+                    break
             if not deck_url:
                 raise Exception(f'Cannot find deck id {deck_url_id} in the url map.')
             deck_image_filename = download_deck_image(deck_url)

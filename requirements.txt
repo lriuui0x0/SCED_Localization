@@ -1,5 +1,6 @@
 Pillow
 polib
 dropbox
+beautifulsoup4
 opencc
 
