@@ -1,6 +1,6 @@
 # TODO:
-# General problems on agenda/act/story formatting (07062a)
 # 06347 Legs of Atlach-Nacha, SE missing enemy template
+# 85037 Subject 8L-08, SE missing enemy template
 # War of the outer god, SE missing card template
 # Return to scenario, missing swapping encounter set icons data
 # Promo cards, Labyrinths of Lunacy, 86024 no translation
@@ -23,8 +23,11 @@ import dropbox
 import uuid
 import glob
 import copy
-from bs4 import BeautifulSoup
+import warnings
 from PIL import Image
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
+# Suppress BeautifulSoup useless warnings.
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 steps = ['translate', 'generate', 'pack', 'upload', 'update']
 langs = ['es', 'de', 'it', 'fr', 'ko', 'uk', 'pl', 'ru', 'zh_TW', 'zh_CN']
@@ -175,7 +178,7 @@ def get_se_slot(card, index):
 
 def get_se_health(card):
     # NOTE: For enemy or asset with sanity, missing health means '-', otherwise it's completely empty.
-    is_enemy = get_field(card, 'type_code', None) == 'enemy'
+    is_enemy = card['type_code'] == 'enemy'
     default_health = 'None'
     if is_enemy or get_field(card, 'sanity', None) is not None:
         default_health = '-'
@@ -220,7 +223,7 @@ def get_se_illustrator(card):
     return get_field(card, 'illustrator', '')
 
 def get_se_copyright(card):
-    pack = get_field(card, 'pack_code', None)
+    pack = card['pack_code']
     year_map = {
         'core': '2016',
         'rcore': '2020',
@@ -301,7 +304,7 @@ def get_se_copyright(card):
     return f'<cop> {year_map[pack]} FFG'
 
 def get_se_pack(card):
-    pack = get_field(card, 'pack_code', None)
+    pack = card['pack_code']
     pack_map = {
         'core': 'CoreSet',
         'rcore': 'CoreSet',
@@ -954,7 +957,7 @@ def get_se_shroud(card):
 
 def get_se_per_investigator(card):
     # NOTE: Location and act cards default to use per-investigator clue count, unless clue count is 0 or 'clues_fixed' is specified.
-    if get_field(card, 'type_code', None) in ['location', 'act']:
+    if card['type_code'] in ['location', 'act']:
         return '0' if get_field(card, 'clues', 0) == 0 or get_field(card, 'clues_fixed', False) else '1'
     else:
         return '1' if get_field(card, 'health_per_investigator', False) else '0'
@@ -994,8 +997,12 @@ def get_se_front_name(card):
 
 def get_se_back_name(card):
     # NOTE: ADB doesn't have back names for scenario and investigator cards but SE have them. We need to use the front names instead to avoid getting blank on the back.
-    if get_field(card, 'type_code', None) in ['scenario', 'investigator']:
+    if card['type_code'] in ['scenario', 'investigator']:
         name = get_field(card, 'name', '')
+    elif card['type_code'] in ['story']:
+        # NOTE: Default back name as the same as front name for story cards for certain cards whose back name is missing.
+        name = get_field(card, 'name', '')
+        name = get_field(card, 'back_name', name)
     else:
         name = get_field(card, 'back_name', '')
     return get_se_name(name)
@@ -1144,7 +1151,7 @@ def get_se_front_template(card):
 def get_se_back_template(card):
     # NOTE: Use scenario template of story card for return to scenarios.
     if is_return_to_scenario(card):
-        return 'Chaos'
+        return 'ChaosFull'
     return 'Story'
 
 def get_se_deck_line(card, index):
@@ -1193,23 +1200,44 @@ def get_se_back_header(card):
     return get_se_header(header)
 
 def get_se_paragraph_line(card, text, flavor, index):
-    # NOTE: If there's explicit flavor text, add it before the main text to handle them together.
-    if flavor:
-        text = f'<blockquote><i>{flavor}</i></blockquote>{text}'
-
-    # NOTE: Use <hr> to explicitly determine paragraphs.
-    paragraphs = [paragraph.strip() for paragraph in text.split('<hr>')]
-
-    # NOTE: Header is determined by 'b' tag ending with a colon.
+    # NOTE: Header is determined by 'b' tag ending with colon or followed by a newline (except for resolution text).
     def is_header(elem):
         if elem.name == 'b':
-            header_text = elem.get_text().strip()
-            return header_text and header_text[-1] in (':', '：')
+            elem_text = elem.get_text().strip()
+            if elem_text and elem_text[-1] in (':', '：'):
+                return True
+            if elem_text.startswith('(→'):
+                return False
+            next_elem = elem.next_sibling
+            if next_elem and next_elem.get_text().startswith('\n'):
+                return True
         return False
 
     # NOTE: Flavor is determined by 'blockquote' or 'i' tag.
     def is_flavor(elem):
         return elem.name in ['blockquote', 'i']
+
+    # NOTE: If there's explicit flavor text, add it before the main text to handle them together. Merge it with existing flavor text if possible.
+    if flavor:
+        soup = BeautifulSoup(text, 'html.parser')
+        if len(soup.contents):
+            flavor_elem = soup.contents[0]
+            if is_flavor(flavor_elem):
+                flavor_elem.insert(0, f'{flavor}\n')
+            else:
+                flavor_elem.insert_before(f'<blockquote><i>{flavor}</i></blockquote>\n')
+            text = str(soup)
+        else:
+            text = f'<blockquote><i>{flavor}</i></blockquote>'
+
+    # NOTE: Normalize <hr> tag.
+    text = text.replace('<hr/>', '<hr>')
+
+    # NOTE: Swap <hr> and <b> tag in case ADB has <hr> at the beginning of the header text.
+    text = re.sub(r'<b>\s*<hr>', '<hr><b>', text)
+
+    # NOTE: Use <hr> to explicitly determine paragraphs.
+    paragraphs = [paragraph.strip() for paragraph in text.split('<hr>')]
 
     # NOTE: Split paragraphs further before each header.
     new_paragraphs = []
@@ -1233,19 +1261,26 @@ def get_se_paragraph_line(card, text, flavor, index):
     for paragraph in paragraphs:
         soup = BeautifulSoup(paragraph, 'html.parser')
 
-        # NOTE: Remove empty children, for example the newline after the header.
-        for child in soup.contents:
-            if not str(child).strip():
-                child.extract()
+        # NOTE: Remove leading whitespace before checking for header or flavor.
+        def strip_leading(node):
+            for child in node.contents:
+                if not str(child).strip():
+                    child.extract()
+                else:
+                    break
 
-        # NOTE: Extract out the header text as the first bold tag ending with a colon.
+        strip_leading(soup)
+
+        # NOTE: Extract out the header text from the beginning.
         header = ''
         header_elem = soup.contents[0]
         if is_header(header_elem):
             header = str(header_elem).replace('<b>', '').replace('</b>', '').strip()
             header_elem.extract()
 
-        # NOTE: Parse the remaining text, extract out the flavor text as the first blockquote or italic tag.
+        strip_leading(soup)
+
+        # NOTE: Extract out the flavor text from the beginning.
         flavor = ''
         flavor_elem = soup.contents[0]
         if is_flavor(flavor_elem):
@@ -1309,6 +1344,11 @@ def get_se_shelter(card):
     shelter = f'Shelter {shelter}.' if type(shelter) == int else ''
     return transform_lang(shelter)
 
+def get_se_blob(card):
+    blob = get_field(card, 'blob', None)
+    blob = f'Blob {blob}.' if type(blob) == int else ''
+    return transform_lang(blob)
+
 def get_se_point(card):
     vengeance = get_se_vengeance(card)
     victory = get_se_victory(card)
@@ -1317,8 +1357,9 @@ def get_se_point(card):
         shelter = get_se_shelter(card)
         point = '\n'.join([point for point in [vengeance, shelter, victory] if point])
     else:
-        point = '<size 50%> <size 200%>'.join([point for point in [victory, vengeance] if point])
-    return transform_lang(point)
+        blob = get_se_blob(card)
+        point = '\n'.join([point for point in [victory, vengeance, blob] if point])
+    return point
 
 def get_se_location_icon(icon):
     icon_map = {
@@ -1543,19 +1584,18 @@ def download_card(ahdb_id):
                             all_cards[card['code']] = card
             return all_cards
 
-        def merge(a, b):
-            for key, value in b.items():
-                a[key] = value
-
         repo_folder = download_repo(args.ahdb_dir, 'Kamalisk/arkhamdb-json-data')
         english = load_folder(f'{repo_folder}/pack')
         translation = load_folder(f'{repo_folder}/translations/{lang_code}/pack')
 
-        # NOTE: Patch translation data to match the API result.
-        for id, card in english.items():
+        # NOTE: Patch translation data while maintain the original properties as 'real_*' to match the API result.
+        for id, english_card in english.items():
             if id in translation:
                 translation_card = translation[id]
-                merge(card, translation_card)
+                for key, value in translation_card.items():
+                    if key in english_card and key != 'code':
+                        english_card[f'real_{key}'] = english_card[key]
+                    english_card[key] = value
         translation = english
 
         # NOTE: Patch 'back_link' property to match the API result.
@@ -1567,9 +1607,20 @@ def download_card(ahdb_id):
         for id, card in translation.items():
             if get_field(card, 'duplicate_of', None):
                 new_card = copy.deepcopy(translation[card['duplicate_of']])
-                merge(new_card, card)
+                for key, value in card.items():
+                    new_card[key] = value
                 translation[id] = new_card
 
+        # NOTE: Patch linked cards missing encounter set.
+        for id, card in translation.items():
+            if 'linked_card' in card:
+                if get_field(card, 'encounter_code', None) != None and get_field(card['linked_card'], 'encounter_code', None) == None:
+                    card['linked_card']['encounter_code'] = card['encounter_code']
+                    card['linked_card']['encounter_position'] = card['encounter_position']
+                elif get_field(card, 'encounter_code', None) == None and get_field(card['linked_card'], 'encounter_code', None) != None:
+                    card['encounter_code'] = card['linked_card']['encounter_code']
+                    card['encounter_position'] = card['linked_card']['encounter_position']
+        
         with open(filename, 'w', encoding='utf-8') as file:
             json_str = json.dumps(list(translation.values()), indent=2, ensure_ascii=False)
             file.write(json_str)
@@ -1616,22 +1667,19 @@ def download_card(ahdb_id):
         ahdb['52016']['stage'] = 2
         ahdb['52017']['stage'] = 2
 
-        # NOTE: Patching linked cards missing encounter set.
-        for id, card in ahdb.items():
-            if 'linked_card' in card:
-                if get_field(card, 'encounter_code', None) != None and get_field(card['linked_card'], 'encounter_code', None) == None:
-                    card['linked_card']['encounter_code'] = card['encounter_code']
-                elif get_field(card, 'encounter_code', None) == None and get_field(card['linked_card'], 'encounter_code', None) != None:
-                    card['encounter_code'] = card['linked_card']['encounter_code']
-        
-        # NOTE: Patching shelter attribute as a separate field.
-        for id in ['08502', '08503', '08504', '08505', '08506', '08507', '08508', '08509', '08510', '08511', '08512', '08513', '08514']:
-            card = ahdb[id]
-            re_shelter = r'\s*<b>.*?(\d+)</b>[.。]\s*$'
-            match = re.search(re_shelter, card['text'])
-            shelter = int(match.group(1))
-            card['shelter'] = shelter
-            card['text'] = re.sub(re_shelter, '', card['text'])
+        # NOTE: Patching special point attributes as separate fields.
+        points = {
+            'shelter': ['08502', '08503', '08504', '08505', '08506', '08507', '08508', '08509', '08510', '08511', '08512', '08513', '08514'],
+            'blob': ['85039', '85040', '85041', '85042'],
+        }
+        for point_key, ids in points.items():
+            for id in ids:
+                card = ahdb[id]
+                re_point = r'\s*<b>.*?(\d+)</b>[.。]\s*$'
+                match = re.search(re_point, card['text'])
+                point = int(match.group(1))
+                card[point_key] = point
+                card['text'] = re.sub(re_point, '', card['text'])
 
     return ahdb[ahdb_id]
 
@@ -1869,10 +1917,8 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
         move_map_se_type = se_type
     image_move_x, image_move_y = move_map[move_map_se_type]
     image_filename = os.path.abspath(image_filename)
-    # TODO: Remove this
-    if se_type in ['agenda_back', 'act_back', 'story']:
-        se_cards[se_type].append(get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y))
-        result_set.add(result_id)
+    se_cards[se_type].append(get_se_card(result_id, card, metadata, image_filename, image_scale, image_move_x, image_move_y))
+    result_set.add(result_id)
 
 def translate_sced_card_object(object, metadata, card):
     deck_id, deck = get_decks(object)[0]
@@ -2014,7 +2060,7 @@ def translate_sced_token_object(object, metadata, card):
     translate_sced_card(image_url, 1, 1, 0, 0, is_front, card, metadata)
 
 def translate_sced_object(object, metadata, card, _1, _2):
-    if object['Name'] == 'Card':
+    if object['Name'] in ['Card', 'CardCustom']:
         translate_sced_card_object(object, metadata, card)
     elif object['Name'] == 'Custom_Token':
         translate_sced_token_object(object, metadata, card)
@@ -2064,7 +2110,7 @@ def process_encounter_cards(callback, **kwargs):
                             results = find_encounter_objects(object['ContainedObjects'])
                             results.append(object)
                             return results
-                        elif object.get('Name', None) == 'Card' and object.get('GMNotes', '').startswith('{'):
+                        elif object.get('Name', None) in ['Card', 'CardCustom'] and object.get('GMNotes', '').startswith('{'):
                             return [object]
                         # NOTE: Some scenario cards have tracker box on them and are custom token object instead.
                         elif object.get('Name', None) == 'Custom_Token' and object.get('Nickname', None) == 'Scenario' and object.get('GMNotes', '').startswith('{'):

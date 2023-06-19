@@ -4,7 +4,7 @@ import opencc
 zh_cn_converter = opencc.OpenCC('t2s.json')
 
 def to_simplified(text):
-    # NOTE: Replace the middle dot for asset names that the font doesn't recognize.
+    # NOTE: Replace the middle dot for names otherwise the font doesn't recognize.
     return zh_cn_converter.convert(text).replace('‧', '·')
 
 def transform_name(name):
@@ -34,12 +34,15 @@ def transform_victory(victory):
 def transform_shelter(shelter):
     return shelter.replace('Shelter', '庇护').replace('.', '。')
 
+def transform_blob(blob):
+    return blob.replace('Blob', '团块').replace('.', '。')
+
 def transform_tracker(tracker):
     if tracker == 'Current Depth':
         return '当前深度'
     elif tracker == 'Spent Keys':
         return '花费的钥匙'
     elif tracker == 'Strength of the Abyss':
-        return '深渊之力的强度'
+        return '深渊之力'
     return tracker
 
