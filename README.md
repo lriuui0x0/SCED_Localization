@@ -48,13 +48,17 @@ The script is `main.py` in the root directory. You can run `python main.py --hel
 
     These are the directories to the local mod repositories. If you don't provide it, the script will clone the [argonui/SCED](https://github.com/argonui/SCED) and [Chr1Z93/loadable-objects](https://github.com/Chr1Z93/loadable-objects) repository into the repo directory.
 
-- `--step`
-
-    The particular step to run this automation script. Explained in more details below.
-
 - `--dropbox-token`
 
     The Dropbox access token for uploading deck images. Explained in more details below.
+
+- `--new-link`
+
+    This flag will force the uploaded deck images to have new image links, which is useful for invalidating mod cache.
+
+- `--step`
+
+    The particular step to run this automation script. Explained in more details below.
 
 The script runs in the following steps. Each step only requires persisted data generated from the previous steps, so if you kill the script half way, you should be able to continue from the last unfinished steps.
 

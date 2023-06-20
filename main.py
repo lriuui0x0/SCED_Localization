@@ -42,8 +42,9 @@ parser.add_argument('--decks-dir', default='decks', help='The directory to keep 
 parser.add_argument('--ahdb-dir', default='repos/arkhamdb-json-data', help='The directory to the ArkhamDB json data repository')
 parser.add_argument('--mod-dir-primary', default='repos/SCED', help='The directory to the primary mod repository')
 parser.add_argument('--mod-dir-secondary', default='repos/loadable-objects', help='The directory to the secondary mod repository')
-parser.add_argument('--step', default=None, choices=steps, help='The particular automation step to run')
 parser.add_argument('--dropbox-token', default=None, help='The dropbox token for uploading translated deck images')
+parser.add_argument('--new-link', action='store_true', help='Whether to create new URL while uploading deck images')
+parser.add_argument('--step', default=None, choices=steps, help='The particular automation step to run')
 args = parser.parse_args()
 
 def get_lang_code_region():
@@ -1748,7 +1749,7 @@ def get_url_id(url):
     save_url_map()
     return url_id
 
-def add_url_id(url_id, url):
+def set_url_id(url_id, url):
     url_map, _ = load_url_map()
     url_map[url_id][args.lang] = url
     save_url_map()
@@ -2128,7 +2129,7 @@ def process_encounter_cards(callback, **kwargs):
         'fortune_and_folly.json',
         'machinations_through_time.json',
         'meddling_of_meowlathotep.json'
-    ]
+   ]
     for folder in folders:
         campaign_folder = f'{repo_folder}/{folder}'
         for filename in os.listdir(campaign_folder):
@@ -2223,27 +2224,14 @@ def pack_images():
         deck_image = deck_image.convert('RGB')
         deck_image.save(f'{decks_dir}/{deck_url_id}.jpg', progressive=True, optimize=True)
 
-def get_uploaded_folder():
+def upload_images():
     dbx = dropbox.Dropbox(args.dropbox_token)
-    # NOTE: Create a folder if not already exists.
     folder = f'/SCED_Localization_Deck_Images_{args.lang}'
+    # NOTE: Create a folder if not already exists.
     try:
         dbx.files_create_folder(folder)
     except:
         pass
-    return folder
-
-def get_uploaded_image_url(image):
-    dbx = dropbox.Dropbox(args.dropbox_token)
-    # NOTE: Dropbox will reuse the old sharing link if there's already one exist.
-    url = dbx.sharing_create_shared_link(image.path_display, short_url=True).url
-    # NOTE: Get direct download link from the dropbox sharing link.
-    url = url.replace('?dl=0', '').replace('www.dropbox.com', 'dl.dropboxusercontent.com')
-    return url
-
-def upload_images():
-    dbx = dropbox.Dropbox(args.dropbox_token)
-    folder = get_uploaded_folder()
     decks_dir = f'{args.decks_dir}/{args.lang}'
     for filename in os.listdir(decks_dir):
         print(f'Uploading {filename}...')
@@ -2252,9 +2240,16 @@ def upload_images():
             deck_filename = f'{folder}/{filename}'
             # NOTE: Setting overwrite to true so that the old deck image is replaced, and the sharing link still maintains.
             image = dbx.files_upload(deck_image_data, deck_filename, mode=dropbox.files.WriteMode.overwrite)
-            url = get_uploaded_image_url(image)
+            # NOTE: Remove all existing shared links if we try to force creating new links.
+            if args.new_link:
+                for url in dbx.sharing_list_shared_links(image.path_display, direct_only=True).links:
+                    dbx.sharing_revoke_shared_link(url)
+            # NOTE: Dropbox will reuse the old sharing link if there's already one exist.
+            url = dbx.sharing_create_shared_link(image.path_display, short_url=True).url
+            # NOTE: Get direct download link from the dropbox sharing link.
+            url = url.replace('?dl=0', '').replace('www.dropbox.com', 'dl.dropboxusercontent.com')
             url_id = filename.split('.')[0]
-            add_url_id(url_id, url)
+            set_url_id(url_id, url)
 
 updated_files = {}
 def update_sced_card_object(object, metadata, card, filename, root):
