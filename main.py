@@ -1990,6 +1990,8 @@ def translate_sced_card_object(object, metadata, card):
                 '03329d',
                 '03330b',
                 '03331b',
+                '04325b',
+                '04326b',
                 '05085b',
                 '05166',
                 '05167',
