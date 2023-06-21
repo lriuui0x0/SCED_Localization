@@ -35,6 +35,7 @@ langs = ['es', 'de', 'it', 'fr', 'ko', 'uk', 'pl', 'ru', 'zh_TW', 'zh_CN']
 parser = argparse.ArgumentParser()
 parser.add_argument('--lang', default='zh_CN', choices=langs, help='The language to translate into')
 parser.add_argument('--se-executable', default=r'C:\Program Files\StrangeEons\bin\eons.exe', help='The Strange Eons executable path')
+parser.add_argument('--se-preferences', default=fr'{os.getenv("APPDATA")}\StrangeEons3\preferences', help='The Strange Eons preferences file path')
 parser.add_argument('--filter', default='True', help='A Python expression filter for what cards to process')
 parser.add_argument('--repo-dir', default='repos', help='The directory to keep intermediate repositories during processing')
 parser.add_argument('--cache-dir', default='cache', help='The directory to keep intermediate resources during processing')
@@ -1713,7 +1714,7 @@ def download_card(ahdb_id):
     return ahdb[ahdb_id]
 
 url_map = None
-def load_url_map():
+def read_url_map():
     global url_map
     if not os.path.isfile(args.url_file):
         with open(args.url_file, 'w', encoding='utf-8') as file:
@@ -1730,30 +1731,30 @@ def load_url_map():
 
     return url_map, url_id_map
 
-def save_url_map():
+def write_url_map():
     ensure_dir(args.cache_dir)
     if url_map is not None:
         with open(args.url_file, 'w', encoding='utf-8') as file:
-            json_str = json.dumps(url_map, indent=2, ensure_ascii=False)
+            json_str = json.dumps(url_map, indent=2, sort_keys=True)
             file.write(json_str)
 
 def get_en_url_id(url):
-    url_map, url_id_map = load_url_map()
+    url_map, url_id_map = read_url_map()
     if url in url_id_map:
         return url_id_map[url]
     url_id = str(uuid.uuid4()).replace('-', '')
     if 'en' not in url_map:
         url_map['en'] = {}
     url_map['en'][url_id] = url
-    save_url_map()
+    write_url_map()
     return url_id
 
 def set_url_id(url_id, url):
-    url_map, _ = load_url_map()
+    url_map, _ = read_url_map()
     if args.lang not in url_map:
         url_map[args.lang] = {}
     url_map[args.lang][url_id] = url
-    save_url_map()
+    write_url_map()
 
 def encode_result_id(url_id, deck_w, deck_h, deck_x, deck_y, rotate, sheet):
     return f'{url_id}-{deck_w}-{deck_h}-{deck_x}-{deck_y}-{1 if rotate else 0}-{sheet}'
@@ -2189,13 +2190,37 @@ def write_csv():
                     writer.writerow(component)
 
 def generate_images():
+    # NOTE: Update SE font preferences before running the generation script.
+    lang_code, _ = get_lang_code_region()
+    lang_preferences = f'translations/{lang_code}/preferences'
+    print(f'Overwriting with {lang_preferences}...')
+    overwrites = {}
+    with open(lang_preferences, mode='r', encoding='utf-8') as file:
+        for line in file:
+            if line:
+                key, value = line.split('=')
+                overwrites[key] = value
+    lines = []
+    with open(args.se_preferences, mode='r', encoding='utf-8') as file:
+        for line in file:
+            lines.append(line)
+    with open(args.se_preferences, mode='w', encoding='utf-8') as file:
+        for line in lines:
+            fields = line.split('=')
+            if len(fields) == 2:
+                key, value = fields
+                value = overwrites.get(key, value)
+                file.write(f'{key}={value}')
+            else:
+                file.write(line)
+
     se_script = 'SE_Generator/make.js'
     print(f'Running {se_script}...')
     subprocess.run([args.se_executable, '--glang', args.lang, '--run', se_script])
 
 def pack_images():
     deck_images = {}
-    url_map, _ = load_url_map()
+    url_map, _ = read_url_map()
     for image_dir in glob.glob('SE_Generator/images*'):
         for filename in os.listdir(image_dir):
             print(f'Packing {filename}...')
@@ -2243,8 +2268,8 @@ def upload_images():
             image = dbx.files_upload(deck_image_data, deck_filename, mode=dropbox.files.WriteMode.overwrite)
             # NOTE: Remove all existing shared links if we try to force creating new links.
             if args.new_link:
-                for url in dbx.sharing_list_shared_links(image.path_display, direct_only=True).links:
-                    dbx.sharing_revoke_shared_link(url)
+                for link in dbx.sharing_list_shared_links(image.path_display, direct_only=True).links:
+                    dbx.sharing_revoke_shared_link(link.url)
             # NOTE: Dropbox will reuse the old sharing link if there's already one exist.
             url = dbx.sharing_create_shared_link(image.path_display, short_url=True).url
             # NOTE: Get direct download link from the dropbox sharing link.
@@ -2254,7 +2279,7 @@ def upload_images():
 
 updated_files = {}
 def update_sced_card_object(object, metadata, card, filename, root):
-    url_map, url_id_map = load_url_map()
+    url_map, url_id_map = read_url_map()
     updated_files[filename] = root
     if card:
         name = get_se_front_name(card)

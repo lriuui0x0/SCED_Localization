@@ -12,8 +12,6 @@ This repository contains the script for automatically generating localized [SCED
 
 This script uses Strange Eons to create custom Arkham Horror cards using the [ArkhamDB card translation](https://github.com/Kamalisk/arkhamdb-json-data) together with the scanned card images in the mod.
 
-While the script can do most of things automatically, it still requires some manual configuration ahead of time. For the language you're interested in translating to, you will need to manually update the font settings to your liking in the preference panel of the Arkham Horror plugin. For many Western languages, this step is not needed since the default settings should already give good results.
-
 The script is `main.py` in the root directory. You can run `python main.py --help` to get a list of command line options it takes. Most command line options have sensible defaults. The options are explained below:
 
 - `--lang`
@@ -23,6 +21,10 @@ The script is `main.py` in the root directory. You can run `python main.py --hel
 - `--se-executable`
 
     This is the path to the Strange Eons command line program. The default Windows installation gives the path `C:\Program Files\StrangeEons\bin\eons.exe`.
+
+- `--se-preferences`
+
+    This is the path to the Strange Eons preference file, which controls settings like font family, size and offset. The default Windows installation gives the path `C:\Users\lriuui0x0\AppData\Roaming\StrangeEons3\preferences`.
 
 - `--filter`
 
