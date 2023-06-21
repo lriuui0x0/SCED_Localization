@@ -42,6 +42,7 @@ parser.add_argument('--decks-dir', default='decks', help='The directory to keep 
 parser.add_argument('--ahdb-dir', default='repos/arkhamdb-json-data', help='The directory to the ArkhamDB json data repository')
 parser.add_argument('--mod-dir-primary', default='repos/SCED', help='The directory to the primary mod repository')
 parser.add_argument('--mod-dir-secondary', default='repos/loadable-objects', help='The directory to the secondary mod repository')
+parser.add_argument('--url-file', default='cache/urls.json', help='The file to keep the url mapping')
 parser.add_argument('--dropbox-token', default=None, help='The dropbox token for uploading translated deck images')
 parser.add_argument('--new-link', action='store_true', help='Whether to create new URL while uploading deck images')
 parser.add_argument('--step', default=None, choices=steps, help='The particular automation step to run')
@@ -1714,44 +1715,44 @@ def download_card(ahdb_id):
 url_map = None
 def load_url_map():
     global url_map
-    ensure_dir(args.cache_dir)
-    filename = f'{args.cache_dir}/urls.json'
-    if not os.path.isfile(filename):
-        with open(filename, 'w', encoding='utf-8') as file:
+    if not os.path.isfile(args.url_file):
+        with open(args.url_file, 'w', encoding='utf-8') as file:
             json_str = json.dumps({}, indent=2, ensure_ascii=False)
             file.write(json_str)
     if url_map is None:
-        with open(filename, 'r', encoding='utf-8') as file:
+        with open(args.url_file, 'r', encoding='utf-8') as file:
             url_map = json.loads(file.read())
 
     url_id_map = {}
-    for url_id, url_set in url_map.items():
-        for url in url_set.values():
+    for lang, url_set in url_map.items():
+        for url_id, url in url_set.items():
             url_id_map[url] = url_id
 
     return url_map, url_id_map
 
 def save_url_map():
     ensure_dir(args.cache_dir)
-    filename = f'{args.cache_dir}/urls.json'
     if url_map is not None:
-        with open(filename, 'w', encoding='utf-8') as file:
+        with open(args.url_file, 'w', encoding='utf-8') as file:
             json_str = json.dumps(url_map, indent=2, ensure_ascii=False)
             file.write(json_str)
 
-def get_url_id(url):
+def get_en_url_id(url):
     url_map, url_id_map = load_url_map()
     if url in url_id_map:
         return url_id_map[url]
     url_id = str(uuid.uuid4()).replace('-', '')
-    # NOTE: The first time we try to get an url which doesn't exist usually means it's the first time we try to download the deck image, so it's the English version.
-    url_map[url_id] = {'en': url}
+    if 'en' not in url_map:
+        url_map['en'] = {}
+    url_map['en'][url_id] = url
     save_url_map()
     return url_id
 
 def set_url_id(url_id, url):
     url_map, _ = load_url_map()
-    url_map[url_id][args.lang] = url
+    if args.lang not in url_map:
+        url_map[args.lang] = {}
+    url_map[args.lang][url_id] = url
     save_url_map()
 
 def encode_result_id(url_id, deck_w, deck_h, deck_x, deck_y, rotate, sheet):
@@ -1764,7 +1765,7 @@ def decode_result_id(result_id):
 def download_deck_image(url):
     decks_folder = f'{args.cache_dir}/decks'
     ensure_dir(decks_folder)
-    url_id = get_url_id(url)
+    url_id = get_en_url_id(url)
     filename = f'{decks_folder}/{url_id}.jpg'
     if not os.path.isfile(filename):
         print(f'Downloading {url_id}.jpg...')
@@ -1828,7 +1829,7 @@ def translate_sced_card(url, deck_w, deck_h, deck_x, deck_y, is_front, card, met
     card_type = card['type_code']
     rotate = card_type in ['investigator', 'agenda', 'act']
     sheet = 0 if is_front else 1
-    result_id = encode_result_id(get_url_id(url), deck_w, deck_h, deck_x, deck_y, rotate, sheet)
+    result_id = encode_result_id(get_en_url_id(url), deck_w, deck_h, deck_x, deck_y, rotate, sheet)
     if result_id in result_set:
         return
     print(f'Translating {result_id}...')
@@ -2201,7 +2202,7 @@ def pack_images():
             result_id = filename.split('.')[0]
             deck_url_id, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
             # NOTE: We use the English version of the url as the base image to pack, which we assume to exist.
-            deck_url = url_map[deck_url_id]['en']
+            deck_url = url_map['en'][deck_url_id]
             deck_image_filename = download_deck_image(deck_url)
             if deck_url_id not in deck_images:
                 deck_images[deck_url_id] = Image.open(deck_image_filename)
@@ -2279,8 +2280,8 @@ def update_sced_card_object(object, metadata, card, filename, root):
             if deck[url_key] in url_id_map:
                 deck_url_id = url_id_map[deck[url_key]]
                 # NOTE: Only update if we have uploaded the deck image and has a sharing URL for the language before.
-                if args.lang in url_map[deck_url_id]:
-                    deck[url_key] = url_map[deck_url_id][args.lang]
+                if args.lang in url_map and deck_url_id in url_map[args.lang]:
+                    deck[url_key] = url_map[args.lang][deck_url_id]
 
 def update_sced_files():
     for filename, root in updated_files.items():

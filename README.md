@@ -48,6 +48,10 @@ The script is `main.py` in the root directory. You can run `python main.py --hel
 
     These are the directories to the local mod repositories. If you don't provide it, the script will clone the [argonui/SCED](https://github.com/argonui/SCED) and [Chr1Z93/loadable-objects](https://github.com/Chr1Z93/loadable-objects) repository into the repo directory.
 
+- `--url-file`
+
+    This is the file that keeps the mapping between original deck image URLs and the corresponding translated version. Explained in more details below.
+
 - `--dropbox-token`
 
     The Dropbox access token for uploading deck images. Explained in more details below.
@@ -74,11 +78,13 @@ The script runs in the following steps. Each step only requires persisted data g
 
 Upon finishing the above steps, the mod repositories in the cache directory will have unstaged changes ready for you to commit. If you use your own fork, you also need to manually update the [repository URL](https://github.com/argonui/SCED/blob/545181308bdb9266e0ac16005f1d51ecbde043fb/src/core/Global.ttslua#L45) in the mod.
 
+### URL mapping file
+
+The URL mapping file keeps track of the original and translated deck image URLs so that update is possible. It also assigns a uuid for each unique deck image. If this file is deleted, the script will forget all the URLs it has seen before and will not recognize previously processed deck images.
+
 ### Cache directory
 
 The cache directory keeps the list of intermediate resources required for processing. This includes the processed ArkhamDB translation data, the original deck images, the cropped individual images, and more.
-
-Most of files in this directory can be deleted without affecting the functionality of the script, since the script will simply download the resources again and save them in the cache directory. However, one important file is `urls.json`, which keeps track of all the URLs it has seen and assigns a uuid for each unique deck image. If this file is deleted, the script will forget all the URLs it has seen before and will not recognize previously generated deck ids.
 
 ### Intermediate filenames
 
