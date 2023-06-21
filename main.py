@@ -1705,7 +1705,7 @@ def download_card(ahdb_id):
         for point_key, ids in points.items():
             for id in ids:
                 card = ahdb[id]
-                re_point = r'\s*<b>.*?(\d+)</b>[.。]\s*$'
+                re_point = r'\s*<b>.*?(\d+)(</b>[.。]|[.。]</b>)\s*$'
                 match = re.search(re_point, card['text'])
                 point = int(match.group(1))
                 card[point_key] = point
