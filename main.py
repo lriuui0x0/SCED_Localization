@@ -947,11 +947,10 @@ def get_se_encounter_number(card, sheet):
     return str(get_field(card, 'encounter_position', 0))
 
 def get_se_encounter_front_visibility(card):
-    return '0' if card['code'] in ['06015a'] else '1'
+    return '0' if card['code'] in ['06015a', '06015b'] else '1'
 
 def get_se_encounter_back_visibility(card):
     return '0' if card['code'] in [
-        '06015a',
         '07048',
         '07049',
         '07050',
