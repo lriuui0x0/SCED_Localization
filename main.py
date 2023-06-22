@@ -680,6 +680,11 @@ def get_se_encounter(card, sheet):
         'death_of_stars': 'DeathOfStars',
         'children_of_paradise': 'ChildrenOfParadise',
         'swarm_of_assimilation': 'SwarmOfAssimilation',
+        'read_or_die': 'ReadOrDie',
+        'all_or_nothing': 'AllOrNothing',
+        'bad_blood': 'BadBlood',
+        'by_the_book': 'ByTheBook',
+        'red_tide_rising': 'RedTideRising',
         None: '',
     }
     return encounter_map[encounter]
@@ -937,6 +942,11 @@ def get_se_encounter_total(card, sheet):
         'death_of_stars': 10,
         'children_of_paradise': 10,
         'swarm_of_assimilation': 10,
+        'read_or_die': 4,
+        'all_or_nothing': 9,
+        'bad_blood': 4,
+        'by_the_book': 5,
+        'red_tide_rising': 5,
         None: 0,
     }
     return str(encounter_map[encounter])
