@@ -1,4 +1,5 @@
 # TODO:
+# "card['pack_code'] not in ['hoth', 'tdor', 'iotv', 'tdg', 'tftbw', 'bob', 'dre', 'lol', 'mtt', 'fof', 'tskp', 'tskc'] and card['code'] not in ['06347', '06348', '06349', '06350', '85037', '85038']"
 # 06347 Legs of Atlach-Nacha, SE missing enemy template
 # 85037 Subject 8L-08, SE missing enemy template
 # WOG, SE missing colored card template
@@ -2152,14 +2153,14 @@ def process_encounter_cards(callback, **kwargs):
             with open(campaign_filename, 'r', encoding='utf-8') as object_file:
                 def find_encounter_objects(object):
                     if type(object) == dict:
-                        if include_decks and object.get('Name', None) == 'Deck':
+                        if include_decks and object.get('Name') == 'Deck':
                             results = find_encounter_objects(object['ContainedObjects'])
                             results.append(object)
                             return results
-                        elif object.get('Name', None) in ['Card', 'CardCustom'] and object.get('GMNotes', '').startswith('{'):
+                        elif object.get('Name') in ['Card', 'CardCustom'] and object.get('GMNotes', '').startswith('{'):
                             return [object]
                         # NOTE: Some scenario cards have tracker box on them and are custom token object instead.
-                        elif object.get('Name', None) == 'Custom_Token' and object.get('Nickname', None) == 'Scenario' and object.get('GMNotes', '').startswith('{'):
+                        elif object.get('Name') == 'Custom_Token' and object.get('Nickname') == 'Scenario' and object.get('GMNotes', '').startswith('{'):
                             return [object]
                         elif 'ContainedObjects' in object:
                             return find_encounter_objects(object['ContainedObjects'])
@@ -2310,14 +2311,21 @@ def update_sced_card_object(object, metadata, card, filename, root):
             object['Description'] = re.sub(r'<[^>]*>', '', get_se_traits(card))
         print(f'Updating {name}...')
 
-    for _, deck in get_decks(object):
-        for url_key in ('FaceURL', 'BackURL'):
-            # NOTE: Only update if we have seen this URL and assigned an id to it before.
-            if deck[url_key] in url_id_map:
-                deck_url_id = url_id_map[deck[url_key]]
-                # NOTE: Only update if we have uploaded the deck image and has a sharing URL for the language before.
-                if args.lang in url_map and deck_url_id in url_map[args.lang]:
-                    deck[url_key] = url_map[args.lang][deck_url_id]
+    url_objects = []
+    if object.get('Name') == 'Custom_Token':
+        url_objects.append((object['CustomImage'], 'ImageURL'))
+    else:
+        for _, deck in get_decks(object):
+            url_objects.append((deck, 'FaceURL'))
+            url_objects.append((deck, 'BackURL'))
+
+    for url_object, url_key in url_objects:
+        # NOTE: Only update if we have seen this URL and assigned an id to it before.
+        if url_object[url_key] in url_id_map:
+            deck_url_id = url_id_map[url_object[url_key]]
+            # NOTE: Only update if we have uploaded the deck image and has a sharing URL for the language before.
+            if args.lang in url_map and deck_url_id in url_map[args.lang]:
+                url_object[url_key] = url_map[args.lang][deck_url_id]
 
 def update_sced_files():
     for filename, root in updated_files.items():
