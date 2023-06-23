@@ -983,17 +983,21 @@ def get_se_encounter_back_visibility(card):
 
 def get_se_doom(card):
     doom = get_field(card, 'doom', '-')
-    # NOTE: ADB uses -2 to indicate variable shroud.
+    # NOTE: ADB uses -2 to indicate variable doom.
     if doom == -2:
         doom = 'Star'
     return str(doom)
 
-def get_se_comment(card):
+def get_se_doom_comment(card):
     # NOTE: Special cases the cards with an asterisk comment on the doom or clue.
     return '1' if card['code'] in ['04212'] else '0'
 
 def get_se_clue(card):
-    return str(get_field(card, 'clues', '-'))
+    clue = get_field(card, 'clues', '-')
+    # NOTE: ADB uses -2 to indicate variable clue.
+    if clue == -2:
+        clue = 'Star'
+    return str(clue)
 
 def get_se_shroud(card):
     shroud = get_field(card, 'shroud', 0)
@@ -1003,9 +1007,9 @@ def get_se_shroud(card):
     return str(shroud)
 
 def get_se_per_investigator(card):
-    # NOTE: Location and act cards default to use per-investigator clue count, unless clue count is 0 or 'clues_fixed' is specified.
+    # NOTE: Location and act cards default to use per-investigator clue count, unless clue count is 0, variable (-2) or 'clues_fixed' is specified.
     if card['type_code'] in ['location', 'act']:
-        return '0' if get_field(card, 'clues', 0) == 0 or get_field(card, 'clues_fixed', False) else '1'
+        return '0' if get_field(card, 'clues', 0) in [0, -2] or get_field(card, 'clues_fixed', False) else '1'
     else:
         return '1' if get_field(card, 'health_per_investigator', False) else '0'
 
@@ -1531,7 +1535,7 @@ def get_se_card(result_id, card, metadata, image_filename, image_scale, image_mo
         '$ShowEncounterIconBack': get_se_encounter_back_visibility(card),
         '$Doom': get_se_doom(card),
         '$Clues': get_se_clue(card),
-        '$Asterisk': get_se_comment(card),
+        '$Asterisk': get_se_doom_comment(card),
         '$Shroud': get_se_shroud(card),
         '$PerInvestigator': get_se_per_investigator(card),
         '$ScenarioIndex': get_se_progress_number(card),
