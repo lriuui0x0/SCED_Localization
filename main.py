@@ -1109,7 +1109,7 @@ def get_se_markup(rule):
 def get_se_rule(rule):
     rule = get_se_markup(rule)
     # NOTE: Get rid of the errata text, e.g. Wendy's Amulet.
-    rule = re.sub(r'<i>\(Erratum[^<]*</i>', '', rule)
+    rule = re.sub(r'<i>\(Errat(um|a)[^<]*</i>', '', rule)
     # NOTE: Get rid of the FAQ text, e.g. Rex Murphy.
     rule = re.sub(r'<i>\(FAQ[^<]*</i>', '', rule)
     # NOTE: Format bold action keywords.
@@ -2242,7 +2242,7 @@ def pack_images():
             print(f'Packing {filename}...')
             result_id = filename.split('.')[0]
             deck_url_id, deck_w, deck_h, deck_x, deck_y, rotate, _ = decode_result_id(result_id)
-            # NOTE: We use the English version of the url as the base image to pack, which we assume to exist.
+            # NOTE: We use the English version of the url as the base image to pack to avoid repeated saving that reduces quality.
             deck_url = url_map['en'][deck_url_id]
             deck_image_filename = download_deck_image(deck_url)
             if deck_url_id not in deck_images:
