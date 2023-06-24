@@ -1707,6 +1707,9 @@ def download_card(ahdb_id):
             pbid = f'{old_id}-pb'
             pb_card = copy.deepcopy(card)
             pb_card['code'] = pbid
+            pb_card['pack_code'] = old_card['pack_code']
+            pb_card['illustrator'] = get_field(old_card, 'illustrator', '')
+            pb_card['position'] = get_field(old_card, 'position', 0)
             pb_card['text'] = get_field(old_card, 'text', '')
             pb_card['flavor'] = get_field(old_card, 'flavor', '')
             pb_card['health'] = get_field(old_card, 'health', 0)
@@ -2048,6 +2051,14 @@ def translate_sced_card_object(object, metadata, card):
         if (card['type_code'] == 'location' and get_field(card, 'double_sided', False)) or card['code'] in ['06078', '06346']:
             front_is_front = False
             back_is_front = True
+
+        # NOTE: Certain location card backs show different pack code from its true pack to make cards indistinguishable during randomization.
+        location_map = {
+            '53039': '04168',
+        }
+        if card['code'] in location_map:
+            front_card = copy.deepcopy(card)
+            front_card['pack_code'] = download_card(location_map[card['code']])['pack_code']
 
     front_url = deck['FaceURL']
     translate_front = True
