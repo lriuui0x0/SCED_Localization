@@ -1709,6 +1709,12 @@ def download_card(ahdb_id):
             pb_card['code'] = pbid
             pb_card['text'] = get_field(old_card, 'text', '')
             pb_card['flavor'] = get_field(old_card, 'flavor', '')
+            pb_card['health'] = get_field(old_card, 'health', 0)
+            pb_card['sanity'] = get_field(old_card, 'sanity', 0)
+            pb_card['skill_willpower'] = get_field(old_card, 'skill_willpower', 0)
+            pb_card['skill_intellect'] = get_field(old_card, 'skill_intellect', 0)
+            pb_card['skill_combat'] = get_field(old_card, 'skill_combat', 0)
+            pb_card['skill_agility'] = get_field(old_card, 'skill_agility', 0)
             ahdb[pbid] = pb_card
 
         # NOTE: Patching special point attributes as separate fields.
