@@ -2153,6 +2153,10 @@ def process_player_cards(callback):
                         with open(object_filename, 'r', encoding='utf-8') as object_file:
                             object = json.loads(object_file.read())
                         callback(object, metadata, card, object_filename, object)
+                        # NOTE: Process card objects with alternative states, e.g. Revised Core investigators.
+                        if 'States' in object:
+                            for state_object in object['States'].values():
+                                callback(state_object, metadata, card, object_filename, object)
 
 def process_encounter_cards(callback, **kwargs):
     include_decks = kwargs.get('include_decks', False)
