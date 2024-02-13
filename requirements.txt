@@ -3,4 +3,4 @@ polib
 dropbox
 beautifulsoup4
 opencc
-
+setuptools
